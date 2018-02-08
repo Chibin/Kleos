@@ -1,0 +1,9 @@
+*.swp
+*.pdb
+*.dll
+main.exe
+main.exp
+main.ilk
+main.lib
+main.obj
+tags
