@@ -10,6 +10,8 @@ void ProcessOpenGLErrors();
 
 void MainGame(SDL_Window *mainWindow)
 {
+    OpenFont();
+
     bool continueRunning = true;
 
     GLuint program = LoadShaders("fixtures/vertex.glsl",
@@ -54,7 +56,6 @@ void MainGame(SDL_Window *mainWindow)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ProcessOpenGLErrors();
-
 
         /* Render graphics */
         glDrawArrays(GL_TRIANGLES, 0, 12);

@@ -3,14 +3,18 @@
 #include <sstream>
 #include <vector>
 
-#include <SDL.h>
 #include <stdio.h>
+#include <assert.h>
+
+#include <SDL.h>
+#include <SDL_ttf.h>
 
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
 
+#include "font.cpp"
 #include "shaders.cpp"
 #include "game.cpp"
 
@@ -30,10 +34,11 @@ void CheckSDLError(int);
 void MainGame();
 bool WindowSetup();
 bool OpenGLSetup();
+bool SDLTTFSetup();
 
 int main(int argc, char *argv[])
 {
-    if(!WindowSetup() || !OpenGLSetup())
+    if(!WindowSetup() || !OpenGLSetup() || !SDLTTFSetup())
         return -1;
 
     MainGame(mainWindow);
@@ -65,7 +70,20 @@ bool WindowSetup(){
     return true;
 }
 
-bool OpenGLSetup(){
+bool SDLTTFSetup()
+{
+    if (TTF_Init() < 0) {
+        printf("TTF failed to init\n");
+        return false;
+    }
+
+    printf("TTF init complete\n");
+
+    return true;
+}
+
+bool OpenGLSetup()
+{
     SetOpenGLSettings();
 
     /* initialize to start using opengl */
@@ -116,5 +134,22 @@ void Cleanup()
 {
     SDL_GL_DeleteContext(mainContext);
     SDL_DestroyWindow(mainWindow);
+    TTF_Quit();
     SDL_Quit();
+}
+
+/* Random helper */
+void PrintSDLTTFVersion()
+{
+    const SDL_version *linkedVersion = TTF_Linked_Version();
+    SDL_version compiledVersion;
+    SDL_TTF_VERSION(&compiledVersion);
+
+    std::cout << "Linked version:\n"
+        << linkedVersion->major << "." << linkedVersion->minor << "." << linkedVersion->patch;
+
+    std::cout << "Compiled version:\n"
+        << compiledVersion.major << "." << compiledVersion.minor << "." << compiledVersion.patch
+        << std::endl;
+
 }
