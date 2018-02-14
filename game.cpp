@@ -6,7 +6,10 @@
 /* should already be included in the main.cpp */
 #include "shaders.cpp"
 
-void ProcessOpenGLErrors();
+
+#define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
+ 
+void _processOpenGLErrors(const char *file, int line);
 void teststuff(GLuint &textureID);
 
 void MainGame(SDL_Window *mainWindow)
@@ -126,8 +129,6 @@ void MainGame(SDL_Window *mainWindow)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glUniform1i(glGetUniformLocation(program, "tex1"), 0);
-
     //Clean up the surfaceace and font
     SDL_FreeSurface(surface);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -164,6 +165,10 @@ void MainGame(SDL_Window *mainWindow)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        /* NOTE: you shouldn't call this function unless you already have a shader
+         * program already binded (glUseProgram)
+         */
         glUniform1i(glGetUniformLocation(program, "tex"), 0);
 
         glBindVertexArray(vao);
@@ -175,12 +180,14 @@ void MainGame(SDL_Window *mainWindow)
     }
 }
 
-void ProcessOpenGLErrors()
+void _processOpenGLErrors(const char *file, int line)
 {
     // Process/log the error.
     GLenum err;
     while((err = glGetError()) != GL_NO_ERROR){
         std::string error;
+
+        printf("error detected at %s:%d:\n", file, line);
 
         switch(err) {
             case GL_INVALID_OPERATION:              error="INVALID_OPERATION";              break;
