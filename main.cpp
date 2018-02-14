@@ -14,6 +14,10 @@
 #include <gl/gl.h>
 #include <gl/glu.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include "texture.cpp"
 #include "font.cpp"
 #include "shaders.cpp"
 #include "game.cpp"

@@ -23,31 +23,18 @@ TTF_Font* OpenFont()
 }
 
 
-SDL_Texture* RenderText(const char* msg,SDL_Renderer *renderer)
+SDL_Surface *RenderText(TTF_Font *font, const char* msg)
 {
-    TTF_Font *font = OpenFont();
-    assert(font != NULL);
-
-
     SDL_Color color = {1,1,1,1};
 
-    //render to a surfaceace
+    // Render the message
     SDL_Surface *surface = TTF_RenderText_Blended(font, msg, color);
     if (surface == NULL){
         CloseFont(font);
         printf("TTF_RenderText\n");
         return NULL;
     }
-
-    //then load that surfaceace into a texture
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (texture == NULL)
-        printf("failed to create texture\n");
-
-    //Clean up the surfaceace and font
-    SDL_FreeSurface(surface);
-    TTF_CloseFont(font);
-    return texture;
+    return surface;
 }
 
 inline void CloseFont(TTF_Font *font)
