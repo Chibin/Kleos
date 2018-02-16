@@ -17,8 +17,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "texture.cpp"
 #include "font.cpp"
+#include "texture.cpp"
 #include "shaders.cpp"
 #include "game.cpp"
 
@@ -35,7 +35,6 @@ SDL_GLContext mainContext;
 void SetOpenGLSettings();
 void Cleanup();
 void CheckSDLError(int);
-void MainGame();
 bool WindowSetup();
 bool OpenGLSetup();
 bool SDLTTFSetup();
@@ -45,7 +44,7 @@ int main(int argc, char *argv[])
     if(!WindowSetup() || !OpenGLSetup() || !SDLTTFSetup())
         return -1;
 
-    MainGame(mainWindow);
+    MainGameLoop(mainWindow);
     Cleanup();
 
     return 0;

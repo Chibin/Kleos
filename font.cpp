@@ -23,7 +23,7 @@ TTF_Font* OpenFont()
 }
 
 
-SDL_Surface *RenderText(TTF_Font *font, const char* msg)
+SDL_Surface *StringToSDLSurface(TTF_Font *font, const char* msg)
 {
     SDL_Color color = {1,1,1,1};
 

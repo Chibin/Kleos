@@ -12,7 +12,7 @@
 void _processOpenGLErrors(const char *file, int line);
 void teststuff(GLuint &textureID);
 
-void MainGame(SDL_Window *mainWindow)
+void MainGameLoop(SDL_Window *mainWindow)
 {
     /* TODO: this is probably not the right spot for this */
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -105,37 +105,14 @@ void MainGame(SDL_Window *mainWindow)
     GLuint textureID;
     glGenTextures(1, &textureID);
 
-#if PRINTFONT
     TTF_Font *font = OpenFont();
     assert(font != NULL);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    SDL_Surface *surface = NULL;
-    surface = RenderText(font, "testing this");
-    assert(surface != NULL);
-
-    int mode = GL_RGB;
-    if(surface->format->BytesPerPixel == 4)
-        mode = GL_RGBA;
-
-    /* https://www.khronos.org/opengl/wiki/Common_Mistakes
-     * Creating a complete texture
-     */
-    glTexImage2D(GL_TEXTURE_2D, 0, mode, surface->w, surface->h, 0, mode, GL_UNSIGNED_BYTE, surface->pixels);
-
-    glTexParameteri(GL_TEXTURE_2D,  GL_GENERATE_MIPMAP, GL_TRUE); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    //Clean up the surfaceace and font
-    SDL_FreeSurface(surface);
-    glBindTexture(GL_TEXTURE_2D, 0);
+#if PRINTFONT
+    StringToTexture(textureID, font, "testing this");
 #else
-    imageToTexture(textureID, "awesomeface.png");
+    ImageToTexture(textureID, "awesomeface.png");
 #endif
-
 
     while (continueRunning)
     {
@@ -195,7 +172,8 @@ void _processOpenGLErrors(const char *file, int line)
             case GL_INVALID_VALUE:                  error="INVALID_VALUE";                  break;
             case GL_OUT_OF_MEMORY:                  error="OUT_OF_MEMORY";                  break;
             case GL_INVALID_FRAMEBUFFER_OPERATION:  error="INVALID_FRAMEBUFFER_OPERATION";  break;
-            default: printf("something bad happened. unknown error: %d\n", err); break;
+            default: printf("something bad happened. "
+                            "unknown error: %d\n", err); break;
         }
 
         printf("something bad happened: %s\n", error.c_str());
