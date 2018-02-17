@@ -2,7 +2,7 @@
 #define __SHADERS__
 
 std::string FileToString(const char *filePath);
-GLuint LoadShaders(const char *vertex_file_path,
+GLuint CreateProgram(const char *vertex_file_path,
                    const char *fragment_file_path);
 
 std::string FileToString(const char* filePath)
@@ -20,7 +20,7 @@ std::string FileToString(const char* filePath)
 }
 
 /* return the programID of the linked vertex and fragment shaders */
-GLuint LoadShaders(const char *vertex_file_path,const char *fragment_file_path)
+GLuint CreateProgram(const char *vertex_file_path,const char *fragment_file_path)
 {
 
 	// Create the shaders
@@ -124,6 +124,4 @@ GLuint LoadShaders(const char *vertex_file_path,const char *fragment_file_path)
     return max;
 
 */
-
-
 #endif

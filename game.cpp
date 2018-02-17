@@ -20,8 +20,10 @@ void MainGameLoop(SDL_Window *mainWindow)
 
     bool continueRunning = true;
 
-    GLuint program = LoadShaders("fixtures/vertex.glsl",
-                                 "fixtures/fragment.glsl");
+    GLuint program = CreateProgram("materials/programs/vertex.glsl",
+                                 "materials/programs/fragment.glsl");
+    GLuint debugProgram = CreateProgram("materials/programs/vertex.glsl",
+            "materials/programs/debug_fragment_shaders.glsl");
 
     GLfloat points[12] = { -0.5, -0.5,
                            0.5, -0.5,
@@ -111,7 +113,7 @@ void MainGameLoop(SDL_Window *mainWindow)
 #if PRINTFONT
     StringToTexture(textureID, font, "testing this");
 #else
-    ImageToTexture(textureID, "awesomeface.png");
+    ImageToTexture(textureID, "./materials/textures/awesomeface.png");
 #endif
 
     while (continueRunning)
@@ -123,8 +125,10 @@ void MainGameLoop(SDL_Window *mainWindow)
                 continueRunning = false;
 
             if (event.type == SDL_KEYDOWN)
-                HandleInput(event.key.keysym.sym, &continueRunning, mainWindow);
+                InputHandler(event.key.keysym.sym, &continueRunning, mainWindow);
         }
+
+        /* TODO: One time init might be done here as the game progress ? */
 
         /* start with an 'empty' canvas */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -132,6 +136,9 @@ void MainGameLoop(SDL_Window *mainWindow)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ProcessOpenGLErrors();
+
+        //GameUpdate();
+        //Render();
 
         /* Render graphics */
         glUseProgram(program);
@@ -148,7 +155,15 @@ void MainGameLoop(SDL_Window *mainWindow)
          */
         glUniform1i(glGetUniformLocation(program, "tex"), 0);
 
+        /* programs used first will have higher priority being shown in the
+         * canvas 
+         */
         glBindVertexArray(vao);
+            glUseProgram(debugProgram);
+            glEnable(GL_PROGRAM_POINT_SIZE);
+            glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
+
+            glUseProgram(program);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
@@ -177,7 +192,6 @@ void _processOpenGLErrors(const char *file, int line)
         }
 
         printf("something bad happened: %s\n", error.c_str());
-
     }
 }
 

@@ -1,7 +1,7 @@
 #ifndef __INPUT__
 #define __INPUT__
 
-void HandleInput(SDL_Keycode sym, bool *continueRunning, SDL_Window *mainWindow){
+void InputHandler(SDL_Keycode sym, bool *continueRunning, SDL_Window *mainWindow){
     switch(sym){
             case SDLK_ESCAPE:
                 *continueRunning = false;
@@ -23,6 +23,15 @@ void HandleInput(SDL_Keycode sym, bool *continueRunning, SDL_Window *mainWindow)
                 glClearColor(0.0, 0.0, 1.0, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT);
                 SDL_GL_SwapWindow(mainWindow);
+                break;
+            case SDLK_UP:
+                printf("up\n");
+                break;
+            case SDLK_DOWN:
+                break;
+            case SDLK_LEFT:
+                break;
+            case SDLK_RIGHT:
                 break;
             default:
                 break;
