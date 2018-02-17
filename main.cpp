@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -5,6 +6,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <windows.h>
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -17,6 +19,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "logger.cpp"
 #include "font.cpp"
 #include "texture.cpp"
 #include "shaders.cpp"
