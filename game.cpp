@@ -12,6 +12,8 @@
 void _processOpenGLErrors(const char *file, int line);
 void teststuff(GLuint &textureID);
 
+typedef void (__cdecl *RENDER)(GLuint, GLuint, GLuint, GLuint); 
+
 void MainGameLoop(SDL_Window *mainWindow)
 {
     /* TODO: this is probably not the right spot for this */
@@ -116,6 +118,19 @@ void MainGameLoop(SDL_Window *mainWindow)
     ImageToTexture(textureID, "./materials/textures/awesomeface.png");
 #endif
 
+    /* Load library */
+    HMODULE RenderDLL;
+
+    RenderDLL = LoadLibrary("render.dll");
+    if(!RenderDLL)
+        printf("Failed to load library! \n");
+
+    RENDER Render;
+    Render = (RENDER)GetProcAddress(RenderDLL, "Render");
+
+    if(!Render)
+        printf("Failed to load function \"Render\"!\n");
+
     while (continueRunning)
     {
         SDL_Event event;
@@ -138,34 +153,7 @@ void MainGameLoop(SDL_Window *mainWindow)
         ProcessOpenGLErrors();
 
         //GameUpdate();
-        //Render();
-
-        /* Render graphics */
-        glUseProgram(program);
-
-        glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        /* NOTE: you shouldn't call this function unless you already have a shader
-         * program already binded (glUseProgram)
-         */
-        glUniform1i(glGetUniformLocation(program, "tex"), 0);
-
-        /* programs used first will have higher priority being shown in the
-         * canvas 
-         */
-        glBindVertexArray(vao);
-            glUseProgram(debugProgram);
-            glEnable(GL_PROGRAM_POINT_SIZE);
-            glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
-
-            glUseProgram(program);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        (Render)(vao, textureID, program, debugProgram);
 
         /* equivalent to glswapbuffer? */
         SDL_GL_SwapWindow(mainWindow);
@@ -182,11 +170,12 @@ void _processOpenGLErrors(const char *file, int line)
         printf("error detected at %s:%d:\n", file, line);
 
         switch(err) {
-            case GL_INVALID_OPERATION:              error="INVALID_OPERATION";              break;
-            case GL_INVALID_ENUM:                   error="INVALID_ENUM";                   break;
-            case GL_INVALID_VALUE:                  error="INVALID_VALUE";                  break;
-            case GL_OUT_OF_MEMORY:                  error="OUT_OF_MEMORY";                  break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION:  error="INVALID_FRAMEBUFFER_OPERATION";  break;
+            case GL_INVALID_OPERATION: error="INVALID_OPERATION"; break;
+            case GL_INVALID_ENUM:      error="INVALID_ENUM";      break;
+            case GL_INVALID_VALUE:     error="INVALID_VALUE";     break;
+            case GL_OUT_OF_MEMORY:     error="OUT_OF_MEMORY";     break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION:
+                                       error="INVALID_FRAMEBUFFER_OPERATION";  break;
             default: printf("something bad happened. "
                             "unknown error: %d\n", err); break;
         }
