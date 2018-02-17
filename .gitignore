@@ -1,9 +1,12 @@
 *.swp
+*.swo
 *.pdb
 *.dll
-main.exe
-main.exp
-main.ilk
-main.lib
-main.obj
+*.exe
+*.exp
+*.ilk
+*.lib
+*.obj
+*.map
 tags
+*.sln
