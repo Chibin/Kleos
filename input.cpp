@@ -18,10 +18,27 @@ void ProcessInput(SDL_Keycode sym, bool *continueRunning, entity *player){
     }
 }
 
+void ProcessKeysHeldDown(entity *Entity, const Uint8 *keystate)
+{
+    if(keystate[SDL_SCANCODE_UP]){
+        EntityMoveUp(Entity);
+    }
+    if(keystate[SDL_SCANCODE_DOWN]){
+        EntityMoveDown(Entity);
+    }
+    if(keystate[SDL_SCANCODE_LEFT]){
+        EntityMoveLeft(Entity);
+    }
+    if(keystate[SDL_SCANCODE_RIGHT]){
+        EntityMoveRight(Entity);
+    }
+}
+
 void ProcessInputToMovement(SDL_Keycode sym, entity *Entity) {
     /* TODO: Replace this with non-repeatable key stroke.
      * Keep repeating the movement while the key is down though.
      */
+#if 1
     switch(sym){
         case SDLK_d:
             break;
@@ -44,6 +61,7 @@ void ProcessInputToMovement(SDL_Keycode sym, entity *Entity) {
         default:
             break;
     }
+#endif
 }
 
 #endif

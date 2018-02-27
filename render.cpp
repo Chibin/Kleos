@@ -34,6 +34,17 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     entity *player = Entity;
     SDL_Event event;
     bool continueRunning = true;
+
+    /* NOTE: Looks very player centric right now, not sure if we need to make it
+     * better later on.
+     * Use keystate to get the feel for the fastest response time.
+     * Keyrepeat is doesn't feel smooth enough for us to use it as a way to
+     * move. The amount of keyboard repeat depends on the setting the user has
+     * on their computer, so not reliable.
+     */
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+    ProcessKeysHeldDown(player, keystate);
+
     while (SDL_PollEvent(&event))
     {
         if (event.type == SDL_QUIT)
@@ -91,6 +102,9 @@ void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, e
     glEnable(GL_PROGRAM_POINT_SIZE);
     glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
 
+    /* This will probably be a loop per entity when drawing them... if they are
+     * dynamically changing everytime???
+     */
     /* TODO: remove this from here... this is just testing it out */
     glm::mat4 position = glm::mat4();
     position = glm::translate(position, player->position);

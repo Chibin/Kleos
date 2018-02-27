@@ -83,7 +83,7 @@ bool WindowSetup(){
         return false;
     }
 
-    // Create our opengl context and attach it to our window
+    /* create our opengl context and attach it to our window */
     mainContext = SDL_GL_CreateContext(mainWindow);
     return true;
 }
