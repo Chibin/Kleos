@@ -1,5 +1,11 @@
 @echo off
+if "%1" == "" (
+    goto :top
+) ELSE (
+    goto :update_and_render
+)
 
+:top
 SET ORIGINAL_DIR=%cd%
 SET LIBS=kernel32.lib User32.lib Winmm.lib Gdi32.lib OpenGL32.lib glu32.lib 
 SET LIBS=%LIBS% glew32.lib SDL2.lib SDL2main.lib SDL2_ttf.lib
@@ -24,12 +30,15 @@ cl /Zi /EHsc %INCLUDE_PATH% %FILES% /link /SUBSYSTEM:CONSOLE %LIB_PATH% %LIBS%
 if NOT %errorlevel% == 0 goto :error
 
 
+:update_and_render
 REM build render as a dll
-set COMPILER_FLAGS=-O2 -MTd -fp:fast -fp:except- -Gm- -GR- -EHa- -Zo -Oi -WX -W4 -FC -Z7
-set LINKER_FLAGS= -incremental:no -opt:ref User32.lib Gdi32.lib winmm.lib Opengl32.lib glew32.lib glu32.lib
+set COMPILER_FLAGS=-O2 -MTd -Gm- -GR- -EHa- -Zo -Oi -WX -W4 -FC -Z7 /EHsc
+set LINKER_FLAGS= -incremental:no -opt:ref User32.lib Gdi32.lib winmm.lib Opengl32.lib glew32.lib glu32.lib SDL2main.lib SDL2_ttf.lib SDL2.lib
 SET INCLUDE_PATH=/I D:\Libraries\glew-1.13.0\include /I D:\Libraries\glm
+SET INCLUDE_PATH=/I D:\Libraries\SDL2-2.0.7\include %INCLUDE_PATH%
+SET INCLUDE_PATH=/I D:\Libraries\SDL2_ttf-2.0.14 %INCLUDE_PATH%
 
-cl %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render
+cl %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender
 
 rem copy %ORIGINAL_DIR%\*.glsl .
 rem copy %ORIGINAL_DIR%\*.vs .
