@@ -1,40 +1,48 @@
 #ifndef __INPUT__
 #define __INPUT__
 
-void InputHandler(SDL_Keycode sym, bool *continueRunning, SDL_Window *mainWindow){
+void ProcessInputToMovement(SDL_Keycode sym, entity *Entity);
+
+void ProcessInput(SDL_Keycode sym, bool *continueRunning, entity *player){
     switch(sym){
-            case SDLK_ESCAPE:
-                *continueRunning = false;
-                break;
-            case SDLK_r:
-                // Cover with red and update
-                glClearColor(1.0, 0.0, 0.0, 1.0);
-                glClear(GL_COLOR_BUFFER_BIT);
-                SDL_GL_SwapWindow(mainWindow);
-                break;
-            case SDLK_g:
-                // Cover with green and update
-                glClearColor(0.0, 1.0, 0.0, 1.0);
-                glClear(GL_COLOR_BUFFER_BIT);
-                SDL_GL_SwapWindow(mainWindow);
-                break;
-            case SDLK_b:
-                // Cover with blue and update
-                glClearColor(0.0, 0.0, 1.0, 1.0);
-                glClear(GL_COLOR_BUFFER_BIT);
-                SDL_GL_SwapWindow(mainWindow);
-                break;
-            case SDLK_UP:
-                printf("up\n");
-                break;
-            case SDLK_DOWN:
-                break;
-            case SDLK_LEFT:
-                break;
-            case SDLK_RIGHT:
-                break;
-            default:
-                break;
+        case SDLK_ESCAPE:
+            *continueRunning = false;
+            break;
+        default:
+            /* TODO: differentiate different types of input
+             * something like...  if (mode == movement) 
+             */
+            ProcessInputToMovement(sym, player);
+            /* TODO: ProcessInputToMenu() */
+            break;
+    }
+}
+
+void ProcessInputToMovement(SDL_Keycode sym, entity *Entity) {
+    /* TODO: Replace this with non-repeatable key stroke.
+     * Keep repeating the movement while the key is down though.
+     */
+    switch(sym){
+        case SDLK_d:
+            break;
+        case SDLK_UP:
+            EntityMoveUp(Entity);
+            printf("up\n");
+            break;
+        case SDLK_DOWN:
+            EntityMoveDown(Entity);
+            printf("down\n");
+            break;
+        case SDLK_LEFT:
+            EntityMoveLeft(Entity);
+            printf("left\n");
+            break;
+        case SDLK_RIGHT:
+            EntityMoveRight(Entity);
+            printf("right\n");
+            break;
+        default:
+            break;
     }
 }
 

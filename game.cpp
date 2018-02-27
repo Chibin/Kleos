@@ -1,18 +1,13 @@
 #ifndef __GAME__
 #define __GAME__
 
-#include "input.cpp"
-
-/* should already be included in the main.cpp */
-#include "shaders.cpp"
-
-
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
  
 void _processOpenGLErrors(const char *file, int line);
 void teststuff(GLuint &textureID);
 
-typedef void (__cdecl *RENDER)(GLuint, GLuint, GLuint, GLuint); 
+typedef void (__cdecl *RENDER)(GLuint, GLuint, GLuint, GLuint, entity *player); 
+typedef bool (__cdecl *UPDATEANDRENDER)(GLuint, GLuint, GLuint , GLuint, entity *player); 
 
 void MainGameLoop(SDL_Window *mainWindow)
 {
@@ -22,9 +17,11 @@ void MainGameLoop(SDL_Window *mainWindow)
 
     bool continueRunning = true;
 
-    GLuint program = CreateProgram("materials/programs/vertex.glsl",
-                                 "materials/programs/fragment.glsl");
-    GLuint debugProgram = CreateProgram("materials/programs/vertex.glsl",
+    GLuint program = CreateProgram(
+            "materials/programs/vertex.glsl",
+            "materials/programs/fragment.glsl");
+    GLuint debugProgram = CreateProgram(
+            "materials/programs/vertex.glsl",
             "materials/programs/debug_fragment_shaders.glsl");
 
     GLfloat points[12] = { -0.5, -0.5,
@@ -101,6 +98,7 @@ void MainGameLoop(SDL_Window *mainWindow)
      * otherwise we might accidentally save some unwatned commands into
      * the vertext array object
      */
+
     /*  It is common practice to unbind OpenGL objects when we're done
      *  configuring them so we don't mistakenly (mis)configure them
      *  elsewhere. */
@@ -126,34 +124,26 @@ void MainGameLoop(SDL_Window *mainWindow)
         printf("Failed to load library! \n");
 
     RENDER Render;
+    UPDATEANDRENDER UpdateAndRender;
     Render = (RENDER)GetProcAddress(RenderDLL, "Render");
+    UpdateAndRender = (UPDATEANDRENDER)GetProcAddress(RenderDLL, "UpdateAndRender");
 
     if(!Render)
         printf("Failed to load function \"Render\"!\n");
 
+    if(!UpdateAndRender)
+        printf("Failed to load function \"UpdateAndRender\"!\n");
+
+    /* end load library */
+
+    entity player;
+    player.position = glm::vec3(0,0,0);
+
     while (continueRunning)
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-                continueRunning = false;
-
-            if (event.type == SDL_KEYDOWN)
-                InputHandler(event.key.keysym.sym, &continueRunning, mainWindow);
-        }
-
-        /* TODO: One time init might be done here as the game progress ? */
-
-        /* start with an 'empty' canvas */
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glEnable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        continueRunning = (UpdateAndRender)(vao, textureID, program, debugProgram, &player);
 
         ProcessOpenGLErrors();
-
-        //GameUpdate();
-        (Render)(vao, textureID, program, debugProgram);
 
         /* equivalent to glswapbuffer? */
         SDL_GL_SwapWindow(mainWindow);
@@ -162,6 +152,7 @@ void MainGameLoop(SDL_Window *mainWindow)
 
 void _processOpenGLErrors(const char *file, int line)
 {
+    /* TODO: change how we print the error? */
     // Process/log the error.
     GLenum err;
     while((err = glGetError()) != GL_NO_ERROR){

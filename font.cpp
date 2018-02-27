@@ -25,13 +25,13 @@ TTF_Font* OpenFont()
 
 SDL_Surface *StringToSDLSurface(TTF_Font *font, const char* msg)
 {
+    /* TODO: Pass the color */
     SDL_Color color = {1,1,1,1};
 
     // Render the message
     SDL_Surface *surface = TTF_RenderText_Blended(font, msg, color);
     if (surface == NULL){
-        CloseFont(font);
-        printf("TTF_RenderText\n");
+        printf("Failed to TTF_RenderText\n");
         return NULL;
     }
     return surface;

@@ -16,6 +16,14 @@
 #include <gl/gl.h>
 #include <gl/glu.h>
 
+#pragma warning(push)
+#pragma warning (disable: 4201)
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/random.hpp>
+#pragma warning(pop)
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -23,11 +31,15 @@
 #include "font.cpp"
 #include "texture.cpp"
 #include "shaders.cpp"
+
+#include "entity.cpp"
+#include "input.cpp"
+
 #include "game.cpp"
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 1366;
+const int SCREEN_HEIGHT = 768;
 
 std::string programName = "First game trial :)";
 SDL_Window *mainWindow;
