@@ -12,6 +12,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
+
+#include "math.cpp"
 #pragma warning(pop)
 
 #include <SDL.h>
@@ -23,17 +25,23 @@
 #include "entity.cpp"
 #include "input.cpp"
 
+#include "rectangle.cpp"
+
 #define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity)
 #define UPDATE(name) void name()
 #define RENDER(name) void name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity)
 
 void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity);
+rectangle *testRectangle = NULL;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
     entity *player = Entity;
     SDL_Event event;
     bool continueRunning = true;
+
+    if (!testRectangle)
+        testRectangle = CreateRectangle(v3{0,1,0}, 2, 3);
 
     /* NOTE: Looks very player centric right now, not sure if we need to make it
      * better later on.
@@ -53,7 +61,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         if (event.type == SDL_KEYDOWN)
             ProcessInput(event.key.keysym.sym, &continueRunning, player);
     }
-
 
     /* TODO: One time init might be done here as the game progress ? */
 

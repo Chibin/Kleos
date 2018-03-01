@@ -15,7 +15,6 @@ struct entity {
      */
 };
 
-
 inline
 void EntityMoveUp(entity *Entity) {
     /* TODO: Replace this later with speed */
@@ -36,5 +35,4 @@ inline
 void EntityMoveRight(entity *Entity) {
     Entity->position += glm::vec3(0.1, 0, 0);
 }
-
 #endif

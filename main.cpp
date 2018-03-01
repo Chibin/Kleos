@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <stdio.h>
+#include <stdlib.h> /* for calloc */
 #include <assert.h>
 #include <windows.h>
 
@@ -27,6 +28,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "math.cpp"
+
 #include "logger.cpp"
 #include "font.cpp"
 #include "texture.cpp"
@@ -34,6 +37,8 @@
 
 #include "entity.cpp"
 #include "input.cpp"
+
+#include "rectangle.cpp"
 
 // screen dimension constants
 #define SCREEN_WIDTH 1366
