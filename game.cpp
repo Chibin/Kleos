@@ -6,9 +6,6 @@
 void _processOpenGLErrors(const char *file, int line);
 void teststuff(GLuint &textureID);
 
-typedef void (__cdecl *RENDER)(GLuint, GLuint, GLuint, GLuint, entity *player); 
-typedef bool (__cdecl *UPDATEANDRENDER)(GLuint, GLuint, GLuint , GLuint, entity *player); 
-
 void MainGameLoop(SDL_Window *mainWindow)
 {
     /* TODO: this is probably not the right spot for this */
@@ -94,7 +91,7 @@ void MainGameLoop(SDL_Window *mainWindow)
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
 
-    /*5. Unbind the VAO (NOT THE EBO). We need to make sure that we always unbind,
+    /* Unbind the VAO (NOT THE EBO). We need to make sure that we always unbind,
      * otherwise we might accidentally save some unwatned commands into
      * the vertext array object
      */
@@ -116,32 +113,12 @@ void MainGameLoop(SDL_Window *mainWindow)
     ImageToTexture(textureID, "./materials/textures/awesomeface.png");
 #endif
 
-    /* Load library */
-    HMODULE RenderDLL;
-
-    RenderDLL = LoadLibrary("render.dll");
-    if(!RenderDLL)
-        printf("Failed to load library! \n");
-
-    RENDER Render;
-    UPDATEANDRENDER UpdateAndRender;
-    Render = (RENDER)GetProcAddress(RenderDLL, "Render");
-    UpdateAndRender = (UPDATEANDRENDER)GetProcAddress(RenderDLL, "UpdateAndRender");
-
-    if(!Render)
-        printf("Failed to load function \"Render\"!\n");
-
-    if(!UpdateAndRender)
-        printf("Failed to load function \"UpdateAndRender\"!\n");
-
-    /* end load library */
-
     entity player;
     player.position = glm::vec3(0,0,0);
 
     while (continueRunning)
     {
-        continueRunning = (UpdateAndRender)(vao, textureID, program, debugProgram, &player);
+        continueRunning = (renderAPI.updateAndRender)(vao, textureID, program, debugProgram, &player);
 
         ProcessOpenGLErrors();
 
@@ -174,5 +151,4 @@ void _processOpenGLErrors(const char *file, int line)
         printf("something bad happened: %s\n", error.c_str());
     }
 }
-
 #endif
