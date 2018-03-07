@@ -1,9 +1,12 @@
 #ifndef __INPUT__
 #define __INPUT__
 
-void ProcessInputToMovement(SDL_Keycode sym, entity *Entity);
+/* Should already be included */
+#include "camera.cpp"
 
-void ProcessInput(SDL_Keycode sym, bool *continueRunning, entity *player){
+void ProcessInputToMovement(SDL_Keycode sym, Entity *entity);
+
+void ProcessInput(SDL_Keycode sym, bool *continueRunning, Entity *player){
     switch(sym){
         case SDLK_ESCAPE:
             *continueRunning = false;
@@ -18,23 +21,36 @@ void ProcessInput(SDL_Keycode sym, bool *continueRunning, entity *player){
     }
 }
 
-void ProcessKeysHeldDown(entity *Entity, const Uint8 *keystate)
+void ProcessMouseInput(SDL_Event &event, Camera *camera)
+{
+     if(event.wheel.y == 1) /* scroll up */
+     {
+        CameraZoomIn(camera);
+     }
+     else if(event.wheel.y == -1) /* scroll down */
+     {
+        CameraZoomOut(camera);
+     }
+
+}
+
+void ProcessKeysHeldDown(Entity *entity, const Uint8 *keystate)
 {
     if(keystate[SDL_SCANCODE_UP]){
-        EntityMoveUp(Entity);
+        EntityMoveUp(entity);
     }
     if(keystate[SDL_SCANCODE_DOWN]){
-        EntityMoveDown(Entity);
+        EntityMoveDown(entity);
     }
     if(keystate[SDL_SCANCODE_LEFT]){
-        EntityMoveLeft(Entity);
+        EntityMoveLeft(entity);
     }
     if(keystate[SDL_SCANCODE_RIGHT]){
-        EntityMoveRight(Entity);
+        EntityMoveRight(entity);
     }
 }
 
-void ProcessInputToMovement(SDL_Keycode sym, entity *Entity) {
+void ProcessInputToMovement(SDL_Keycode sym, Entity *entity) {
     /* TODO: Replace this with non-repeatable key stroke.
      * Keep repeating the movement while the key is down though.
      */
@@ -43,19 +59,19 @@ void ProcessInputToMovement(SDL_Keycode sym, entity *Entity) {
         case SDLK_d:
             break;
         case SDLK_UP:
-            EntityMoveUp(Entity);
+            EntityMoveUp(entity);
             printf("up\n");
             break;
         case SDLK_DOWN:
-            EntityMoveDown(Entity);
+            EntityMoveDown(entity);
             printf("down\n");
             break;
         case SDLK_LEFT:
-            EntityMoveLeft(Entity);
+            EntityMoveLeft(entity);
             printf("left\n");
             break;
         case SDLK_RIGHT:
-            EntityMoveRight(Entity);
+            EntityMoveRight(entity);
             printf("right\n");
             break;
         default:

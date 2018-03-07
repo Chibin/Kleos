@@ -36,6 +36,7 @@
 #include "shaders.cpp"
 
 #include "entity.cpp"
+#include "camera.cpp"
 #include "input.cpp"
 
 #include "rectangle.cpp"

@@ -23,25 +23,43 @@
 
 /* probably need to be here? depends where we put our game logic */
 #include "entity.cpp"
+#include "camera.cpp"
 #include "input.cpp"
 
 #include "rectangle.cpp"
 
-#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity)
+#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, v2 screenResolution)
 #define UPDATE(name) void name()
-#define RENDER(name) void name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity)
+#define RENDER(name) void name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 
-void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity);
-rectangle *testRectangle = NULL;
+void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity);
+void RenderAllEntities(GLuint program);
+
+Rect *g_testRectangle = NULL;
+Camera *g_camera = NULL;
+glm::mat4 *g_projection = NULL;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
-    entity *player = Entity;
+    Entity *player = entity;
     SDL_Event event;
     bool continueRunning = true;
 
-    if (!testRectangle)
-        testRectangle = CreateRectangle(v3{0,1,0}, 2, 3);
+    if (!g_testRectangle) {
+        v3 startingPosition = {0, 1, 0};
+        g_testRectangle = CreateRectangle(startingPosition, 2, 3);
+    }
+
+    if (!g_camera) {
+        g_camera = CreateCamera();
+    }
+
+    if(!g_projection) {
+        float SCREEN_WIDTH = screenResolution.v[0];
+        float SCREEN_HEIGHT = screenResolution.v[1];
+        g_projection = (glm::mat4*)malloc(sizeof(glm::mat4));
+        *g_projection = glm::infinitePerspective(45.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f);
+    }
 
     /* NOTE: Looks very player centric right now, not sure if we need to make it
      * better later on.
@@ -57,6 +75,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     {
         if (event.type == SDL_QUIT)
             return false;
+
+        if (event.type == SDL_MOUSEWHEEL)
+            ProcessMouseInput(event, g_camera);
 
         if (event.type == SDL_KEYDOWN)
             ProcessInput(event.key.keysym.sym, &continueRunning, player);
@@ -78,13 +99,13 @@ extern "C" UPDATE(Update)
 
 }
 
-void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, entity *Entity)
+void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 {
     /* TODO: sort materials to their own group for that specific program 
      * bind to the new program 
      */
-    entity *player = NULL;
-    player = Entity;
+    Entity *player = NULL;
+    player = entity;
 
     /* Render graphics */
     glUseProgram(program);
@@ -105,26 +126,83 @@ void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, e
      */
     glBindVertexArray(vao);
 
-    glUseProgram(debugProgram);
-    glEnable(GL_PROGRAM_POINT_SIZE);
-    glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
-
     /* This will probably be a loop per entity when drawing them... if they are
      * dynamically changing everytime???
      */
     /* TODO: remove this from here... this is just testing it out */
     glm::mat4 position = glm::mat4();
+    //position = glm::translate(position, player->position);
     position = glm::translate(position, player->position);
+
+#define DEBUG 1
+#if DEBUG
+    glUseProgram(debugProgram);
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
+
     GLuint modelLoc = glGetUniformLocation(debugProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
+    GLuint viewLoc = glGetUniformLocation(program, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+    GLuint projectionLoc = glGetUniformLocation(program, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+#endif
+
+    RenderAllEntities(program);
 
     glUseProgram(program);
 
     /* load uniform variable to shader program before drawing */
     modelLoc = glGetUniformLocation(program, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
+    viewLoc = glGetUniformLocation(program, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+    projectionLoc = glGetUniformLocation(program, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
+
+void RenderAllEntities(GLuint program)
+{
+
+    //UseProgram(program);
+    //LoadTexturesToProgram();
+    //BindVertex();
+
+    glUseProgram(program);
+
+    /* NOTE: you shouldn't call this function unless you have a shader
+     * program already binded (glUseProgram)
+     */
+    //glActiveTexture(GL_TEXTURE0);
+    //    glBindTexture(GL_TEXTURE_2D, textureID);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glUniform1i(glGetUniformLocation(program, "tex"), 0);
+
+    ///* programs used first will have higher priority being shown in the
+    // * canvas 
+    // */
+    //glBindVertexArray(vao);
+    glm::mat4 position = glm::mat4();
+    position = glm::translate(position, g_testRectangle->entity.position);
+
+    glUseProgram(program);
+
+    /* load uniform variable to shader program before drawing */
+    GLuint modelLoc = glGetUniformLocation(program, "model");
+    GLuint viewLoc = glGetUniformLocation(program, "view");
+    GLuint projectionLoc = glGetUniformLocation(program, "projection");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+}
+
 #endif

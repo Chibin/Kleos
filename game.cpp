@@ -28,7 +28,7 @@ void MainGameLoop(SDL_Window *mainWindow)
                            -0.5, 0.5,
                            -0.5, -0.5 };
 
-#define PRINTFONT 1
+#define PRINTFONT 0
 #if PRINTFONT
     /* Flip the texture coordinates if we're using SDL TTF. OpenGL normally
      * draws things upsidedown
@@ -113,12 +113,13 @@ void MainGameLoop(SDL_Window *mainWindow)
     ImageToTexture(textureID, "./materials/textures/awesomeface.png");
 #endif
 
-    entity player;
+    Entity player;
     player.position = glm::vec3(0,0,0);
+    v2 screenResolution = {SCREEN_WIDTH, SCREEN_HEIGHT};
 
     while (continueRunning)
     {
-        continueRunning = (renderAPI.updateAndRender)(vao, textureID, program, debugProgram, &player);
+        continueRunning = (renderAPI.updateAndRender)(vao, textureID, program, debugProgram, &player, screenResolution);
 
         ProcessOpenGLErrors();
 

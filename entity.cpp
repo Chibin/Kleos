@@ -5,7 +5,8 @@ struct stats {
     int movementSpeed;
 };
 
-struct entity {
+/* TODO: how do we treat dynamically moving entities vs static ones? */
+struct Entity {
     unsigned int id;
     glm::vec3 position;
     /* TODO: entity may or may not have stats ...
@@ -16,23 +17,23 @@ struct entity {
 };
 
 inline
-void EntityMoveUp(entity *Entity) {
+void EntityMoveUp(Entity *entity) {
     /* TODO: Replace this later with speed */
-    Entity->position += glm::vec3(0, 0.1, 0);
+    entity->position += glm::vec3(0, 0.1, 0);
 }
 
 inline
-void EntityMoveDown(entity *Entity) {
-    Entity->position += glm::vec3(0, -0.1, 0);
+void EntityMoveDown(Entity *entity) {
+    entity->position += glm::vec3(0, -0.1, 0);
 }
 
 inline
-void EntityMoveLeft(entity *Entity) {
-    Entity->position += glm::vec3(-0.1, 0, 0);
+void EntityMoveLeft(Entity *entity) {
+    entity->position += glm::vec3(-0.1, 0, 0);
 }
 
 inline
-void EntityMoveRight(entity *Entity) {
-    Entity->position += glm::vec3(0.1, 0, 0);
+void EntityMoveRight(Entity *entity) {
+    entity->position += glm::vec3(0.1, 0, 0);
 }
 #endif
