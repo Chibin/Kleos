@@ -10,3 +10,4 @@
 *.map
 tags
 *.sln
+*.vs
