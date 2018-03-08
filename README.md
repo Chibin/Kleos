@@ -17,3 +17,13 @@ Not really part of the build.
 Just things that helps me with the work flow.
 
 `https://github.com/jesse23/with`
+
+
+# Misc Links
+https://www.mkyong.com/linux/grep-for-windows-findstr-example/
+
+
+# Misc ENV
+
+aliased:
+`DOSKEY gvim="C:\Program Files (x86)\Vim\vim74\gvim.exe" -- $1`
