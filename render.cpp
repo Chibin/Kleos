@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
 
+#include "logger.cpp"
 #include "math.cpp"
 #pragma warning(pop)
 
@@ -21,6 +22,7 @@
 
 #include <stdio.h>
 
+
 /* probably need to be here? depends where we put our game logic */
 #include "entity.cpp"
 #include "camera.cpp"
@@ -28,16 +30,19 @@
 
 #include "rectangle.cpp"
 
-#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, v2 screenResolution)
+#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, v2 screenResolution, GLfloat *vertices)
 #define UPDATE(name) void name()
-#define RENDER(name) void name(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
+#define RENDER(name) void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 
-void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity);
+void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, GLfloat *vertices);
 void RenderAllEntities(GLuint program);
+void LoadStuff();
 
 Rect *g_testRectangle = NULL;
 Camera *g_camera = NULL;
 glm::mat4 *g_projection = NULL;
+GLfloat *g_rectangleVertices = NULL;
+static bool init = false;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -46,8 +51,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     bool continueRunning = true;
 
     if (!g_testRectangle) {
-        v3 startingPosition = {0, 1, 0};
-        g_testRectangle = CreateRectangle(startingPosition, 2, 3);
+        v3 startingPosition = {0, 0, 0};
+        g_testRectangle = CreateRectangle(startingPosition, 10, 4);
+        g_rectangleVertices = CreateVertices(g_testRectangle);
     }
 
     if (!g_camera) {
@@ -59,6 +65,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         float SCREEN_HEIGHT = screenResolution.v[1];
         g_projection = (glm::mat4*)malloc(sizeof(glm::mat4));
         *g_projection = glm::infinitePerspective(45.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f);
+    }
+
+    if (!init) {
+        LoadStuff();
+        init = true;
     }
 
     /* NOTE: Looks very player centric right now, not sure if we need to make it
@@ -90,7 +101,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Render(vao, textureID, program, debugProgram, player);
+    Render(vao, vbo, textureID, program, debugProgram, player, vertices);
     return continueRunning;
 }
 
@@ -99,7 +110,8 @@ extern "C" UPDATE(Update)
 
 }
 
-void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
+void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
+            GLuint debugProgram, Entity *entity, GLfloat *vertices)
 {
     /* TODO: sort materials to their own group for that specific program 
      * bind to the new program 
@@ -134,11 +146,13 @@ void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, E
     //position = glm::translate(position, player->position);
     position = glm::translate(position, player->position);
 
-#define DEBUG 1
-#if DEBUG
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, vertices, GL_STATIC_DRAW);
+
+#define DEBUG_SHADER 1
+#if DEBUG_SHADER
     glUseProgram(debugProgram);
     glEnable(GL_PROGRAM_POINT_SIZE);
-    glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
 
     GLuint modelLoc = glGetUniformLocation(debugProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
@@ -146,9 +160,10 @@ void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, E
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     GLuint projectionLoc = glGetUniformLocation(program, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-#endif
 
-    RenderAllEntities(program);
+    glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
+
+#endif
 
     glUseProgram(program);
 
@@ -161,6 +176,19 @@ void Render(GLuint vao, GLuint textureID, GLuint program, GLuint debugProgram, E
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    /* load all rectangles */
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, g_rectangleVertices, GL_STATIC_DRAW);
+    for (int i = 0; i < 10; i++)
+    {
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), glm::vec3(-10+i*5,i*2,0))));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    }
+
     glBindVertexArray(0);
 }
 
@@ -201,8 +229,10 @@ void RenderAllEntities(GLuint program)
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
 }
 
+
+void LoadStuff()
+{
+}
 #endif

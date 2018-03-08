@@ -15,13 +15,13 @@ Camera *CreateCamera()
     Camera *camera = (Camera*)malloc(sizeof(Camera));
 
     // Camera is at, (0,0,0) in World Space
-    camera->pos = glm::vec3(0,0,1);
+    camera->pos = glm::vec3(0, 0, 10);
 
     // and looks at the origin
-    camera->target = glm::vec3(0,0,0);
+    camera->target = glm::vec3(0, 0, 0);
 
     // Head is up (set to 0,-1,0 to look upside-down)
-    camera->up = glm::vec3(0,1,0); 
+    camera->up = glm::vec3(0, 1, 0); 
 
     camera->view = glm::lookAt(
             camera->pos,
@@ -30,11 +30,11 @@ Camera *CreateCamera()
     return camera;
 }
 
-void CameraZoomIn(Camera *camera)
+void CameraZoomOut(Camera *camera)
 {
-    printf("up! zooming in\n");
+    printf("down! zooming out\n");
 
-    camera->pos += glm::vec3(0,0.0,0.1);
+    camera->pos += glm::vec3(0, 0, 1);
 
     camera->view = glm::lookAt(
             camera->pos,
@@ -42,10 +42,17 @@ void CameraZoomIn(Camera *camera)
             camera->up);
 }
 
-void CameraZoomOut(Camera *camera)
+void CameraZoomIn(Camera *camera)
 {
-    printf("down! zooming out\n");
-    camera->pos += glm::vec3(0,-0.0,-0.1);
+    printf("up! zooming in\n");
+
+    if ( (camera->pos[2] - 1) <  0.1) {
+        printf("can no longer zoom out reached max zoom!\n"
+               "current camera z-axis value: %f\n", camera->pos[2]);
+        return;
+    }
+
+    camera->pos += glm::vec3(0, -0, -1);
 
     camera->view = glm::lookAt(
             camera->pos,

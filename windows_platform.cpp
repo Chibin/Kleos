@@ -1,13 +1,11 @@
 #ifndef __WINDOWS_PLATFORM__
 #define __WINDOWS_PLATFORM__
 
-typedef void (__cdecl *RENDER)(GLuint, GLuint, GLuint, GLuint, Entity *player); 
-typedef bool (__cdecl *UPDATEANDRENDER)(GLuint, GLuint, GLuint , GLuint, Entity *player, v2 screenResolution); 
+typedef bool (__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, v2 screenResolution, GLfloat *vertices);
 
 struct RenderAPI {
     std::string libraryName;
     HMODULE renderDLL;
-    RENDER render;
     UPDATEANDRENDER updateAndRender;
 };
 
@@ -120,14 +118,8 @@ bool LoadDLLWindows(RenderAPI *renderAPI)
     }
 
     HMODULE RenderDLL = renderAPI->renderDLL;
-    renderAPI->render = (RENDER)GetProcAddress(RenderDLL, "Render");
     renderAPI->updateAndRender = (UPDATEANDRENDER)GetProcAddress(RenderDLL,
             "UpdateAndRender");
-
-    if(!renderAPI->render) {
-        printf("Failed to load function \"Render\"!\n");
-        return false;
-    }
 
     if(!renderAPI->updateAndRender) {
         printf("Failed to load function \"UpdateAndRender\"!\n");

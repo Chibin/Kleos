@@ -55,11 +55,6 @@ void MainGameLoop(SDL_Window *mainWindow)
         1, 2, 3    // Second Triangle
     };  
 
-    GLuint indices2[] = {  // Note that we start from 0!
-        1, 2, 3    // Second Triangle
-    };  
-
-
     /*  Each vertex attribute takes its data from memory managed by a
      *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
      *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
@@ -119,7 +114,7 @@ void MainGameLoop(SDL_Window *mainWindow)
 
     while (continueRunning)
     {
-        continueRunning = (renderAPI.updateAndRender)(vao, textureID, program, debugProgram, &player, screenResolution);
+        continueRunning = (renderAPI.updateAndRender)(vao, vbo, textureID, program, debugProgram, &player, screenResolution, vertices);
 
         ProcessOpenGLErrors();
 
