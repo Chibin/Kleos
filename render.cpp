@@ -1,6 +1,12 @@
 #ifndef __RENDER__
 #define __RENDER_
 
+#include <stdio.h>
+
+#include <SDL.h>
+#include <SDL_ttf.h>
+#define ASSERT(condition) SDL_assert(condition)
+
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>
 #include <gl/gl.h>
@@ -13,24 +19,20 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
 
-#include "logger.cpp"
 #include "math.cpp"
+#include "logger.cpp"
 #pragma warning(pop)
 
-#include <SDL.h>
-#include <SDL_ttf.h>
-
-#include <stdio.h>
-
-
 /* probably need to be here? depends where we put our game logic */
+#include "opengl.cpp"
 #include "entity.cpp"
+#include "entity_manager.cpp"
 #include "camera.cpp"
 #include "input.cpp"
 
 #include "rectangle.cpp"
 
-#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, v2 screenResolution, GLfloat *vertices)
+#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GLfloat *vertices)
 #define UPDATE(name) void name()
 #define RENDER(name) void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 
@@ -38,34 +40,57 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint deb
 void RenderAllEntities(GLuint program);
 void LoadStuff();
 
+/* TODO: We'll need to get rid of these global variables later on */
 Rect *g_testRectangle = NULL;
 Camera *g_camera = NULL;
 glm::mat4 *g_projection = NULL;
 GLfloat *g_rectangleVertices = NULL;
 static bool init = false;
+EntityManager *g_entityManager = NULL;
+Entity *g_player = NULL;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
-    Entity *player = entity;
+
     SDL_Event event;
     bool continueRunning = true;
-
-    if (!g_testRectangle) {
-        v3 startingPosition = {0, 0, 0};
-        g_testRectangle = CreateRectangle(startingPosition, 10, 4);
-        g_rectangleVertices = CreateVertices(g_testRectangle);
-    }
 
     if (!g_camera) {
         g_camera = CreateCamera();
     }
 
-    if(!g_projection) {
+    if (!g_projection) {
         float SCREEN_WIDTH = screenResolution.v[0];
         float SCREEN_HEIGHT = screenResolution.v[1];
         g_projection = (glm::mat4*)malloc(sizeof(glm::mat4));
         *g_projection = glm::infinitePerspective(45.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f);
     }
+
+    if (!g_entityManager) {
+        /* TODO: May be the entity manager should be the only one creating the entities? */
+        g_entityManager = CreateEntityManger();
+
+        Entity newPlayer;
+        newPlayer.position = glm::vec3(0,0,0);
+
+        int index = Append(g_entityManager, &newPlayer);
+        printf("size %d\n", g_entityManager->size);
+
+        /* NOTE: we don't need to free the player since we created it in the stack */
+        g_player = &g_entityManager->entities[index];
+
+        printf("size %d\n", g_entityManager->size);
+
+    }
+
+    if (!g_testRectangle) {
+        v3 startingPosition = {-5, -5, 0};
+
+        Entity* rectEntity = AddNewEntity(g_entityManager);
+        g_testRectangle = CreateRectangle(rectEntity, startingPosition, 10, 4);
+        g_rectangleVertices = CreateVertices(g_testRectangle);
+    }
+
 
     if (!init) {
         LoadStuff();
@@ -80,7 +105,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
      * on their computer, so not reliable.
      */
     const Uint8* keystate = SDL_GetKeyboardState(NULL);
-    ProcessKeysHeldDown(player, keystate);
+    ProcessKeysHeldDown(g_player, keystate);
 
     while (SDL_PollEvent(&event))
     {
@@ -91,7 +116,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ProcessMouseInput(event, g_camera);
 
         if (event.type == SDL_KEYDOWN)
-            ProcessInput(event.key.keysym.sym, &continueRunning, player);
+            ProcessInput(event.key.keysym.sym, &continueRunning, g_player);
     }
 
     /* TODO: One time init might be done here as the game progress ? */
@@ -101,7 +126,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Render(vao, vbo, textureID, program, debugProgram, player, vertices);
+    Render(vao, vbo, textureID, program, debugProgram, g_player, vertices);
     return continueRunning;
 }
 
@@ -113,8 +138,16 @@ extern "C" UPDATE(Update)
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity, GLfloat *vertices)
 {
-    /* TODO: sort materials to their own group for that specific program 
-     * bind to the new program 
+
+    /* you need to disable this if you want the back parts to be shown when
+     * alpha blending
+     */
+    glDisable(GL_CULL_FACE);
+    glEnable (GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    /* TODO: sort materials to their own group for that specific program
+     * bind to the new program
      */
     Entity *player = NULL;
     player = entity;
@@ -126,21 +159,18 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
      * program already binded (glUseProgram)
      */
     glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, textureID);
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
 
     /* programs used first will have higher priority being shown in the
-     * canvas 
+     * canvas
      */
     glBindVertexArray(vao);
 
     /* This will probably be a loop per entity when drawing them... if they are
      * dynamically changing everytime???
      */
+
     /* TODO: remove this from here... this is just testing it out */
     glm::mat4 position = glm::mat4();
     //position = glm::translate(position, player->position);
@@ -178,56 +208,45 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     /* load all rectangles */
+    //RenderAllEntities(vbo);
+
+    /* TODO: explore a better way of doing this. reloading vertices over and over might be meh.
+     * performance hit with just doing VAO might be very miniscule that it's worth doing for a simpler code base?
+     */
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, g_rectangleVertices, GL_STATIC_DRAW);
-    for (int i = 0; i < 10; i++)
-    {
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), glm::vec3(-10+i*5,i*2,0))));
+    /* XXX: THIS IS BAD TO DO every frame!! :( */
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, g_rectangleVertices, GL_STATIC_DRAW); /* this should be a GL_DYNAMIC_SOMETHING DRAW */
+
+    for (unsigned int i = 0; i < g_entityManager->size; i++) {
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), g_entityManager->entities[i].position)));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glm::vec3 pos = g_entityManager->entities[i].position;
+
+        /* TODO: Remove me */
+        printf("position %f, %f, %f\n", pos.x, pos.y, pos.z);
     }
 
     glBindVertexArray(0);
 }
 
-void RenderAllEntities(GLuint program)
+void RenderAllEntities(GLuint vbo)
 {
 
-    //UseProgram(program);
-    //LoadTexturesToProgram();
-    //BindVertex();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    glUseProgram(program);
+    //for(int i = 0; i < AllEntities.GetTotalEntities(); i++)
+    //{
+    //    GLfloat *verticies = entity->vertices;
+    //    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, g_rectangleVertices, GL_STATIC_DRAW);
+    //    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), glm::vec3(-10+i*5,i*2,0))));
+    //    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+    //    glUniformMatrix4f(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-    /* NOTE: you shouldn't call this function unless you have a shader
-     * program already binded (glUseProgram)
-     */
-    //glActiveTexture(GL_TEXTURE0);
-    //    glBindTexture(GL_TEXTURE_2D, textureID);
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);   // We want to repeat this pattern so we set kept it at GL_REPEAT
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glUniform1i(glGetUniformLocation(program, "tex"), 0);
-
-    ///* programs used first will have higher priority being shown in the
-    // * canvas 
-    // */
-    //glBindVertexArray(vao);
-    glm::mat4 position = glm::mat4();
-    position = glm::translate(position, g_testRectangle->entity.position);
-
-    glUseProgram(program);
-
-    /* load uniform variable to shader program before drawing */
-    GLuint modelLoc = glGetUniformLocation(program, "model");
-    GLuint viewLoc = glGetUniformLocation(program, "view");
-    GLuint projectionLoc = glGetUniformLocation(program, "projection");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+    //    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    //}
 
 }
 

@@ -1,6 +1,8 @@
 #ifndef __MATH__
 #define __MATH_
 
+#define FLOOR(value) int(value)
+
 typedef uint8_t uint8;
 typedef uint16_t uint16;
 typedef uint32_t uint32;
@@ -182,5 +184,4 @@ union m4
     };
     real32 v[16];
 };
-
 #endif

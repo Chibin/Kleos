@@ -11,6 +11,7 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
+#define ASSERT(condition) SDL_assert(condition)
 
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>
@@ -29,6 +30,7 @@
 #include "stb_image.h"
 
 #include "math.cpp"
+#include "opengl.cpp"
 
 #include "logger.cpp"
 #include "font.cpp"

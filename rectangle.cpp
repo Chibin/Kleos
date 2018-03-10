@@ -2,9 +2,12 @@
 #define __RECTANGLE__
 
 struct Rect {
-    Entity entity;
+    Entity *entity;
+    GLfloat *vertices;
 
     real32 width, height;
+
+    v3 startingPosition;
 
     v3 topLeft;
     v3 topRight;
@@ -15,24 +18,35 @@ struct Rect {
     v2 uvTextureTopRight;
     v2 uvTextureBottomLeft;
     v2 uvTextureBottomRight;
+
 };
 
-Rect *CreateRectangle(v3 startingPosition, real32 width, real32 height)
+GLfloat *CreateVertices(Rect *rect);
+
+Rect *CreateRectangle(Entity *entity, v3 startingPosition, real32 width, real32 height)
 {
     /* NOTE: opengl default is ccw */
 
     Rect *tmp = NULL;
     tmp = (Rect*)calloc(1, sizeof(Rect));
-    tmp->entity.position = glm::vec3(startingPosition.x,
-                                     startingPosition.y,
-                                     startingPosition.z);
+    tmp->startingPosition = startingPosition;
+    tmp->entity = entity;
+    tmp->entity->position.x = startingPosition.x;
+    tmp->entity->position.y = startingPosition.y;
+    tmp->entity->position.z = startingPosition.z;
+
     tmp->width = width;
     tmp->height = height;
 
-    tmp->topRight = startingPosition + v3{width, height, 0};
-    tmp->bottomRight = startingPosition + v3{width, 0, 0};
-    tmp->bottomLeft = startingPosition;
-    tmp->topLeft = startingPosition + v3{0, height, 0};
+    /* FIXME: This is starting the drawing from the origin, but not centered at
+     * the origin
+     */
+    tmp->topRight = v3{width, height, 0};
+    tmp->bottomRight = v3{width, 0, 0};
+    tmp->bottomLeft = v3{0,0,0};
+    tmp->topLeft = v3{0, height, 0};
+
+    tmp->vertices = CreateVertices(tmp);
     
     return tmp;
 }
@@ -92,7 +106,6 @@ GLfloat *CreateVertices(Rect *rect)
     GLfloat *vertices = NULL;
     vertices = (GLfloat*)malloc(sizeof(GLfloat) * totalSize);
 
-    ERROR_PRINT("BLAH");
     if (!vertices) {
         DEBUG_PRINT("Failed to malloc!");
     }
@@ -125,5 +138,4 @@ GLfloat *CreateVertices(Rect *rect)
 
     return vertices;
 }
-
 #endif

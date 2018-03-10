@@ -96,25 +96,22 @@ void MainGameLoop(SDL_Window *mainWindow)
      *  elsewhere. */
     glBindVertexArray(0);
 
-    GLuint textureID;
-    glGenTextures(1, &textureID);
+    GLuint *textureID;
 
     TTF_Font *font = OpenFont();
     assert(font != NULL);
 
 #if PRINTFONT
-    StringToTexture(textureID, font, "testing this");
+    textureID = StringToTexture(font, "testing this");
 #else
-    ImageToTexture(textureID, "./materials/textures/awesomeface.png");
+    textureID = ImageToTexture("./materials/textures/awesomeface.png");
 #endif
 
-    Entity player;
-    player.position = glm::vec3(0,0,0);
     v2 screenResolution = {SCREEN_WIDTH, SCREEN_HEIGHT};
 
     while (continueRunning)
     {
-        continueRunning = (renderAPI.updateAndRender)(vao, vbo, textureID, program, debugProgram, &player, screenResolution, vertices);
+        continueRunning = (renderAPI.updateAndRender)(vao, vbo, *textureID, program, debugProgram, screenResolution, vertices);
 
         ProcessOpenGLErrors();
 

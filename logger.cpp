@@ -23,6 +23,8 @@ void EmptyDebugPrint(const char* msgFmt, ...)
 #define ERROR_PRINT(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
 
 #define PAUSE_HERE(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__); \
-       printf("Pausing all activity. Press enter in console to resume.\n"); getchar();
+    printf(fmt, __VA_ARGS__); \
+    printf("Pausing all activity. Press enter in console to resume.\n"); \
+    getchar();
 
 #endif

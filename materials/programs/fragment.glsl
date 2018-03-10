@@ -8,4 +8,5 @@ out vec4 color;
 void main()
 {
     color = texture(tex, TexCoord);
+    // color.a = 0.1; alpha channel
 }
