@@ -87,7 +87,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v3 startingPosition = {-5, -5, 0};
 
         Entity* rectEntity = AddNewEntity(g_entityManager);
-        g_testRectangle = CreateRectangle(rectEntity, startingPosition, 10, 4);
+        g_testRectangle = CreateRectangle(rectEntity, startingPosition, 1, 1);
         g_rectangleVertices = CreateVertices(g_testRectangle);
     }
 
@@ -116,7 +116,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ProcessMouseInput(event, g_camera);
 
         if (event.type == SDL_KEYDOWN)
-            ProcessInput(event.key.keysym.sym, &continueRunning, g_player);
+            ProcessInput(event.key.keysym.sym, &continueRunning);
     }
 
     /* TODO: One time init might be done here as the game progress ? */
@@ -139,7 +139,8 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity, GLfloat *vertices)
 {
 
-    /* you need to disable this if you want the back parts to be shown when
+    /* TODO: Fix alpha blending... it's currently not true transparency.
+     * you need to disable this if you want the back parts to be shown when
      * alpha blending
      */
     glDisable(GL_CULL_FACE);
@@ -167,14 +168,17 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
      */
     glBindVertexArray(vao);
 
-    /* This will probably be a loop per entity when drawing them... if they are
-     * dynamically changing everytime???
-     */
-
     /* TODO: remove this from here... this is just testing it out */
     glm::mat4 position = glm::mat4();
     //position = glm::translate(position, player->position);
     position = glm::translate(position, player->position);
+
+    /* TODO: bound checking for the camera such that we only move the camera
+     * when necessary
+     */
+
+    /* follow the character around */
+    CameraUpdateTarget(g_camera, player->position);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, vertices, GL_STATIC_DRAW);

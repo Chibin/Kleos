@@ -87,7 +87,7 @@ void MainGameLoop(SDL_Window *mainWindow)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
 
     /* Unbind the VAO (NOT THE EBO). We need to make sure that we always unbind,
-     * otherwise we might accidentally save some unwatned commands into
+     * otherwise we might accidentally save some unwanted commands into
      * the vertext array object
      */
 

@@ -4,9 +4,9 @@
 /* Should already be included */
 #include "camera.cpp"
 
-void ProcessInputToMovement(SDL_Keycode sym, Entity *entity);
+void ProcessInputToMovement(SDL_Keycode sym);
 
-void ProcessInput(SDL_Keycode sym, bool *continueRunning, Entity *player){
+void ProcessInput(SDL_Keycode sym, bool *continueRunning){
     switch(sym){
         case SDLK_ESCAPE:
             *continueRunning = false;
@@ -15,7 +15,7 @@ void ProcessInput(SDL_Keycode sym, bool *continueRunning, Entity *player){
             /* TODO: differentiate different types of input
              * something like...  if (mode == movement) 
              */
-            ProcessInputToMovement(sym, player);
+            ProcessInputToMovement(sym);
             /* TODO: ProcessInputToMenu() */
             break;
     }
@@ -50,7 +50,7 @@ void ProcessKeysHeldDown(Entity *entity, const Uint8 *keystate)
     }
 }
 
-void ProcessInputToMovement(SDL_Keycode sym, Entity *entity) {
+void ProcessInputToMovement(SDL_Keycode sym) {
     /* TODO: Replace this with non-repeatable key stroke.
      * Keep repeating the movement while the key is down though.
      */
@@ -59,20 +59,12 @@ void ProcessInputToMovement(SDL_Keycode sym, Entity *entity) {
         case SDLK_d:
             break;
         case SDLK_UP:
-            EntityMoveUp(entity);
-            printf("up\n");
             break;
         case SDLK_DOWN:
-            EntityMoveDown(entity);
-            printf("down\n");
             break;
         case SDLK_LEFT:
-            EntityMoveLeft(entity);
-            printf("left\n");
             break;
         case SDLK_RIGHT:
-            EntityMoveRight(entity);
-            printf("right\n");
             break;
         default:
             break;
