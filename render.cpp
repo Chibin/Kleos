@@ -250,8 +250,15 @@ void RenderAllEntities(GLuint vbo)
 
 }
 
-
 void LoadStuff()
 {
+    for(int i = 0; i < 100; i++) {
+        for(int y = 0; y < 100; y++) {
+            glm::vec3 startingPosition = glm::vec3(i, y, 0);
+            Entity* rectEntity = AddNewEntity(g_entityManager);
+            ASSERT(rectEntity != NULL);
+            rectEntity->position = startingPosition;
+        }
+    }
 }
 #endif

@@ -37,11 +37,10 @@ EntityManager* CreateEntityManger()
 
     em->size = 0;
     em->entityIDs = NULL;
-    em->totalAllocatedSpace = 10; /* arbitrary amount */
+    em->totalAllocatedSpace = 10000000; /* arbitrary amount */
 
     /* TODO: not sure if we should zero the values */
     em->entities = (Entity*)malloc(sizeof(Entity) * em->totalAllocatedSpace);
-    em->entities[0].position = glm::vec3(0,0,0);
     memset(em->entities, 0, sizeof(Entity) * em->totalAllocatedSpace);
 
     /* TODO: This should really be an assert */
@@ -85,16 +84,26 @@ int Append(EntityManager *em, Entity *entity)
 
 /* helper functions */
 void _allocateMoreMemory(EntityManager *em) {
-    em->totalAllocatedSpace = FLOOR(em->totalAllocatedSpace * 0.25);
-    Entity *entities = (Entity*)malloc(sizeof(Entity) * em->totalAllocatedSpace);
-    memset(em->entities, 0, sizeof(Entity) * em->totalAllocatedSpace);
+    /* TODO: This is broken. freeing the memory is not a good idea because
+     * there might be pointers pointed to the old memory that we plan on deleting.
+     */
+
+    unsigned int newTotalAllocatedSpace = em->totalAllocatedSpace + FLOOR(em->totalAllocatedSpace * 0.25);
+
+    Entity *entities = (Entity*)malloc(sizeof(Entity) * newTotalAllocatedSpace);
+    memset(entities, 0, sizeof(Entity) * newTotalAllocatedSpace);
+
+    memcpy(entities, em->entities, sizeof(Entity) * em->totalAllocatedSpace);
+    free(em->entities);
+
+    printf("em: %p", em->entities);
+    printf("new: %p", entities);
 
     if (!entities || !em->entities) {
         PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
     }
 
-    memcpy(entities, em->entities, sizeof(Entity) * em->size);
-    free(em->entities);
+    em->totalAllocatedSpace = newTotalAllocatedSpace;
     em->entities = entities;
 }
 
