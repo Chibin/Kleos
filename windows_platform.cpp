@@ -36,8 +36,6 @@ bool WindowSetup()
         return false;
     }
 
-    /* create our opengl context and attach it to our window */
-    mainContext = SDL_GL_CreateContext(mainWindow);
     return true;
 }
 
@@ -56,6 +54,8 @@ bool WindowsSDLTTFSetup()
 bool WindowsOpenGLSetup()
 {
     _setOpenGLSettings();
+    /* create our opengl context and attach it to our window */
+    mainContext = SDL_GL_CreateContext(mainWindow);
 
     /* initialize to start using opengl */
     glewExperimental = GL_TRUE;
@@ -84,6 +84,7 @@ void _setOpenGLSettings()
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
     // Turn on double buffering with a 24bit Z buffer.
     // You may need to change this to 16 or 32 for your system
