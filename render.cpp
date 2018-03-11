@@ -2,6 +2,7 @@
 #define __RENDER_
 
 #include <stdio.h>
+#include <string>
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -173,20 +174,26 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, vertices, GL_STATIC_DRAW);
 
+    OpenGLCheckErrors();
+
+    GLuint modelLoc, viewLoc, projectionLoc;
 #define DEBUG_SHADER 1
 #if DEBUG_SHADER
-    OpenGLBeginUseProgram(debugProgram);
+    OpenGLBeginUseProgram(debugProgram, textureID);
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    GLuint modelLoc = glGetUniformLocation(debugProgram, "model");
+    modelLoc = glGetUniformLocation(debugProgram, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
-    GLuint viewLoc = glGetUniformLocation(program, "view");
+    OpenGLCheckErrors();
+
+    viewLoc = glGetUniformLocation(program, "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-    GLuint projectionLoc = glGetUniformLocation(program, "projection");
+    OpenGLCheckErrors();
+
+    projectionLoc = glGetUniformLocation(program, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
-
     OpenGLEndUseProgram();
 #endif
 
@@ -200,6 +207,8 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     projectionLoc = glGetUniformLocation(program, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+
+    OpenGLCheckErrors();
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -218,8 +227,10 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glm::vec3 pos = g_entityManager->entities[i].position;
     }
+
+
+    OpenGLCheckErrors();
 
     glBindVertexArray(0);
     OpenGLEndUseProgram();

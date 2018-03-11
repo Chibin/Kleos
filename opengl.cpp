@@ -1,6 +1,8 @@
 #ifndef __OPENGL__
 #define __OPENGL__
 
+#define OpenGLCheckErrors() _defined_openGLCheckErrors(__FILE__, __LINE__)
+
 struct Program {
     GLuint handle;
 
@@ -60,5 +62,31 @@ GLuint * OpenGLAllocateTexture(int textureFormat, int width, int height, void * 
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return textureID;
+}
+
+void _defined_openGLCheckErrors(const char *file, int line)
+{
+    /* TODO: change how we print the error? */
+    // Process/log the error.
+    GLenum err;
+    while((err = glGetError()) != GL_NO_ERROR){
+        std::string error;
+
+        printf("error detected at %s:%d:\n", file, line);
+
+        switch(err) {
+            case GL_INVALID_OPERATION: error="INVALID_OPERATION"; break;
+            case GL_INVALID_ENUM:      error="INVALID_ENUM";      break;
+            case GL_INVALID_VALUE:     error="INVALID_VALUE";     break;
+            case GL_OUT_OF_MEMORY:     error="OUT_OF_MEMORY";     break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION:
+                                       error="INVALID_FRAMEBUFFER_OPERATION";  break;
+            default: printf("something bad happened. "
+                            "unknown error: %d\n", err); break;
+        }
+
+        printf("an error occured: %s\n", error.c_str());
+        ASSERT(strlen(error.c_str()) == 0);
+    }
 }
 #endif

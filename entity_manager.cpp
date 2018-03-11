@@ -96,9 +96,6 @@ void _allocateMoreMemory(EntityManager *em) {
     memcpy(entities, em->entities, sizeof(Entity) * em->totalAllocatedSpace);
     free(em->entities);
 
-    printf("em: %p", em->entities);
-    printf("new: %p", entities);
-
     if (!entities || !em->entities) {
         PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
     }
