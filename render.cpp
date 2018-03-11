@@ -153,16 +153,6 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     Entity *player = NULL;
     player = entity;
 
-    /* Render graphics */
-    glUseProgram(program);
-
-    /* NOTE: you shouldn't call this function unless you have a shader
-     * program already binded (glUseProgram)
-     */
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
-
     /* programs used first will have higher priority being shown in the
      * canvas
      */
@@ -185,7 +175,7 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 
 #define DEBUG_SHADER 1
 #if DEBUG_SHADER
-    glUseProgram(debugProgram);
+    OpenGLBeginUseProgram(debugProgram);
     glEnable(GL_PROGRAM_POINT_SIZE);
 
     GLuint modelLoc = glGetUniformLocation(debugProgram, "model");
@@ -197,9 +187,11 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 
     glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
 
+    OpenGLEndUseProgram();
 #endif
 
-    glUseProgram(program);
+    OpenGLBeginUseProgram(program, textureID);
+    //OpenGLLoadProgramInput(program);
 
     /* load uniform variable to shader program before drawing */
     modelLoc = glGetUniformLocation(program, "model");
@@ -211,15 +203,14 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-    /* load all rectangles */
-    //RenderAllEntities(vbo);
-
-    /* TODO: explore a better way of doing this. reloading vertices over and over might be meh.
-     * performance hit with just doing VAO might be very miniscule that it's worth doing for a simpler code base?
+    /* TODO: explore a better way of doing this. reloading vertices over and
+     * over might be meh. performance hit with just doing VAO might be very
+     * miniscule that it's worth doing for a simpler code base?
      */
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    /* XXX: THIS IS BAD TO DO every frame!! :( */
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, g_rectangleVertices, GL_STATIC_DRAW); /* this should be a GL_DYNAMIC_SOMETHING DRAW */
+    /* XXX: THIS IS BAD TO DO every frame!! :(
+     * this also should be a GL_DYNAMIC_SOMETHING DRAW */
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, g_rectangleVertices, GL_STATIC_DRAW);
 
     for (unsigned int i = 0; i < g_entityManager->size; i++) {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), g_entityManager->entities[i].position)));
@@ -228,12 +219,10 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glm::vec3 pos = g_entityManager->entities[i].position;
-
-        /* TODO: Remove me */
-        printf("position %f, %f, %f\n", pos.x, pos.y, pos.z);
     }
 
     glBindVertexArray(0);
+    OpenGLEndUseProgram();
 }
 
 void RenderAllEntities(GLuint vbo)
