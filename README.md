@@ -1,8 +1,11 @@
 # Prerequisites
+SDL2
+SDL2 ttf
+glm
+GLEW
 
-## Libraries
-
-D:\Libraries\SDL2_ttf-2.0.14\VisualC\x64\Debug
+## Debugging OpenGL
+Currently using RenderDoc https://renderdoc.org
 
 ## Using cl
 
@@ -10,7 +13,6 @@ My build is a simple bat file that uses `cl`
 
 your call might slightly be different depending on your visual studio version:
 `call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64`
-
 
 # ENV
 Not really part of the build.
