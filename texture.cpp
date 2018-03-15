@@ -33,6 +33,7 @@ GLuint * ImageToTexture(const char * ImageName)
         textureFormat = GL_RGBA;
 
     textureID =  OpenGLAllocateTexture(textureFormat, width, height, image);
+    OpenGLCheckErrors();
 
     stbi_image_free(image);
 

@@ -60,10 +60,22 @@ bool WindowsOpenGLSetup()
     /* initialize to start using opengl */
     glewExperimental = GL_TRUE;
     GLenum glewError = glewInit();
+
+    GLenum err;
+    if ((err = glGetError()) != GL_NO_ERROR) {
+        /* Ignore GL_INVALID_ENUM. There are cases where using glewExperimental
+         * can cause a GL_INVALID_ENUM, which is fine -- just ignore it.
+         * Otherwise, we do have a problem.
+         */
+        if ( err != GL_INVALID_ENUM )
+            printf("OpenGL: found true error x%x\n", err);
+    }
+
     if( glewError != GLEW_OK ) {
         std::cout << "Error initializing GLEW! " << glewGetErrorString( glewError ) << std::endl;
         return false;
     }
+
 
     if( SDL_GL_SetSwapInterval( 1 ) < 0 ) 
         printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());

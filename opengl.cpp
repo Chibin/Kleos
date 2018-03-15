@@ -2,6 +2,7 @@
 #define __OPENGL__
 
 #define OpenGLCheckErrors() _defined_openGLCheckErrors(__FILE__, __LINE__)
+void _defined_openGLCheckErrors(const char *file, int line);
 
 struct Program {
     GLuint handle;
@@ -53,7 +54,24 @@ GLuint * OpenGLAllocateTexture(int textureFormat, int width, int height, void * 
     glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, width, height, 0,
                  textureFormat, GL_UNSIGNED_BYTE, data);
 
-    glTexParameteri(GL_TEXTURE_2D,  GL_GENERATE_MIPMAP, GL_TRUE);
+    switch(textureFormat){
+        case GL_RGBA:
+            printf("RGBA\n");
+            /* TODO: Will need to remove later on */
+            OpenGLCheckErrors();
+            break;
+        case GL_RGB:
+            printf("RGB\n");
+            glTexParameteri(GL_TEXTURE_2D,  GL_GENERATE_MIPMAP, GL_TRUE);
+            /* TODO: Will need to remove later on */
+            OpenGLCheckErrors();
+            break;
+
+        default:
+            printf("Unknown\n");
+            break;
+    }
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

@@ -229,11 +229,10 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
-
-    OpenGLCheckErrors();
-
     glBindVertexArray(0);
     OpenGLEndUseProgram();
+
+    OpenGLCheckErrors();
 }
 
 void RenderAllEntities(GLuint vbo)
