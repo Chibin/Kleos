@@ -11,3 +11,6 @@
 tags
 *.sln
 *.vs
+*.swn
+*.VC.db
+*.cap
