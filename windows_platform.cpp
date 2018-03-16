@@ -141,7 +141,8 @@ bool LoadDLLWindows(RenderAPI *renderAPI)
     return true;
 }
 
-/* Random helper */
+/* HELPER FUNCTIONS */
+
 void PrintSDLTTFVersion()
 {
     const SDL_version *linkedVersion = TTF_Linked_Version();
@@ -155,5 +156,85 @@ void PrintSDLTTFVersion()
         << compiledVersion.major << "." << compiledVersion.minor << "." << compiledVersion.patch
         << std::endl;
 
+}
+
+char *GetProgramPath()
+{
+    char *dataPath = NULL;
+    char *basePath = SDL_GetBasePath();
+    if (basePath) {
+        dataPath = basePath;
+    } else {
+        dataPath = SDL_strdup("./");
+    }
+    return dataPath;
+}
+
+void PrintFileTimeStamp(WIN32_FIND_DATA searchData)
+{
+    FILETIME ftCreate, ftAccess, ftWrite;
+    SYSTEMTIME stUTC, stLocal;
+
+    /* Convert the last-write time to local time. */
+    FileTimeToSystemTime(&searchData.ftCreationTime, &stUTC);
+    SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
+
+    printf("%02d/%02d/%d  %02d:%02d\n",
+            stLocal.wMonth, stLocal.wDay, stLocal.wYear,
+            stLocal.wHour, stLocal.wMinute);
+}
+
+void FindFile(const char *dirPath, const char *fileRegex)
+{
+    const unsigned BUFFER_SIZE = 256;
+    char searchPath[BUFFER_SIZE];
+
+    std::strncpy(searchPath, dirPath, BUFFER_SIZE-1);
+    std::strncat(searchPath, fileRegex, BUFFER_SIZE-strlen(searchPath)-1);
+
+    WIN32_FIND_DATA searchData;
+    memset(&searchData, 0, sizeof(WIN32_FIND_DATA));
+
+    HANDLE handle = FindFirstFile(searchPath, &searchData);
+
+    while(handle != INVALID_HANDLE_VALUE)
+    {
+        unsigned long qwResult = (((ULONGLONG)searchData.ftLastWriteTime.dwHighDateTime) << 32) +
+                                 searchData.ftLastWriteTime.dwLowDateTime;
+
+        if(FindNextFile(handle, &searchData) == FALSE)
+            break;
+    }
+
+    /* Close the handle after use or memory/resource leak */
+    FindClose(handle);
+}
+
+void GetLatestFile()
+{
+}
+
+void ListFiles(const char *dirPath)
+{
+    const unsigned BUFFER_SIZE = 256;
+    char *fileRegex = "*";
+    char searchPath[BUFFER_SIZE];
+
+    std::strncpy(searchPath, dirPath, BUFFER_SIZE-1);
+    std::strncat(searchPath, fileRegex, BUFFER_SIZE-strlen(searchPath)-1);
+
+    WIN32_FIND_DATA search_data;
+    memset(&search_data, 0, sizeof(WIN32_FIND_DATA));
+
+    HANDLE handle = FindFirstFile(searchPath, &search_data);
+    while(handle != INVALID_HANDLE_VALUE)
+    {
+        //DEBUG_PRINT("\n%s\n", search_data.cFileName);
+        if(FindNextFile(handle, &search_data) == FALSE)
+            break;
+    }
+
+    /* Close the handle after use or memory/resource leak */
+    FindClose(handle);
 }
 #endif

@@ -136,6 +136,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Update(g_player, *gameTimestep);
+    /* create scene */
+    /* filter scene */
+    /* render scene */
     Render(vao, vbo, textureID, program, debugProgram, g_player, vertices);
     return continueRunning;
 }

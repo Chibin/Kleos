@@ -110,6 +110,8 @@ void MainGameLoop(SDL_Window *mainWindow)
     v2 screenResolution = {SCREEN_WIDTH, SCREEN_HEIGHT};
     GameTimestep *gameTimestep;
 
+    FindFile(GetProgramPath(), "render*dll");
+
     while (continueRunning)
     {
         continueRunning = (renderAPI.updateAndRender)(vao, vbo, *textureID, program, debugProgram, screenResolution, vertices, &gameTimestep);

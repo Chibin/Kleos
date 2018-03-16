@@ -38,7 +38,10 @@ SET INCLUDE_PATH=/I D:\Libraries\glew-1.13.0\include /I D:\Libraries\glm
 SET INCLUDE_PATH=/I D:\Libraries\SDL2-2.0.7\include %INCLUDE_PATH%
 SET INCLUDE_PATH=/I D:\Libraries\SDL2_ttf-2.0.14 %INCLUDE_PATH%
 
-cl %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender
+cl %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender -OUT:render_new.dll 
+
+copy render_new.dll render.dll
+
 
 rem copy %ORIGINAL_DIR%\*.glsl .
 rem copy %ORIGINAL_DIR%\*.vs .
