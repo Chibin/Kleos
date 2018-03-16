@@ -26,6 +26,7 @@
 
 /* probably need to be here? depends where we put our game logic */
 #include "opengl.cpp"
+#include "game_time.cpp"
 #include "entity.cpp"
 #include "entity_manager.cpp"
 #include "camera.cpp"
@@ -33,12 +34,12 @@
 
 #include "rectangle.cpp"
 
-#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GLfloat *vertices)
-#define UPDATE(name) void name()
+#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GLfloat *vertices, GameTimestep **gameTimestep)
 #define RENDER(name) void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, GLfloat *vertices);
 void RenderAllEntities(GLuint program);
+void Update(Entity *player, GameTimestep *gameTimestep);
 void LoadStuff();
 
 /* TODO: We'll need to get rid of these global variables later on */
@@ -55,6 +56,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     SDL_Event event;
     bool continueRunning = true;
+
+    if (!*gameTimestep) {
+        *gameTimestep = (GameTimestep*)malloc(sizeof(GameTimestep));
+        ResetGameTimestep(*gameTimestep);
+    }
 
     if (!g_camera) {
         g_camera = CreateCamera();
@@ -92,7 +98,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_rectangleVertices = CreateVertices(g_testRectangle);
     }
 
-
     if (!init) {
         LoadStuff();
         init = true;
@@ -117,7 +122,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ProcessMouseInput(event, g_camera);
 
         if (event.type == SDL_KEYDOWN)
-            ProcessInput(event.key.keysym.sym, &continueRunning);
+            ProcessInputDown(event.key.keysym.sym, &continueRunning);
+
+        if (event.type == SDL_KEYUP)
+            ProcessInputUp(event.key.keysym.sym);
     }
 
     /* TODO: One time init might be done here as the game progress ? */
@@ -127,13 +135,44 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    Update(g_player, *gameTimestep);
     Render(vao, vbo, textureID, program, debugProgram, g_player, vertices);
     return continueRunning;
 }
 
-extern "C" UPDATE(Update)
+void Update(Entity *player, GameTimestep *gameTimestep)
 {
+    /* update logics and data here */
+    /* physics */
+    const GLfloat gravity = -9.81f;
+    UpdateGameTimestep(gameTimestep);
 
+    //printf("delta: %d\n", g_gameTimestep->deltaTime);
+    // position, velocity, acceleration
+    player->acceleration.y += gravity;
+    player->velocity.y += player->acceleration.y * gameTimestep->deltaTime/1000;
+    player->position.y += player->velocity.y * gameTimestep->deltaTime/1000;
+
+    /* can move */
+
+    /* did entity hit floor */
+    if (player->position.y < -1) {
+        player->position.y = -1;
+        player->velocity.y = 0;
+        player->acceleration.y = 0;
+    }
+
+    player->position.x += player->velocity.x * gameTimestep->deltaTime;
+    /* Apply "friction" */
+    player->velocity.x = 0;
+
+
+    /* TODO: bound checking for the camera such that we only move the camera
+     * when necessary
+     */
+
+    /* follow the character around */
+    CameraUpdateTarget(g_camera, player->position);
 }
 
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
@@ -163,13 +202,6 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glm::mat4 position = glm::mat4();
     //position = glm::translate(position, player->position);
     position = glm::translate(position, player->position);
-
-    /* TODO: bound checking for the camera such that we only move the camera
-     * when necessary
-     */
-
-    /* follow the character around */
-    CameraUpdateTarget(g_camera, player->position);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 20, vertices, GL_STATIC_DRAW);
@@ -264,4 +296,5 @@ void LoadStuff()
         }
     }
 }
+
 #endif

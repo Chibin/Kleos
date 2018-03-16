@@ -37,6 +37,7 @@
 #include "texture.cpp"
 #include "shaders.cpp"
 
+#include "game_time.cpp"
 #include "entity.cpp"
 #include "camera.cpp"
 #include "input.cpp"

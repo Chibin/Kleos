@@ -4,9 +4,11 @@
 /* Should already be included */
 #include "camera.cpp"
 
+static bool g_canJump = true;
+
 void ProcessInputToMovement(SDL_Keycode sym);
 
-void ProcessInput(SDL_Keycode sym, bool *continueRunning){
+void ProcessInputDown(SDL_Keycode sym, bool *continueRunning){
     switch(sym){
         case SDLK_ESCAPE:
             *continueRunning = false;
@@ -17,6 +19,17 @@ void ProcessInput(SDL_Keycode sym, bool *continueRunning){
              */
             ProcessInputToMovement(sym);
             /* TODO: ProcessInputToMenu() */
+            break;
+    }
+}
+
+void ProcessInputUp(SDL_Keycode sym){
+    switch(sym){
+        case SDLK_SPACE:
+        case SDLK_UP:
+            g_canJump = true;
+            break;
+        default:
             break;
     }
 }
@@ -36,9 +49,11 @@ void ProcessMouseInput(SDL_Event &event, Camera *camera)
 
 void ProcessKeysHeldDown(Entity *entity, const Uint8 *keystate)
 {
-    if(keystate[SDL_SCANCODE_UP]){
+    if( (keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_SPACE]) && g_canJump){
         EntityMoveUp(entity);
+        g_canJump = false;
     }
+
     if(keystate[SDL_SCANCODE_DOWN]){
         EntityMoveDown(entity);
     }
@@ -48,6 +63,7 @@ void ProcessKeysHeldDown(Entity *entity, const Uint8 *keystate)
     if(keystate[SDL_SCANCODE_RIGHT]){
         EntityMoveRight(entity);
     }
+
 }
 
 void ProcessInputToMovement(SDL_Keycode sym) {

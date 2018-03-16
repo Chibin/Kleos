@@ -9,6 +9,9 @@ struct stats {
 struct Entity {
     unsigned int id;
     glm::vec3 position;
+    glm::vec3 velocity;
+    glm::vec3 acceleration;
+
     /* TODO: entity may or may not have stats ...
      * how do we deal with this?
      * may be.. when creating an entity, we use the entity id as a key to store
@@ -19,22 +22,23 @@ struct Entity {
 inline
 void EntityMoveUp(Entity *entity) {
     /* TODO: Replace this later with speed (time based)*/
-    entity->position += glm::vec3(0, 0.1, 0);
+    entity->acceleration += glm::vec3(0, 10, 0);
+    entity->velocity += glm::vec3(0, 15, 0);
 }
 
 inline
 void EntityMoveDown(Entity *entity) {
-    entity->position += glm::vec3(0, -0.1, 0);
+    entity->velocity += glm::vec3(0, -0.01, 0);
 }
 
 inline
 void EntityMoveLeft(Entity *entity) {
-    entity->position += glm::vec3(-0.1, 0, 0);
+    entity->velocity += glm::vec3(-0.01, 0, 0);
 }
 
 inline
 void EntityMoveRight(Entity *entity) {
-    entity->position += glm::vec3(0.1, 0, 0);
+    entity->velocity += glm::vec3(0.01, 0, 0);
 }
 
 #endif

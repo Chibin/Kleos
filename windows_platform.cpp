@@ -1,7 +1,7 @@
 #ifndef __WINDOWS_PLATFORM__
 #define __WINDOWS_PLATFORM__
 
-typedef bool (__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GLfloat *vertices);
+typedef bool (__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GLfloat *vertices, GameTimestep **gameTimestep);
 
 struct RenderAPI {
     std::string libraryName;
