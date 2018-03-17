@@ -21,35 +21,6 @@ void MainGameLoop(SDL_Window *mainWindow)
             "materials/programs/vertex.glsl",
             "materials/programs/debug_fragment_shaders.glsl");
 
-    GLfloat points[12] = { -0.5, -0.5,
-                           0.5, -0.5,
-                           0.5, 0.5,
-                           0.5, 0.5,
-                           -0.5, 0.5,
-                           -0.5, -0.5 };
-
-#define PRINTFONT 0
-#if PRINTFONT
-    /* Flip the texture coordinates if we're using SDL TTF. OpenGL normally
-     * draws things upsidedown
-     */
-    GLfloat vertices[] = {
-        // Positions           // Texture Coords
-        0.5f,  0.5f, 0.0f,     1.0f, 0.0f,   // Top Right
-        0.5f, -0.5f, 0.0f,     1.0f, 1.0f,   // Bottom Right
-        -0.5f, -0.5f, 0.0f,    0.0f, 1.0f,   // Bottom Left
-        -0.5f,  0.5f, 0.0f,    0.0f, 0.0f    // Top Left
-    };
-#else
-    GLfloat vertices[] = {
-        // Positions           // Texture Coords
-        0.5f,  0.5f, 0.0f,     1.0f, 1.0f,   // Top Right
-        0.5f, -0.5f, 0.0f,     1.0f, 0.0f,   // Bottom Right
-        -0.5f, -0.5f, 0.0f,    0.0f, 0.0f,   // Bottom Left
-        -0.5f,  0.5f, 0.0f,    0.0f, 1.0f    // Top Left
-    };
-#endif
-
     /*  Each vertex attribute takes its data from memory managed by a
      *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
      *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
@@ -63,9 +34,20 @@ void MainGameLoop(SDL_Window *mainWindow)
     glGenBuffers(1, &ebo);
     glGenBuffers(1, &vbo);
     Entity entity;
+    GLuint *textureID;
 
     /* *entity, startingPosition, color, width, height, isTraversable */
     Rect *firstRect = CreateRectangle(&entity, v3{0,0,0}, v4{0,0,0,0}, 1, 2, false);
+
+#if 0
+    TTF_Font *font = OpenFont();
+    assert(font != NULL);
+    textureID = StringToTexture(font, "testing this");
+    firstRect->isTextureUpsideDown = true;
+#else
+    textureID = ImageToTexture("./materials/textures/awesomeface.png");
+#endif
+
     firstRect->vertices = CreateVertices(firstRect);
 
     /*  Initialization code (done once (unless your object frequently changes)) */
@@ -99,19 +81,8 @@ void MainGameLoop(SDL_Window *mainWindow)
      *  elsewhere. */
     glBindVertexArray(0);
 
-    GLuint *textureID;
-
-    TTF_Font *font = OpenFont();
-    assert(font != NULL);
-
-#if PRINTFONT
-    textureID = StringToTexture(font, "testing this");
-#else
-    textureID = ImageToTexture("./materials/textures/awesomeface.png");
-#endif
-
     v2 screenResolution = {SCREEN_WIDTH, SCREEN_HEIGHT};
-    GameTimestep *gameTimestep;
+    GameTimestep *gameTimestep = NULL;
 
     FindFile(GetProgramPath(), "render*dll");
 

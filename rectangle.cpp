@@ -23,6 +23,8 @@ struct Rect {
     v2 uvTextureBottomLeft;
     v2 uvTextureBottomRight;
 
+    bool isTextureUpsideDown;
+
     int size;
 };
 
@@ -77,6 +79,12 @@ GLfloat *CreateDefaultRectangleVertices(){
      *   1, 0,      Bottom Right
      *   0, 0,      Bottom Left
      *   0, 1       Top Left
+     *
+     *   Texture flipped
+     *   1, 0,
+     *   1, 1,
+     *   0, 1,
+     *   0, 0
      */
 
     GLfloat *vertices = NULL;
@@ -151,8 +159,14 @@ GLfloat *CreateVertices(Rect *rect)
     vertices[5] = rect->color.b;
     vertices[6] = rect->color.a;
 
-    vertices[7] = 1;
-    vertices[8] = 1;
+    if (rect->isTextureUpsideDown) {
+        vertices[7] = 1;
+        vertices[8] = 0;
+    }
+    else {
+        vertices[7] = 1;
+        vertices[8] = 1;
+    }
 
     vertices[9]  = rect->bottomRight.x;
     vertices[10] = rect->bottomRight.y;
@@ -161,8 +175,16 @@ GLfloat *CreateVertices(Rect *rect)
     vertices[13] = rect->color.g;
     vertices[14] = rect->color.b;
     vertices[15] = rect->color.a;
-    vertices[16] = 1;
-    vertices[17] = 0;
+
+    if (rect->isTextureUpsideDown) {
+        vertices[16] = 1;
+        vertices[17] = 1;
+    }
+    else {
+        vertices[16] = 1;
+        vertices[17] = 0;
+
+    }
 
     vertices[18] = rect->bottomLeft.x;
     vertices[19] = rect->bottomLeft.y;
@@ -171,8 +193,15 @@ GLfloat *CreateVertices(Rect *rect)
     vertices[22] = rect->color.g;
     vertices[23] = rect->color.b;
     vertices[24] = rect->color.a;
-    vertices[25] = 0;
-    vertices[26] = 0;
+
+    if (rect->isTextureUpsideDown) {
+        vertices[25] = 0;
+        vertices[26] = 1;
+    }
+    else {
+        vertices[25] = 0;
+        vertices[26] = 0;
+    }
 
     vertices[27] = rect->topLeft.x;
     vertices[28] = rect->topLeft.y;
@@ -181,8 +210,15 @@ GLfloat *CreateVertices(Rect *rect)
     vertices[31] = rect->color.g;
     vertices[32] = rect->color.b;
     vertices[33] = rect->color.a;
-    vertices[34] = 0;
-    vertices[35] = 1;
+
+    if (rect->isTextureUpsideDown) {
+        vertices[34] = 0;
+        vertices[35] = 0;
+    }
+    else {
+        vertices[34] = 0;
+        vertices[35] = 1;
+    }
 
     return vertices;
 }

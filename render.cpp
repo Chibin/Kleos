@@ -319,6 +319,7 @@ void LoadStuff()
     v3 startingPosition = {-1, -2, 0};
     Entity* rectEntity = AddNewEntity(g_entityManager, startingPosition);
     ASSERT(rectEntity != NULL);
+    //rectEntity->position = startingPosition;
     rectEntity->isTraversable = false;
     rectEntity->isPlayer = false;
 }
