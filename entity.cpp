@@ -17,6 +17,8 @@ struct Entity {
      * may be.. when creating an entity, we use the entity id as a key to store
      * some stat value if the entity needs it.
      */
+    bool isTraversable;
+    bool isPlayer;
 };
 
 inline
@@ -39,6 +41,12 @@ void EntityMoveLeft(Entity *entity) {
 inline
 void EntityMoveRight(Entity *entity) {
     entity->velocity += glm::vec3(0.01, 0, 0);
+}
+
+Entity *GetNonTraversableEntities(uint32 *out_NumOfNTs)
+{
+    *out_NumOfNTs = 0;
+    return NULL;
 }
 
 #endif

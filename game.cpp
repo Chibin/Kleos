@@ -2,7 +2,7 @@
 #define __GAME__
 
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
- 
+
 void _processOpenGLErrors(const char *file, int line);
 void teststuff(GLuint &textureID);
 
@@ -38,7 +38,7 @@ void MainGameLoop(SDL_Window *mainWindow)
         0.5f,  0.5f, 0.0f,     1.0f, 0.0f,   // Top Right
         0.5f, -0.5f, 0.0f,     1.0f, 1.0f,   // Bottom Right
         -0.5f, -0.5f, 0.0f,    0.0f, 1.0f,   // Bottom Left
-        -0.5f,  0.5f, 0.0f,    0.0f, 0.0f    // Top Left 
+        -0.5f,  0.5f, 0.0f,    0.0f, 0.0f    // Top Left
     };
 #else
     GLfloat vertices[] = {
@@ -46,27 +46,27 @@ void MainGameLoop(SDL_Window *mainWindow)
         0.5f,  0.5f, 0.0f,     1.0f, 1.0f,   // Top Right
         0.5f, -0.5f, 0.0f,     1.0f, 0.0f,   // Bottom Right
         -0.5f, -0.5f, 0.0f,    0.0f, 0.0f,   // Bottom Left
-        -0.5f,  0.5f, 0.0f,    0.0f, 1.0f    // Top Left 
+        -0.5f,  0.5f, 0.0f,    0.0f, 1.0f    // Top Left
     };
 #endif
-
-    GLuint indices[] = {  // Note that we start from 0!
-        0, 1, 3,   // First Triangle
-        1, 2, 3    // Second Triangle
-    };  
 
     /*  Each vertex attribute takes its data from memory managed by a
      *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
      *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
      *  Since the previously defined VBO was bound before
      *  calling glVertexAttribPointer vertex attribute 0 is now associated with its
-     *  vertex data. 
+     *  vertex data.
      */
 
     GLuint vao, ebo, vbo;
-    glGenVertexArrays(1, &vao);  
-    glGenBuffers(1, &ebo);  
-    glGenBuffers(1, &vbo);  
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &ebo);
+    glGenBuffers(1, &vbo);
+    Entity entity;
+
+    /* *entity, startingPosition, color, width, height, isTraversable */
+    Rect *firstRect = CreateRectangle(&entity, v3{0,0,0}, v4{0,0,0,0}, 1, 2, false);
+    firstRect->vertices = CreateVertices(firstRect);
 
     /*  Initialization code (done once (unless your object frequently changes)) */
     // 1. Bind Vertex Array Object
@@ -74,17 +74,20 @@ void MainGameLoop(SDL_Window *mainWindow)
         // 2. Copy our vertices array in a buffer for OpenGL to use
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * firstRect->size, firstRect->vertices, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_rectIndices), g_rectIndices, GL_STATIC_DRAW);
 
 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
 
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(7* sizeof(GLfloat)));
 
     /* Unbind the VAO (NOT THE EBO). We need to make sure that we always unbind,
      * otherwise we might accidentally save some unwanted commands into
@@ -114,7 +117,7 @@ void MainGameLoop(SDL_Window *mainWindow)
 
     while (continueRunning)
     {
-        continueRunning = (renderAPI.updateAndRender)(vao, vbo, *textureID, program, debugProgram, screenResolution, vertices, &gameTimestep);
+        continueRunning = (renderAPI.updateAndRender)(vao, vbo, *textureID, program, debugProgram, screenResolution, firstRect->vertices, &gameTimestep);
 
         ProcessOpenGLErrors();
 

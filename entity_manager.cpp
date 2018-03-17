@@ -51,7 +51,7 @@ EntityManager* CreateEntityManger()
     return em;
 }
 
-Entity *AddNewEntity(EntityManager *em)
+Entity *AddNewEntity(EntityManager *em, v3 position = v3{0,0,0})
 {
     /* Creates a new entity that's zeroed out */
     if (em->totalAllocatedSpace < em->size)
@@ -60,7 +60,7 @@ Entity *AddNewEntity(EntityManager *em)
     Entity *entity = &(em->entities[em->size]);
 
     entity->id = em->size;
-    entity->position = glm::vec3(0, 0, 0);
+    entity->position = glm::vec3(position.x, position.y, position.z);
 
     em->size++;
     return entity;
@@ -76,6 +76,7 @@ int Append(EntityManager *em, Entity *entity)
     if (em->totalAllocatedSpace < em->size)
         _allocateMoreMemory(em);
 
+    entity->id = em->size;
     memcpy(&(em->entities[em->size]), entity, sizeof(Entity));
     em->size++;
 
@@ -104,4 +105,107 @@ void _allocateMoreMemory(EntityManager *em) {
     em->entities = entities;
 }
 
+struct EntityDynamicArray {
+    Entity *firstEntity;
+    Entity *nextEntity;
+    Entity *lastEntity;
+
+    int size;
+    int allocatedSize; /*not in bytes but amount of entities */
+    Entity **entities;
+
+    /* should probably be in the entity manager */
+    int *indexOfEmptySlots;
+};
+
+EntityDynamicArray *CreateEntityDynamicArray()
+{
+    EntityDynamicArray *eda = (EntityDynamicArray*)malloc(sizeof(EntityDynamicArray));
+    memset(eda, 0, sizeof(EntityDynamicArray));
+    eda->allocatedSize = 10;
+    eda->entities = (Entity**)malloc(sizeof(Entity)*eda->allocatedSize);
+
+    return eda;
+}
+
+void DeleteEntityDynamicArray(EntityDynamicArray *eda)
+{
+    if (!eda)
+        return;
+
+    if (eda->entities && eda->size > 0) {
+        for(int i = 0; i < eda->size; i++) {
+            printf("entity triangle x: %f\n", eda->entities[i]->position.x);
+            printf("entity triangle y: %f\n", eda->entities[i]->position.y);
+            printf("entity triangle z: %f\n", eda->entities[i]->position.z);
+        }
+    }
+    free(eda->entities);
+
+    printf("freeing size: %d\n", eda->size);
+    free(eda);
+}
+
+void PushBack(EntityDynamicArray *eda, Entity *entity)
+{
+    float expansionRate = 0.25;
+
+    if (eda->allocatedSize <= eda->size) {
+        uint32 newTotalSpace = eda->allocatedSize +
+           (unsigned int)(eda->allocatedSize * expansionRate);
+
+        Entity *tmp = *eda->entities;
+        unsigned int oldSize = eda->size;
+
+        *eda->entities = (Entity*)malloc(sizeof(Entity*) * newTotalSpace);
+        memset(*eda->entities, 0, sizeof(Entity) * newTotalSpace);
+        memcpy(*eda->entities, tmp, sizeof(Entity) * oldSize);
+
+        free(tmp);
+
+        eda->allocatedSize  = newTotalSpace;
+    }
+
+    eda->entities[eda->size] = entity;
+    eda->size++;
+}
+
+void GetNonTraversableEntities(EntityDynamicArray *eda, Entity *allEntities,
+                               int totalEntities)
+{
+    /* don't include the player for now */
+    for(int i = 0; i < totalEntities; i++) {
+        bool isTraversable = allEntities[i].isTraversable;
+        bool isPlayer = allEntities[i].isPlayer;
+
+#if 1
+        if (isPlayer) {
+            printf("player x: %f\n", allEntities[i].position.x);
+            printf("player y: %f\n", allEntities[i].position.y);
+            printf("player z: %f\n", allEntities[i].position.z);
+            printf("player id: %d\n", allEntities[i].id);
+        }
+#endif
+
+        if (isPlayer || isTraversable)
+            continue;
+
+#if 0
+            printf("entity triangle x: %f\n", allEntities[i].position.x);
+            printf("entity triangle y: %f\n", allEntities[i].position.y);
+            printf("entity triangle z: %f\n", allEntities[i].position.z);
+            printf("entity ID: %d\n", allEntities[i].id);
+            PAUSE_HERE("pause");
+#endif
+
+            PushBack(eda, &allEntities[i]);
+    }
+}
+
+Entity *GetListOfNonTraversableEntities(EntityDynamicArray *eda, int *out_size)
+{
+    *out_size = eda->size;
+    return *eda->entities;
+
+}
 #endif

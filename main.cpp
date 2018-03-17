@@ -55,7 +55,7 @@ static SDL_GLContext mainContext;
 
 #include "windows_platform.cpp"
 /* different platforms may have different ways to load a library, so creating a
- * struct within the platform file 
+ * struct within the platform file
  * Not sure about the name though.
  */
 static RenderAPI renderAPI;
@@ -64,8 +64,8 @@ static RenderAPI renderAPI;
 
 int main(int argc, char *argv[])
 {
-    if(!WindowSetup() || 
-            !WindowsOpenGLSetup() || 
+    if(!WindowSetup() ||
+            !WindowsOpenGLSetup() ||
             !WindowsSDLTTFSetup() ||
             !LoadDLLWindows(&renderAPI))
         return -1;
