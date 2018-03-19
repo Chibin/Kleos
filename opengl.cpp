@@ -4,6 +4,13 @@
 #define OpenGLCheckErrors() _defined_openGLCheckErrors(__FILE__, __LINE__)
 void _defined_openGLCheckErrors(const char *file, int line);
 
+struct Vertex {
+    GLfloat position[3];
+    GLfloat color[4];
+    GLfloat normal[3];
+    GLfloat uv[2];
+};
+
 struct Program {
     GLuint handle;
 
@@ -35,6 +42,61 @@ void OpenGLBeginUseProgram(GLuint program, GLuint textureID = 0)
 void OpenGLEndUseProgram()
 {
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void OpenGLCreateVAO(GLuint &vao,
+        GLuint &vbo, uint32 vboSize, Vertex *vboVertices,
+        GLuint &ebo, uint32 eboSize, GLuint *eboVertices,
+        GLenum vboUsage = GL_STATIC_DRAW,
+        GLenum eboUsage = GL_STATIC_DRAW)
+{
+    /*  Initialization code (done once (unless your object frequently changes)) */
+    // 1. Bind Vertex Array Object
+    glBindVertexArray(vao);
+        // 2. Copy our vertices array in a buffer for OpenGL to use
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, vboSize, vboVertices, vboUsage);
+        /* This determines whether you'll use glDrawElements or glDrawArrays.
+         * NOTE: assuming to always use ebo
+         */
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, eboVertices, eboUsage);
+
+        /* vCoord, vColor, and vTexCoord are the common attributes */
+
+        const int numVertexSize = 12;
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, color));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, uv));
+
+        /* used for GLSL 4.x */
+#if 0
+        glEnableVertexAttribArray(0);
+        glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+        glVertexAttribBinding(0, 0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
+        glVertexAttribBinding(1, 0);
+        glEnableVertexAttribArray(2);
+        glVertexAttribFormat(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, offsetof(Vertex, color));
+        glVertexAttribBinding(2, 0);
+#endif
+
+    /* Unbind the VAO (NOT THE EBO); We need to make sure that we always unbind.
+     * Otherwise, we might accidentally save some unwanted commands into
+     * the vertext array object.
+     */
+
+    /*  It is common practice to unbind OpenGL objects when we're done
+     *  configuring them so we don't mistakenly (mis)configure them
+     *  elsewhere. */
+    glBindVertexArray(0);
 }
 
 GLuint * OpenGLAllocateTexture(int textureFormat, int width, int height, void * data)

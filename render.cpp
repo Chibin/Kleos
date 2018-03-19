@@ -1,6 +1,7 @@
 #ifndef __RENDER__
 #define __RENDER_
 
+#include <stddef.h> /* offsetof */
 #include <stdio.h>
 #include <string>
 
@@ -34,10 +35,10 @@
 
 #include "rectangle.cpp"
 
-#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GLfloat *vertices, GameTimestep **gameTimestep)
+#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, Vertex *vertices, GameTimestep **gameTimestep)
 #define RENDER(name) void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 
-void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, GLfloat *vertices);
+void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, Vertex *vertices);
 void RenderAllEntities(GLuint program);
 void Update(Entity *player, GameTimestep *gameTimestep);
 void LoadStuff();
@@ -97,7 +98,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         Entity* rectEntity = AddNewEntity(g_entityManager);
         rectEntity->isPlayer = false;
         g_testRectangle = CreateRectangle(rectEntity, startingPosition, color, 1, 1);
-        g_testRectangle->vertices = CreateVertices(g_testRectangle);
     }
 
     if (!init) {
@@ -205,7 +205,7 @@ void Update(Entity *player, GameTimestep *gameTimestep)
 }
 
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, GLfloat *vertices)
+            GLuint debugProgram, Entity *entity, Vertex *vertices)
 {
 
     /* TODO: Fix alpha blending... it's currently not true transparency.
@@ -232,7 +232,7 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     position = glm::translate(position, player->position);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * RECT_SIZE, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, vertices, GL_STATIC_DRAW);
 
     OpenGLCheckErrors();
 
@@ -278,8 +278,7 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     /* XXX: THIS IS BAD TO DO every frame!! :(
      * this also should be a GL_DYNAMIC_SOMETHING DRAW */
-    glBufferData(GL_ARRAY_BUFFER,
-            sizeof(GLfloat) * g_testRectangle->size, g_testRectangle->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_testRectangle->vertices, GL_STATIC_DRAW);
 
     for (unsigned int i = 0; i < g_entityManager->size; i++) {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), g_entityManager->entities[i].position)));
@@ -319,7 +318,6 @@ void LoadStuff()
     v3 startingPosition = {-1, -2, 0};
     Entity* rectEntity = AddNewEntity(g_entityManager, startingPosition);
     ASSERT(rectEntity != NULL);
-    //rectEntity->position = startingPosition;
     rectEntity->isTraversable = false;
     rectEntity->isPlayer = false;
 }

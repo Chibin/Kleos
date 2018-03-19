@@ -2,10 +2,10 @@
 #define __RECTANGLE__
 
 #define RECT_SIZE 36
-
+#define NUM_OF_RECT_CORNER 4
 struct Rect {
     Entity *entity;
-    GLfloat *vertices;
+    Vertex vertices[4];
 
     real32 width, height;
 
@@ -33,7 +33,7 @@ static GLuint g_rectIndices[] = {  // Note that we start from 0!
     1, 2, 3    // Second Triangle
 };
 
-GLfloat *CreateVertices(Rect *rect);
+void CreateVertices(Rect *rect);
 
 Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color, real32 width, real32 height, bool isTraversable = true)
 {
@@ -61,7 +61,7 @@ Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color, real32 widt
     tmp->bottomLeft = v3{0,0,0};
     tmp->topLeft = v3{0, height, 0};
 
-    tmp->vertices = CreateVertices(tmp);
+    CreateVertices(tmp);
 
     return tmp;
 }
@@ -141,85 +141,98 @@ GLfloat *CreateDefaultRectangleVertices(){
     return vertices;
 }
 
-GLfloat *CreateVertices(Rect *rect)
+
+void CreateVertices(Rect *rect)
 {
     /* texCoords + verticesCoords + color*/
-    GLfloat *vertices = NULL;
-    vertices = (GLfloat*)malloc(sizeof(GLfloat) * RECT_SIZE);
+    Vertex *vTopRight = &(rect->vertices[0]);
 
-    if (!vertices) {
-        DEBUG_PRINT("Failed to malloc!");
-    }
+    vTopRight->position[0] = rect->topRight.x;
+    vTopRight->position[1] = rect->topRight.y;
+    vTopRight->position[2] = rect->topRight.z;
+    vTopRight->color[0] = rect->color.r;
+    vTopRight->color[1] = rect->color.g;
+    vTopRight->color[2] = rect->color.b;
+    vTopRight->color[3] = rect->color.a;
 
-    vertices[0] = rect->topRight.x;
-    vertices[1] = rect->topRight.y;
-    vertices[2] = rect->topRight.z;
-    vertices[3] = rect->color.r;
-    vertices[4] = rect->color.g;
-    vertices[5] = rect->color.b;
-    vertices[6] = rect->color.a;
+    vTopRight->normal[0] = 0;
+    vTopRight->normal[0] = 0;
+    vTopRight->normal[0] = 0;
 
-    if (rect->isTextureUpsideDown) {
-        vertices[7] = 1;
-        vertices[8] = 0;
-    }
-    else {
-        vertices[7] = 1;
-        vertices[8] = 1;
-    }
-
-    vertices[9]  = rect->bottomRight.x;
-    vertices[10] = rect->bottomRight.y;
-    vertices[11] = rect->bottomRight.z;
-    vertices[12] = rect->color.r;
-    vertices[13] = rect->color.g;
-    vertices[14] = rect->color.b;
-    vertices[15] = rect->color.a;
+    vTopRight->uv[2];
 
     if (rect->isTextureUpsideDown) {
-        vertices[16] = 1;
-        vertices[17] = 1;
+        vTopRight->uv[0] = 1;
+        vTopRight->uv[1] = 0;
     }
     else {
-        vertices[16] = 1;
-        vertices[17] = 0;
-
+        vTopRight->uv[0] = 1;
+        vTopRight->uv[1] = 1;
     }
 
-    vertices[18] = rect->bottomLeft.x;
-    vertices[19] = rect->bottomLeft.y;
-    vertices[20] = rect->bottomLeft.z;
-    vertices[21] = rect->color.r;
-    vertices[22] = rect->color.g;
-    vertices[23] = rect->color.b;
-    vertices[24] = rect->color.a;
+    Vertex *vBottomRight = &(rect->vertices[1]);
+    vBottomRight->position[0]  = rect->bottomRight.x;
+    vBottomRight->position[1] = rect->bottomRight.y;
+    vBottomRight->position[2] = rect->bottomRight.z;
+    vBottomRight->color[0] = rect->color.r;
+    vBottomRight->color[1] = rect->color.g;
+    vBottomRight->color[2] = rect->color.b;
+    vBottomRight->color[3] = rect->color.a;
+    vBottomRight->normal[0] = 0;
+    vBottomRight->normal[1] = 0;
+    vBottomRight->normal[2] = 0;
 
     if (rect->isTextureUpsideDown) {
-        vertices[25] = 0;
-        vertices[26] = 1;
+        vBottomRight->uv[0] = 1;
+        vBottomRight->uv[1] = 1;
     }
     else {
-        vertices[25] = 0;
-        vertices[26] = 0;
+        vBottomRight->uv[0] = 1;
+        vBottomRight->uv[1] = 0;
+
     }
 
-    vertices[27] = rect->topLeft.x;
-    vertices[28] = rect->topLeft.y;
-    vertices[29] = rect->topLeft.z;
-    vertices[30] = rect->color.r;
-    vertices[31] = rect->color.g;
-    vertices[32] = rect->color.b;
-    vertices[33] = rect->color.a;
+    Vertex *vBottomLeft = &(rect->vertices[2]);
+    vBottomLeft->position[0] = rect->bottomLeft.x;
+    vBottomLeft->position[1] = rect->bottomLeft.y;
+    vBottomLeft->position[2] = rect->bottomLeft.z;
+    vBottomLeft->color[0] = rect->color.r;
+    vBottomLeft->color[1] = rect->color.g;
+    vBottomLeft->color[2] = rect->color.b;
+    vBottomLeft->color[3] = rect->color.a;
+    vBottomLeft->normal[0] = 0;
+    vBottomLeft->normal[1] = 0;
+    vBottomLeft->normal[2] = 0;
 
     if (rect->isTextureUpsideDown) {
-        vertices[34] = 0;
-        vertices[35] = 0;
+        vBottomLeft->uv[0] = 0;
+        vBottomLeft->uv[1] = 1;
     }
     else {
-        vertices[34] = 0;
-        vertices[35] = 1;
+        vBottomLeft->uv[0] = 0;
+        vBottomLeft->uv[1] = 0;
     }
 
-    return vertices;
+    Vertex *topLeft = &(rect->vertices[3]);
+
+    topLeft->position[0] = rect->topLeft.x;
+    topLeft->position[1] = rect->topLeft.y;
+    topLeft->position[2] = rect->topLeft.z;
+    topLeft->color[0] = rect->color.r;
+    topLeft->color[1] = rect->color.g;
+    topLeft->color[2] = rect->color.b;
+    topLeft->color[3] = rect->color.a;
+    topLeft->normal[0] = rect->topLeft.x;
+    topLeft->normal[1] = rect->topLeft.y;
+    topLeft->normal[2] = rect->topLeft.z;
+
+    if (rect->isTextureUpsideDown) {
+        topLeft->uv[0] = 0;
+        topLeft->uv[1] = 0;
+    }
+    else {
+        topLeft->uv[0] = 0;
+        topLeft->uv[1] = 1;
+    }
 }
 #endif

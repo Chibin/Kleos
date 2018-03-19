@@ -48,38 +48,11 @@ void MainGameLoop(SDL_Window *mainWindow)
     textureID = ImageToTexture("./materials/textures/awesomeface.png");
 #endif
 
-    firstRect->vertices = CreateVertices(firstRect);
+    CreateVertices(firstRect);
 
-    /*  Initialization code (done once (unless your object frequently changes)) */
-    // 1. Bind Vertex Array Object
-    glBindVertexArray(vao);
-        // 2. Copy our vertices array in a buffer for OpenGL to use
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * firstRect->size, firstRect->vertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_rectIndices), g_rectIndices, GL_STATIC_DRAW);
-
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
-
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(7* sizeof(GLfloat)));
-
-    /* Unbind the VAO (NOT THE EBO). We need to make sure that we always unbind,
-     * otherwise we might accidentally save some unwanted commands into
-     * the vertext array object
-     */
-
-    /*  It is common practice to unbind OpenGL objects when we're done
-     *  configuring them so we don't mistakenly (mis)configure them
-     *  elsewhere. */
-    glBindVertexArray(0);
+    OpenGLCreateVAO(vao,
+            vbo, sizeof(Vertex) * NUM_OF_RECT_CORNER, firstRect->vertices,
+            ebo, sizeof(g_rectIndices), g_rectIndices);
 
     v2 screenResolution = {SCREEN_WIDTH, SCREEN_HEIGHT};
     GameTimestep *gameTimestep = NULL;

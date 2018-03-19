@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 
+#include <stddef.h> /* offsetof */
 #include <stdio.h>
 #include <stdlib.h> /* for calloc */
 #include <assert.h>
