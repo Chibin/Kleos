@@ -5,8 +5,8 @@
 #define NUM_OF_RECT_CORNER 4
 struct Rect {
     Entity *entity;
-    Vertex vertices[4];
 
+    Vertex vertices[4];
     real32 width, height;
 
     v3 startingPosition;
@@ -24,7 +24,6 @@ struct Rect {
     v2 uvTextureBottomRight;
 
     bool isTextureUpsideDown;
-
     int size;
 };
 
@@ -62,6 +61,7 @@ Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color, real32 widt
     tmp->topLeft = v3{0, height, 0};
 
     CreateVertices(tmp);
+    tmp->entity->data = tmp->vertices;
 
     return tmp;
 }
@@ -234,5 +234,24 @@ void CreateVertices(Rect *rect)
         topLeft->uv[0] = 0;
         topLeft->uv[1] = 1;
     }
+}
+
+inline
+void DrawRectangle()
+{
+    const int totalIndiciesFromEbo = 6;
+    glDrawElements(GL_TRIANGLES,
+            totalIndiciesFromEbo,
+            GL_UNSIGNED_INT, 0);
+}
+
+inline
+void DrawDebugRectangle()
+{
+    const int totalIndiciesFromEbo = 6;
+    glDrawElements(GL_POINTS,
+            totalIndiciesFromEbo,
+            GL_UNSIGNED_INT, 0);
+
 }
 #endif

@@ -89,7 +89,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         /* NOTE: we don't need to free the player since we created it in the
          * stack
          */
+        v4 color = {0.4f, 0.0f, 0.4f, 1.0f};
+        v3 pos = {0, 0, 0};
         g_player = &g_entityManager->entities[index];
+        CreateRectangle(g_player, pos, color, 2, 1);
     }
 
     if (!g_testRectangle) {
@@ -232,7 +235,9 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     position = glm::translate(position, player->position);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, vertices, GL_STATIC_DRAW);
+    vertices;
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_player->data, GL_STATIC_DRAW);
+    //glBufferSubData(GL_ARRAY_BUFFER, offsetof(Vertex, position), sizeof(GLfloat) * 3, vertices);
 
     OpenGLCheckErrors();
 
@@ -253,7 +258,7 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     projectionLoc = glGetUniformLocation(program, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-    glDrawElements(GL_POINTS, 6, GL_UNSIGNED_INT, 0);
+    DrawDebugRectangle();
     OpenGLEndUseProgram();
 #endif
 
@@ -268,24 +273,33 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     OpenGLCheckErrors();
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    DrawRectangle();
 
     /* TODO: explore a better way of doing this. reloading vertices over and
      * over might be meh. performance hit with just doing VAO might be very
      * miniscule that it's worth doing for a simpler code base?
      */
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    /* XXX: THIS IS BAD TO DO every frame!! :(
-     * this also should be a GL_DYNAMIC_SOMETHING DRAW */
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_testRectangle->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_entityManager->entities[10001].data, GL_STATIC_DRAW);
 
     for (unsigned int i = 0; i < g_entityManager->size; i++) {
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), g_entityManager->entities[i].position)));
+        Entity *entityToDraw;
+        entityToDraw = &(g_entityManager->entities[i]);
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), entityToDraw->position)));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        if (i == 10002) {
+            //glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_entityManager->entities[i].data, GL_STATIC_DRAW);
+            /* If the data is interleaved, you have to do multiple
+             * glBufferSubData calls in order to populate all the right parts */
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeof(GLfloat) * 3, g_entityManager->entities[i].data);
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1) , sizeof(GLfloat) * 3, (Vertex*)g_entityManager->entities[i].data + 1);
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2) , sizeof(GLfloat) * 3, (Vertex*)g_entityManager->entities[i].data + 2);
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3) , sizeof(GLfloat) * 3, (Vertex*)g_entityManager->entities[i].data + 3);
+        }
+        DrawRectangle();
     }
 
     glBindVertexArray(0);
@@ -301,6 +315,7 @@ void RenderAllEntities(GLuint vbo)
 
 void LoadStuff()
 {
+    v4 color = {0.4f, 0.0f, 0.4f, 1.0f};
     /* load random data */
     for(int i = 0; i < 100; i++) {
         for(int y = 0; y < 100; y++) {
@@ -309,16 +324,18 @@ void LoadStuff()
             Entity* rectEntity = AddNewEntity(g_entityManager,
                     startingPosition);
             ASSERT(rectEntity != NULL);
+            CreateRectangle(rectEntity, startingPosition, color, 1, 1);
             rectEntity->isTraversable = true;
             rectEntity->isPlayer = false;
         }
     }
 
     /* Let's add a non-traversable entity */
-    v3 startingPosition = {-1, -2, 0};
-    Entity* rectEntity = AddNewEntity(g_entityManager, startingPosition);
-    ASSERT(rectEntity != NULL);
-    rectEntity->isTraversable = false;
-    rectEntity->isPlayer = false;
+    v3 startingPosition = {-3, -3, 0};
+    Entity* collisionEntity = AddNewEntity(g_entityManager, startingPosition);
+    ASSERT(collisionEntity != NULL);
+    CreateRectangle(collisionEntity, startingPosition, color, 2, 5);
+    collisionEntity->isTraversable = false;
+    collisionEntity->isPlayer = false;
 }
 #endif

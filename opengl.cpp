@@ -5,6 +5,7 @@
 void _defined_openGLCheckErrors(const char *file, int line);
 
 struct Vertex {
+    /* 3 + 4 + 3 + 2  = 12 */ 
     GLfloat position[3];
     GLfloat color[4];
     GLfloat normal[3];
@@ -47,7 +48,7 @@ void OpenGLEndUseProgram()
 void OpenGLCreateVAO(GLuint &vao,
         GLuint &vbo, uint32 vboSize, Vertex *vboVertices,
         GLuint &ebo, uint32 eboSize, GLuint *eboVertices,
-        GLenum vboUsage = GL_STATIC_DRAW,
+        GLenum vboUsage = GL_DYNAMIC_DRAW,
         GLenum eboUsage = GL_STATIC_DRAW)
 {
     /*  Initialization code (done once (unless your object frequently changes)) */
@@ -63,9 +64,7 @@ void OpenGLCreateVAO(GLuint &vao,
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, eboVertices, eboUsage);
 
-        /* vCoord, vColor, and vTexCoord are the common attributes */
-
-        const int numVertexSize = 12;
+        /* common attributes */
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
 
