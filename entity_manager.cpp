@@ -122,8 +122,8 @@ EntityDynamicArray *CreateEntityDynamicArray()
 {
     EntityDynamicArray *eda = (EntityDynamicArray*)malloc(sizeof(EntityDynamicArray));
     memset(eda, 0, sizeof(EntityDynamicArray));
-    eda->allocatedSize = 10;
-    eda->entities = (Entity**)malloc(sizeof(Entity)*eda->allocatedSize);
+    eda->allocatedSize = 20000;
+    eda->entities = (Entity**)malloc(sizeof(Entity*)*eda->allocatedSize);
 
     return eda;
 }
@@ -133,17 +133,8 @@ void DeleteEntityDynamicArray(EntityDynamicArray *eda)
     if (!eda)
         return;
 
-    if (eda->entities && eda->size > 0) {
-        for(int i = 0; i < eda->size; i++) {
-            printf("entity triangle x: %f\n", eda->entities[i]->position.x);
-            printf("entity triangle y: %f\n", eda->entities[i]->position.y);
-            printf("entity triangle z: %f\n", eda->entities[i]->position.z);
-        }
-    }
-    free(eda->entities);
-
-    printf("freeing size: %d\n", eda->size);
-    free(eda);
+    memset(eda->entities, 0, sizeof(Entity*)*eda->allocatedSize);
+    eda->size = 0;
 }
 
 void PushBack(EntityDynamicArray *eda, Entity *entity)
@@ -170,42 +161,4 @@ void PushBack(EntityDynamicArray *eda, Entity *entity)
     eda->size++;
 }
 
-void GetNonTraversableEntities(EntityDynamicArray *eda, Entity *allEntities,
-                               int totalEntities)
-{
-    /* don't include the player for now */
-    for(int i = 0; i < totalEntities; i++) {
-        bool isTraversable = allEntities[i].isTraversable;
-        bool isPlayer = allEntities[i].isPlayer;
-
-#if 1
-        if (isPlayer) {
-            printf("player x: %f\n", allEntities[i].position.x);
-            printf("player y: %f\n", allEntities[i].position.y);
-            printf("player z: %f\n", allEntities[i].position.z);
-            printf("player id: %d\n", allEntities[i].id);
-        }
-#endif
-
-        if (isPlayer || isTraversable)
-            continue;
-
-#if 0
-            printf("entity triangle x: %f\n", allEntities[i].position.x);
-            printf("entity triangle y: %f\n", allEntities[i].position.y);
-            printf("entity triangle z: %f\n", allEntities[i].position.z);
-            printf("entity ID: %d\n", allEntities[i].id);
-            PAUSE_HERE("pause");
-#endif
-
-            PushBack(eda, &allEntities[i]);
-    }
-}
-
-Entity *GetListOfNonTraversableEntities(EntityDynamicArray *eda, int *out_size)
-{
-    *out_size = eda->size;
-    return *eda->entities;
-
-}
 #endif

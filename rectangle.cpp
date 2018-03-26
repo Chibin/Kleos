@@ -11,6 +11,25 @@ struct Rect {
 
     v3 startingPosition;
 
+#pragma warning(push)
+#pragma warning (disable: 4201)
+    union {
+        struct {
+            real32 max[2];
+        };
+        real32 maxX;
+        real32 maxY;
+    };
+
+    union {
+        struct {
+            real32 min[2];
+        };
+        real32 minX;
+        real32 minY;
+    };
+#pragma warning(pop)
+
     v3 topLeft;
     v3 topRight;
     v3 bottomLeft;
@@ -49,6 +68,8 @@ Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color, real32 widt
     tmp->entity->isTraversable = isTraversable;
     tmp->size = RECT_SIZE;
 
+    tmp->entity->width = width;
+    tmp->entity->height = height;
     tmp->width = width;
     tmp->height = height;
 
@@ -59,6 +80,11 @@ Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color, real32 widt
     tmp->bottomRight = v3{width, 0, 0};
     tmp->bottomLeft = v3{0,0,0};
     tmp->topLeft = v3{0, height, 0};
+
+    tmp->minX = startingPosition.x;
+    tmp->minY = startingPosition.y;
+    tmp->maxX = startingPosition.x + width;
+    tmp->maxY = startingPosition.y + height;
 
     CreateVertices(tmp);
     tmp->entity->data = tmp->vertices;
@@ -243,6 +269,18 @@ void DrawRectangle()
     glDrawElements(GL_TRIANGLES,
             totalIndiciesFromEbo,
             GL_UNSIGNED_INT, 0);
+}
+
+inline
+void DrawPointRectangle()
+{
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    const int totalIndiciesFromEbo = 6;
+    glDrawElements(GL_POINTS,
+            totalIndiciesFromEbo,
+            GL_UNSIGNED_INT, 0);
+
+    glDisable(GL_PROGRAM_POINT_SIZE);
 }
 
 inline

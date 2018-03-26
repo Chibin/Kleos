@@ -1,6 +1,5 @@
 #ifndef __ENTITY__
 #define __ENTITY__
-
 struct stats {
     int movementSpeed;
 };
@@ -12,7 +11,12 @@ struct Entity {
     glm::vec3 position;
     glm::vec3 velocity;
     glm::vec3 acceleration;
+    real32 width;
+    real32 height;
 
+    int type;
+    real32 minX;
+    real32 maxX;
     Vertex *data;
 
     /* TODO: entity may or may not have stats ...
@@ -29,8 +33,8 @@ struct Entity {
 inline
 void EntityMoveUp(Entity *entity) {
     /* TODO: Replace this later with speed (time based)*/
-    entity->acceleration += glm::vec3(0, 10, 0);
-    entity->velocity += glm::vec3(0, 15, 0);
+    entity->acceleration = glm::vec3(0, 9.81, 0);
+    entity->velocity = glm::vec3(0, 5, 0);
 }
 
 inline
@@ -40,12 +44,12 @@ void EntityMoveDown(Entity *entity) {
 
 inline
 void EntityMoveLeft(Entity *entity) {
-    entity->velocity += glm::vec3(-0.01, 0, 0);
+    entity->velocity.x += -0.01f;
 }
 
 inline
 void EntityMoveRight(Entity *entity) {
-    entity->velocity += glm::vec3(0.01, 0, 0);
+    entity->velocity.x += 0.01f;
 }
 
 Entity *GetNonTraversableEntities(uint32 *out_NumOfNTs)

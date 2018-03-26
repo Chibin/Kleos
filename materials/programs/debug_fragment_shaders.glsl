@@ -19,5 +19,5 @@ void main()
     color.b = 0;
     color.r += texture(tex, TexCoord).r;
     color.g += texture(tex, TexCoord).r;
-    color.a = 1;
+    color.a = 0.3;
 }

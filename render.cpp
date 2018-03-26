@@ -4,6 +4,7 @@
 #include <stddef.h> /* offsetof */
 #include <stdio.h>
 #include <string>
+#include <stdlib.h> /* abs */
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -34,23 +35,27 @@
 #include "input.cpp"
 
 #include "rectangle.cpp"
+#include "rect_manager.cpp"
+#include "collision.cpp"
 
-#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, Vertex *vertices, GameTimestep **gameTimestep)
+#define UPDATEANDRENDER(name) bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GameTimestep **gameTimestep)
 #define RENDER(name) void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity)
 
-void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity, Vertex *vertices);
+void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, Entity *entity);
 void RenderAllEntities(GLuint program);
 void Update(Entity *player, GameTimestep *gameTimestep);
 void LoadStuff();
 
 /* TODO: We'll need to get rid of these global variables later on */
-Rect *g_testRectangle = NULL;
 Camera *g_camera = NULL;
 glm::mat4 *g_projection = NULL;
 GLfloat *g_rectangleVertices = NULL;
 static bool init = false;
 EntityManager *g_entityManager = NULL;
 Entity *g_player = NULL;
+Rect *g_playerRect = NULL;
+RectManager *g_rectManager = NULL;
+EntityDynamicArray *g_eda = NULL;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -67,11 +72,19 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_camera = CreateCamera();
     }
 
+    if (!g_eda) {
+        g_eda = CreateEntityDynamicArray();
+    }
+
     if (!g_projection) {
         float SCREEN_WIDTH = screenResolution.v[0];
         float SCREEN_HEIGHT = screenResolution.v[1];
         g_projection = (glm::mat4*)malloc(sizeof(glm::mat4));
         *g_projection = glm::infinitePerspective(45.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f);
+    }
+
+    if (!g_rectManager) {
+        g_rectManager = CreateRectManager();
     }
 
     if (!g_entityManager) {
@@ -92,15 +105,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v4 color = {0.4f, 0.0f, 0.4f, 1.0f};
         v3 pos = {0, 0, 0};
         g_player = &g_entityManager->entities[index];
-        CreateRectangle(g_player, pos, color, 2, 1);
-    }
-
-    if (!g_testRectangle) {
-        v3 startingPosition = {-5, -5, 0};
-        v4 color = {0.4f, 0.0f, 0.4f, 1.0f};
-        Entity* rectEntity = AddNewEntity(g_entityManager);
-        rectEntity->isPlayer = false;
-        g_testRectangle = CreateRectangle(rectEntity, startingPosition, color, 1, 1);
+        g_player->type = 2;
+        g_playerRect = CreateRectangle(g_player, pos, color, 2, 1);
     }
 
     if (!init) {
@@ -141,42 +147,74 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Update(g_player, *gameTimestep);
+
     /* create scene */
     /* filter scene */
     /* render scene */
-    Render(vao, vbo, textureID, program, debugProgram, g_player, vertices);
+
+    Render(vao, vbo, textureID, program, debugProgram, g_player);
     return continueRunning;
 }
 
 void UpdateEntityPosition(Entity *e, GameTimestep *gt, bool isPlayer = false)
 {
     /* NOTE: Look at this later Axis-Aligned Bounding Box*/
-    uint32 numOfNTs = 0;
+    // position, velocity, acceleration
+    const GLfloat gravity = -0.81f;
 
-    EntityDynamicArray *eda = CreateEntityDynamicArray();
-    GetNonTraversableEntities(eda,
-            g_entityManager->entities,
-            g_entityManager->size);
+    for (int i = 0; i < g_rectManager->NonTraversable.size; i++) {
+        Rect *rect = g_rectManager->NonTraversable.rects[i];
 
-    bool canUpdatePosition = true;
-    for(uint32 i = 0; i < numOfNTs && eda != NULL; i++)
-    {
-        canUpdatePosition = false;
+        real32 dX = e->velocity.x;
+        real32 dY =
+            e->velocity.y +
+            (gravity + e->acceleration.y) * gt->deltaTime/1000;
+
+        glm::vec3 rayDirection = {dX, dY, 0};
+        rayDirection = glm::normalize(rayDirection);
+        rayDirection = glm::vec3(1/rayDirection.x, 1/rayDirection.y, 0);
+
+        printf("rect X- min: %f max: %f\n", rect->minX, rect->maxX);
+        printf("rect Y- min: %f max: %f\n", rect->minY, rect->maxY);
+
+        g_playerRect->min[0] = e->position.x;
+        g_playerRect->max[0] = e->position.x + g_playerRect->width;
+
+        g_playerRect->min[1] = e->position.y;
+        g_playerRect->max[1] = e->position.y + g_playerRect->height;
+
+        rect->min[0] = rect->entity->position.x;
+        rect->max[0] = rect->entity->position.x + rect->width;
+
+        rect->min[1] = rect->entity->position.y;
+        rect->max[1] = rect->entity->position.y + rect->height;
+
+//      if (IntersectionAABB(rect, v2{e->position.x, e->position.y}, rayDirection))
+        Rect nextUpdate = *g_playerRect;
+        nextUpdate.min[0] = e->position.x + e->velocity.x;
+        nextUpdate.max[0] = e->position.x + nextUpdate.width + e->velocity.x;
+        nextUpdate.min[1] = e->position.y + (e->velocity.y + (gravity + e->acceleration.y) * gt->deltaTime/1000) * gt->deltaTime/1000;
+        nextUpdate.max[1] = e->position.y + nextUpdate.height + (e->velocity.y + (gravity + e->acceleration.y) * gt->deltaTime/1000) * gt->deltaTime/1000;
+        
+        if (TestAABBAABB(rect, &nextUpdate)) {
+            /* how to differentiate between x and y axis? */
+            printf("I hit something!!!!!!!\n");
+            e->position.y = rect->entity->position.y + rect->height;
+            e->velocity.y = 0;
+            e->acceleration.y = 0;
+            e->position.x += e->velocity.x * gt->deltaTime;
+        }
+        else {
+            e->acceleration.y += gravity;
+            e->velocity.y += e->acceleration.y * gt->deltaTime/1000;
+            e->position.y += e->velocity.y * gt->deltaTime/1000;
+            e->position.x += e->velocity.x * gt->deltaTime;
+        }
+
     }
-
-    e->position.x += e->velocity.x * gt->deltaTime;
 
     /* Apply "friction" */
     e->velocity.x = 0;
-
-    if (canUpdatePosition) {
-        /* did entity hit floor */
-        if (e->position.y < -1) {
-            e->position.y = -1;
-            e->velocity.y = 0;
-            e->acceleration.y = 0;
-        }
-    }
 
     if (isPlayer) {
         /* TODO: bound checking for the camera such that we only move the camera
@@ -187,28 +225,21 @@ void UpdateEntityPosition(Entity *e, GameTimestep *gt, bool isPlayer = false)
         CameraUpdateTarget(g_camera, e->position);
     }
 
-    DeleteEntityDynamicArray(eda);
+    //DeleteEntityDynamicArray(g_eda);
 }
 
 void Update(Entity *player, GameTimestep *gameTimestep)
 {
     /* update logics and data here */
     /* physics */
-    const GLfloat gravity = -9.81f;
     UpdateGameTimestep(gameTimestep);
-
-    // position, velocity, acceleration
-    player->acceleration.y += gravity;
-    player->velocity.y += player->acceleration.y * gameTimestep->deltaTime/1000;
-    player->position.y += player->velocity.y * gameTimestep->deltaTime/1000;
 
     /* Update movable entities */
     UpdateEntityPosition(player, gameTimestep, true);
-
 }
 
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, Vertex *vertices)
+            GLuint debugProgram, Entity *entity)
 {
 
     /* TODO: Fix alpha blending... it's currently not true transparency.
@@ -235,32 +266,11 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     position = glm::translate(position, player->position);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    vertices;
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_player->data, GL_STATIC_DRAW);
-    //glBufferSubData(GL_ARRAY_BUFFER, offsetof(Vertex, position), sizeof(GLfloat) * 3, vertices);
 
     OpenGLCheckErrors();
 
     GLuint modelLoc, viewLoc, projectionLoc;
-#define DEBUG_SHADER 1
-#if DEBUG_SHADER
-    OpenGLBeginUseProgram(debugProgram, textureID);
-    glEnable(GL_PROGRAM_POINT_SIZE);
-
-    modelLoc = glGetUniformLocation(debugProgram, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
-    OpenGLCheckErrors();
-
-    viewLoc = glGetUniformLocation(program, "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-    OpenGLCheckErrors();
-
-    projectionLoc = glGetUniformLocation(program, "projection");
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
-    DrawDebugRectangle();
-    OpenGLEndUseProgram();
-#endif
 
     OpenGLBeginUseProgram(program, textureID);
 
@@ -273,7 +283,6 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     OpenGLCheckErrors();
-    DrawRectangle();
 
     /* TODO: explore a better way of doing this. reloading vertices over and
      * over might be meh. performance hit with just doing VAO might be very
@@ -281,8 +290,8 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
      */
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_entityManager->entities[10001].data, GL_STATIC_DRAW);
 
+    int type = -1;
     for (unsigned int i = 0; i < g_entityManager->size; i++) {
         Entity *entityToDraw;
         entityToDraw = &(g_entityManager->entities[i]);
@@ -290,20 +299,66 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-        if (i == 10002) {
-            //glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER, g_entityManager->entities[i].data, GL_STATIC_DRAW);
+        if (type != entityToDraw->type) {
+            type = entityToDraw->type;
+
             /* If the data is interleaved, you have to do multiple
              * glBufferSubData calls in order to populate all the right parts */
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeof(GLfloat) * 3, g_entityManager->entities[i].data);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1) , sizeof(GLfloat) * 3, (Vertex*)g_entityManager->entities[i].data + 1);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2) , sizeof(GLfloat) * 3, (Vertex*)g_entityManager->entities[i].data + 2);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3) , sizeof(GLfloat) * 3, (Vertex*)g_entityManager->entities[i].data + 3);
-        }
+            glBufferSubData(GL_ARRAY_BUFFER,
+                    (GLintptr)(offsetof(Vertex, position)),
+                    sizeof(GLfloat) * 3,
+                    g_entityManager->entities[i].data);
+            glBufferSubData(GL_ARRAY_BUFFER,
+                    /* cast to Vertex* so that we can get the proper pointer
+                     * arithmetic */
+                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 1),
+                    sizeof(GLfloat) * 3,
+                    (Vertex*)g_entityManager->entities[i].data + 1);
+            glBufferSubData(GL_ARRAY_BUFFER,
+                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 2),
+                    sizeof(GLfloat) * 3,
+                    (Vertex*)g_entityManager->entities[i].data + 2);
+            glBufferSubData(GL_ARRAY_BUFFER,
+                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 3),
+                    sizeof(GLfloat) * 3,
+                    (Vertex*)g_entityManager->entities[i].data + 3);
+        } 
         DrawRectangle();
     }
 
-    glBindVertexArray(0);
     OpenGLEndUseProgram();
+
+#define DEBUG_SHADER 1
+#if DEBUG_SHADER
+    OpenGLBeginUseProgram(debugProgram, textureID);
+
+    modelLoc = glGetUniformLocation(debugProgram, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+    OpenGLCheckErrors();
+
+    viewLoc = glGetUniformLocation(program, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+    OpenGLCheckErrors();
+
+    projectionLoc = glGetUniformLocation(program, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+
+    for( int i = 0; i < g_rectManager->NonTraversable.size; i++) {
+        Entity *debugEntity = g_rectManager->NonTraversable.rects[i]->entity;
+
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), debugEntity->position)));
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeof(GLfloat) * 3, debugEntity->data);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1) , sizeof(GLfloat) * 3, (Vertex*)debugEntity->data + 1);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2) , sizeof(GLfloat) * 3, (Vertex*)debugEntity->data + 2);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3) , sizeof(GLfloat) * 3, (Vertex*)debugEntity->data + 3);
+
+        DrawPointRectangle();
+        DrawRectangle();
+    }
+
+    OpenGLEndUseProgram();
+#endif
+    glBindVertexArray(0);
 
     OpenGLCheckErrors();
 }
@@ -324,18 +379,24 @@ void LoadStuff()
             Entity* rectEntity = AddNewEntity(g_entityManager,
                     startingPosition);
             ASSERT(rectEntity != NULL);
-            CreateRectangle(rectEntity, startingPosition, color, 1, 1);
+            Rect *r = CreateRectangle(rectEntity, startingPosition, color, 1, 1);
             rectEntity->isTraversable = true;
             rectEntity->isPlayer = false;
+            rectEntity->type = 0;
+            PushBack(&(g_rectManager->Traversable), r);
         }
     }
 
     /* Let's add a non-traversable entity */
-    v3 startingPosition = {-3, -3, 0};
-    Entity* collisionEntity = AddNewEntity(g_entityManager, startingPosition);
-    ASSERT(collisionEntity != NULL);
-    CreateRectangle(collisionEntity, startingPosition, color, 2, 5);
-    collisionEntity->isTraversable = false;
-    collisionEntity->isPlayer = false;
+    for (int i = 0; i < 2; i++) {
+        v3 startingPosition = {-3 + 4* (real32)i, -10, 0};
+        Entity* collisionEntity = AddNewEntity(g_entityManager, startingPosition);
+        ASSERT(collisionEntity != NULL);
+        Rect *collissionRect = CreateRectangle(collisionEntity, startingPosition, color, 3, 5);
+        collisionEntity->isTraversable = false;
+        collisionEntity->isPlayer = false;
+        collisionEntity->type = 1;
+        PushBack(&(g_rectManager->NonTraversable), collissionRect);
+    }
 }
 #endif

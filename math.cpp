@@ -2,6 +2,8 @@
 #define __MATH_
 
 #define FLOOR(value) int(value)
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 typedef uint8_t uint8;
 typedef uint16_t uint16;

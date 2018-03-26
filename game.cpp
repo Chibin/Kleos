@@ -51,7 +51,8 @@ void MainGameLoop(SDL_Window *mainWindow)
     CreateVertices(firstRect);
 
     OpenGLCreateVAO(vao,
-            vbo, sizeof(Vertex) * NUM_OF_RECT_CORNER, firstRect->vertices,
+            vbo, sizeof(Vertex) * NUM_OF_RECT_CORNER,
+            NULL, /* use null as way to not load anything to vbo*/
             ebo, sizeof(g_rectIndices), g_rectIndices);
 
     v2 screenResolution = {SCREEN_WIDTH, SCREEN_HEIGHT};
@@ -61,7 +62,7 @@ void MainGameLoop(SDL_Window *mainWindow)
 
     while (continueRunning)
     {
-        continueRunning = (renderAPI.updateAndRender)(vao, vbo, *textureID, program, debugProgram, screenResolution, firstRect->vertices, &gameTimestep);
+        continueRunning = (renderAPI.updateAndRender)(vao, vbo, *textureID, program, debugProgram, screenResolution, &gameTimestep);
 
         ProcessOpenGLErrors();
 

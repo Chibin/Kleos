@@ -26,6 +26,16 @@ void UpdateGameTimestep(GameTimestep *gt)
     gt->prevTime = gt->latestTime;
     gt->latestTime = SDL_GetTicks();
 
+    static int counter = 0;
+    if (counter > 1) {
+        gt->deltaTime = 30;
+        counter = 0;
+
+    } else {
+        gt->deltaTime = 0;
+    }
+
+    counter ++;
     gt->deltaTime = gt->latestTime - gt->prevTime;
 }
 #endif
