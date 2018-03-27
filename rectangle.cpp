@@ -15,18 +15,18 @@ struct Rect {
 #pragma warning (disable: 4201)
     union {
         struct {
-            real32 max[2];
+            real32 maxX;
+            real32 maxY;
         };
-        real32 maxX;
-        real32 maxY;
+        real32 max[2];
     };
 
     union {
         struct {
-            real32 min[2];
+            real32 minX;
+            real32 minY;
         };
-        real32 minX;
-        real32 minY;
+        real32 min[2];
     };
 #pragma warning(pop)
 

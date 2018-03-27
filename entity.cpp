@@ -34,7 +34,7 @@ inline
 void EntityMoveUp(Entity *entity) {
     /* TODO: Replace this later with speed (time based)*/
     entity->acceleration = glm::vec3(0, 9.81, 0);
-    entity->velocity = glm::vec3(0, 5, 0);
+    entity->velocity = glm::vec3(0, 15, 0);
 }
 
 inline

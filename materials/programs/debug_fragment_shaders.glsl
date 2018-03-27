@@ -14,10 +14,9 @@ void main()
      * complaining for "uniform mat4 view"
      * doing this fails glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
      */
-    color.r = 1;
-    color.g = 1;
-    color.b = 0;
+    color = vColor;
     color.r += texture(tex, TexCoord).r;
-    color.g += texture(tex, TexCoord).r;
-    color.a = 0.3;
+    color.g += texture(tex, TexCoord).g;
+    color.b += texture(tex, TexCoord).b;
+    color.a = 0.1;
 }
