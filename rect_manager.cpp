@@ -11,14 +11,18 @@ RectDynamicArray *CreateRectDynamicArray();
 
 #pragma warning(push)
 #pragma warning (disable: 4201)
-union RectManager {
+struct RectManager {
 
-    struct {
-        RectDynamicArray Traversable;
-        RectDynamicArray NonTraversable;
+    union {
+        struct {
+            RectDynamicArray Traversable;
+            RectDynamicArray NonTraversable;
+        };
+
+        RectDynamicArray rda[2];
     };
 
-    RectDynamicArray rda[2];
+    Rect *player;
 };
 #pragma warning(pop)
 

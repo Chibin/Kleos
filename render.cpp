@@ -56,6 +56,7 @@ Entity *g_player = NULL;
 Rect *g_playerRect = NULL;
 RectManager *g_rectManager = NULL;
 EntityDynamicArray *g_eda = NULL;
+static bool g_debugMode = false;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -107,6 +108,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
         g_playerRect = CreateRectangle(g_player, pos, color, 2, 1);
+        g_rectManager->player = g_playerRect;
     }
 
     if (!init) {
@@ -266,28 +268,24 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 
     GLuint modelLoc, viewLoc, projectionLoc;
 
-
-
-    //DrawHurtBoxes();
-    //DrawHitBoxes();
-    //DrawCollisions();
+    if (g_debugMode) {
+        //DrawHurtBoxes();
+        //DrawHitBoxes();
+        //DrawCollisions();
+    }
 
     OpenGLBeginUseProgram(program, textureID);
 
     /* load uniform variable to shader program before drawing */
     modelLoc = glGetUniformLocation(program, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
     viewLoc = glGetUniformLocation(program, "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     projectionLoc = glGetUniformLocation(program, "projection");
+
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     OpenGLCheckErrors();
-
-    /* TODO: explore a better way of doing this. reloading vertices over and
-     * over might be meh. performance hit with just doing VAO might be very
-     * miniscule that it's worth doing for a simpler code base?
-     */
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     /* TODO: sort things based on the transparency?? You have to draw the
@@ -295,77 +293,33 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
      * background properly. otherwise, you'll just get a blank background.
      */
 
-    int type = -1;
-    for (unsigned int i = 0; i < g_entityManager->size; i++) {
-        Entity *entityToDraw;
-        entityToDraw = &(g_entityManager->entities[i]);
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), entityToDraw->position)));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+    int sizeOfVertices = sizeof(GLfloat) * 3;
+    for(int i = 0; i < g_rectManager->Traversable.size; i++) {
+        Entity *debugEntity = g_rectManager->Traversable.rects[i]->entity;
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), debugEntity->position)));
 
-        if (entityToDraw->type == 2)
-            continue;
-
-        if (type != entityToDraw->type) {
-            type = entityToDraw->type;
-
+        /* only load once since they're all similar -- just different positions.*/
+        if (i == 0) {
             /* If the data is interleaved, you have to do multiple
              * glBufferSubData calls in order to populate all the right parts */
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    (GLintptr)(offsetof(Vertex, position)),
-                    sizeof(GLfloat) * 3,
-                    g_entityManager->entities[i].data);
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    /* cast to Vertex* so that we can get the proper pointer
-                     * arithmetic */
-                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 1),
-                    sizeof(GLfloat) * 3,
-                    (Vertex*)g_entityManager->entities[i].data + 1);
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 2),
-                    sizeof(GLfloat) * 3,
-                    (Vertex*)g_entityManager->entities[i].data + 2);
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 3),
-                    sizeof(GLfloat) * 3,
-                    (Vertex*)g_entityManager->entities[i].data + 3);
+            /* cast to Vertex* so that we can get the proper pointer * arithmetic */
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeOfVertices, debugEntity->data);
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1) , sizeOfVertices, (Vertex*)debugEntity->data + 1);
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2) , sizeOfVertices, (Vertex*)debugEntity->data + 2);
+            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3) , sizeOfVertices, (Vertex*)debugEntity->data + 3);
         }
 
         DrawRectangle();
     }
 
-    for (unsigned int i = 0; i < g_entityManager->size; i++) {
-        Entity *entityToDraw;
-        entityToDraw = &(g_entityManager->entities[i]);
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), entityToDraw->position)));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
-        if (2 == entityToDraw->type ) {
-            /* If the data is interleaved, you have to do multiple
-             * glBufferSubData calls in order to populate all the right parts */
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    (GLintptr)(offsetof(Vertex, position)),
-                    sizeof(GLfloat) * 3,
-                    g_entityManager->entities[i].data);
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    /* cast to Vertex* so that we can get the proper pointer
-                     * arithmetic */
-                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 1),
-                    sizeof(GLfloat) * 3,
-                    (Vertex*)g_entityManager->entities[i].data + 1);
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 2),
-                    sizeof(GLfloat) * 3,
-                    (Vertex*)g_entityManager->entities[i].data + 2);
-            glBufferSubData(GL_ARRAY_BUFFER,
-                    (GLintptr)((Vertex*)offsetof(Vertex, position) + 3),
-                    sizeof(GLfloat) * 3,
-                    (Vertex*)g_entityManager->entities[i].data + 3);
-            DrawRectangle();
-            break;
-        }
-    }
+    /* Draw the player */
+    Entity *entityToDraw = g_rectManager->player->entity;
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), entityToDraw->position)));
+    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeOfVertices, entityToDraw->data);
+    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1), sizeOfVertices, (Vertex*)entityToDraw->data + 1);
+    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2), sizeOfVertices, (Vertex*)entityToDraw->data + 2);
+    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3), sizeOfVertices, (Vertex*)entityToDraw->data + 3);
+    DrawRectangle();
 
     OpenGLEndUseProgram();
 
@@ -373,28 +327,22 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 #if DEBUG_SHADER
     OpenGLBeginUseProgram(debugProgram, textureID);
 
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glBlendEquation(GL_MAX);
-
     modelLoc = glGetUniformLocation(debugProgram, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-    OpenGLCheckErrors();
-
     viewLoc = glGetUniformLocation(program, "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-    OpenGLCheckErrors();
-
     projectionLoc = glGetUniformLocation(program, "projection");
+
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     for( int i = 0; i < g_rectManager->NonTraversable.size; i++) {
         Entity *debugEntity = g_rectManager->NonTraversable.rects[i]->entity;
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(), debugEntity->position)));
-        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeof(GLfloat) * 3, debugEntity->data);
-        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1) , sizeof(GLfloat) * 3, (Vertex*)debugEntity->data + 1);
-        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2) , sizeof(GLfloat) * 3, (Vertex*)debugEntity->data + 2);
-        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3) , sizeof(GLfloat) * 3, (Vertex*)debugEntity->data + 3);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offsetof(Vertex, position)), sizeOfVertices, debugEntity->data);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 1) , sizeOfVertices, (Vertex*)debugEntity->data + 1);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 2) , sizeOfVertices, (Vertex*)debugEntity->data + 2);
+        glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)((Vertex*)offsetof(Vertex, position) + 3) , sizeOfVertices, (Vertex*)debugEntity->data + 3);
 
         DrawPointRectangle();
         DrawRectangle();
