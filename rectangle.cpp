@@ -3,6 +3,13 @@
 
 #define RECT_SIZE 36
 #define NUM_OF_RECT_CORNER 4
+enum RectType {
+    REGULAR   = 0,
+    COLLISION = 1,
+    HITBOX    = 2,
+    HURTBOX   = 3
+};
+
 struct Rect {
     Entity *entity;
 
@@ -44,6 +51,8 @@ struct Rect {
 
     bool isTextureUpsideDown;
     int size;
+    RectType type;
+    uint32 ttl; /* time to live / duration */
 };
 
 static GLuint g_rectIndices[] = {  // Note that we start from 0!

@@ -1,5 +1,5 @@
 #ifndef __MATH__
-#define __MATH_
+#define __MATH__
 
 #define FLOOR(value) int(value)
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))

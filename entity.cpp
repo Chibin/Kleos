@@ -44,12 +44,12 @@ void EntityMoveDown(Entity *entity) {
 
 inline
 void EntityMoveLeft(Entity *entity) {
-    entity->velocity.x += -0.01f;
+    entity->velocity.x += -5.0f;
 }
 
 inline
 void EntityMoveRight(Entity *entity) {
-    entity->velocity.x += 0.01f;
+    entity->velocity.x += 5.0f;
 }
 
 Entity *GetNonTraversableEntities(uint32 *out_NumOfNTs)

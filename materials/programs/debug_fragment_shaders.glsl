@@ -15,8 +15,7 @@ void main()
      * doing this fails glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
      */
     color = vColor;
-    color.r += texture(tex, TexCoord).r;
-    color.g += texture(tex, TexCoord).g;
-    color.b += texture(tex, TexCoord).b;
-    color.a = 0.1;
+    color.r += texture(tex, TexCoord).r * .4;
+    color.g += texture(tex, TexCoord).g * .4;
+    color.b += texture(tex, TexCoord).b * .4;
 }

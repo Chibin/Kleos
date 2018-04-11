@@ -7,8 +7,6 @@ struct RectDynamicArray {
     Rect **rects;
 };
 
-RectDynamicArray *CreateRectDynamicArray();
-
 #pragma warning(push)
 #pragma warning (disable: 4201)
 struct RectManager {
@@ -26,6 +24,15 @@ struct RectManager {
 };
 #pragma warning(pop)
 
+RectDynamicArray *CreateRectDynamicArray(uint32 size = 15000)
+{
+    RectDynamicArray *rda = (RectDynamicArray*)malloc(sizeof(RectDynamicArray));
+    memset(rda, 0, sizeof(RectDynamicArray));
+    rda->allocatedSize = size;
+    rda->rects = (Rect**)malloc(sizeof(Rect)*rda->allocatedSize);
+
+    return rda;
+}
 
 RectManager *CreateRectManager()
 {
@@ -36,15 +43,6 @@ RectManager *CreateRectManager()
     return rm;
 }
 
-RectDynamicArray *CreateRectDynamicArray()
-{
-    RectDynamicArray *rda = (RectDynamicArray*)malloc(sizeof(RectDynamicArray));
-    memset(rda, 0, sizeof(RectDynamicArray));
-    rda->allocatedSize = 15000;
-    rda->rects = (Rect**)malloc(sizeof(Rect)*rda->allocatedSize);
-
-    return rda;
-}
 
 void DeleteRectDynamicArray(RectDynamicArray *rda)
 {

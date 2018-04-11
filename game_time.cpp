@@ -31,10 +31,9 @@ void UpdateGameTimestep(GameTimestep *gt)
     static int counter = 0;
     /* Hardcode timestep for now */
     if (counter > 1) {
-        gt->deltaTime = 16;
-        gt->dt = (real32)16/(real32)1000.0f;
+        gt->deltaTime = 5;
+        gt->dt = (real32)5/(real32)1000.0f;
         counter = 0;
-
     }
     counter ++;
     //gt->deltaTime = gt->latestTime - gt->prevTime;
