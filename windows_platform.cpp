@@ -5,7 +5,7 @@ typedef bool (__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID
 
 struct RenderAPI {
     std::string libraryName;
-    HMODULE renderDLL;
+    HMODULE libHandle;
     UPDATEANDRENDER updateAndRender;
 };
 
@@ -124,13 +124,13 @@ void WindowsCleanup()
 
 bool LoadDLLWindows(RenderAPI *renderAPI)
 {
-    renderAPI->renderDLL = LoadLibrary("render.dll");
-    if(!renderAPI->renderDLL) {
+    renderAPI->libHandle = LoadLibrary("render.dll");
+    if(!renderAPI->libHandle) {
         printf("Failed to load library! \n");
         return false;
     }
 
-    HMODULE RenderDLL = renderAPI->renderDLL;
+    HMODULE RenderDLL = renderAPI->libHandle;
     renderAPI->updateAndRender = (UPDATEANDRENDER)GetProcAddress(RenderDLL,
             "UpdateAndRender");
 

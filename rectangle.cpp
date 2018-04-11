@@ -191,10 +191,8 @@ void CreateVertices(Rect *rect)
     vTopRight->color[3] = rect->color.a;
 
     vTopRight->normal[0] = 0;
-    vTopRight->normal[0] = 0;
-    vTopRight->normal[0] = 0;
-
-    vTopRight->uv[2];
+    vTopRight->normal[1] = 0;
+    vTopRight->normal[2] = 0;
 
     if (rect->isTextureUpsideDown) {
         vTopRight->uv[0] = 1;
