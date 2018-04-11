@@ -8,16 +8,25 @@
 #include <stdio.h>
 #include <stdlib.h> /* for calloc */
 #include <assert.h>
-#include <windows.h>
 
+#define WINDOWS 0
+#if WINDOWS
+#include <windows.h>
+#endif
+
+#if WINDOWS
 #include <SDL.h>
 #include <SDL_ttf.h>
+#else
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#endif
 #define ASSERT(condition) SDL_assert(condition)
 
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 #pragma warning(push)
 #pragma warning (disable: 4201)
@@ -54,7 +63,11 @@ static SDL_Window *mainWindow;
 /* our opengl context handle */
 static SDL_GLContext mainContext;
 
+#if WINDOWS
 #include "windows_platform.cpp"
+#else
+#include "linux_platform.cpp"
+#endif
 /* different platforms may have different ways to load a library, so creating a
  * struct within the platform file
  * Not sure about the name though.
