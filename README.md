@@ -30,12 +30,19 @@ https://www.mkyong.com/linux/grep-for-windows-findstr-example/
 aliased:
 `DOSKEY gvim="C:\Program Files (x86)\Vim\vim74\gvim.exe" -- $1`
 
-# LINUX
+# Debian
 apt-get install libsdl2-dev
 apt-get install glm-devel
 apt-get install glm
 apt-get install libsdl2-dev
 
 I mnaully built sdl2-ttf and glm
+
+# Fedora
+dnf install mesa-libGL-devel
+dnf install glew-devel
+dnf install SDL2_ttf-devel
+dnf install SDL_ttf-devel
+dnf install glm-devel
 
 ``` clang -std=c++14  main.cpp /usr/lib64/libGLEW.a -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ ```

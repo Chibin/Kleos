@@ -1,7 +1,11 @@
 #ifndef __ENTITY_MANAGER__
 #define __ENTITY_MANAGER__
 
-struct EntityManager {
+#include "entity.h"
+#include "logger.h"
+
+struct EntityManager
+{
     /* TODO: We're currently assuming that no entities will be removed,
      * may be later on implement something that will detect things that we
      * remove.
@@ -28,34 +32,39 @@ struct EntityManager {
 
 void _allocateMoreMemory(EntityManager *em);
 
-EntityManager* CreateEntityManger()
+EntityManager *CreateEntityManger()
 {
-    EntityManager *em = (EntityManager*)malloc(sizeof(EntityManager));
-    if (!em) {
+    auto *em = static_cast<EntityManager *>(malloc(sizeof(EntityManager)));
+    if (em == nullptr)
+    {
         PAUSE_HERE("entity manger is NULL? %s\n", __func__);
     }
 
     em->size = 0;
-    em->entityIDs = NULL;
+    em->entityIDs = nullptr;
     em->totalAllocatedSpace = 10000000; /* arbitrary amount */
 
     /* TODO: not sure if we should zero the values */
-    em->entities = (Entity*)malloc(sizeof(Entity) * em->totalAllocatedSpace);
+    em->entities =
+        static_cast<Entity *>(malloc(sizeof(Entity) * em->totalAllocatedSpace));
     memset(em->entities, 0, sizeof(Entity) * em->totalAllocatedSpace);
 
     /* TODO: This should really be an assert */
-    if (!em->entities) {
+    if (em->entities == nullptr)
+    {
         PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
     }
 
     return em;
 }
 
-Entity *AddNewEntity(EntityManager *em, v3 position = v3{0,0,0})
+Entity *AddNewEntity(EntityManager *em, v3 position = v3{ 0, 0, 0 })
 {
     /* Creates a new entity that's zeroed out */
     if (em->totalAllocatedSpace < em->size)
+    {
         _allocateMoreMemory(em);
+    }
 
     Entity *entity = &(em->entities[em->size]);
 
@@ -74,30 +83,37 @@ int Append(EntityManager *em, Entity *entity)
      * space???
      */
     if (em->totalAllocatedSpace < em->size)
+    {
         _allocateMoreMemory(em);
+    }
 
     entity->id = em->size;
     memcpy(&(em->entities[em->size]), entity, sizeof(Entity));
     em->size++;
 
-    return em->size-1;
+    return em->size - 1;
 }
 
 /* helper functions */
-void _allocateMoreMemory(EntityManager *em) {
+void _allocateMoreMemory(EntityManager *em)
+{
     /* TODO: This is broken. freeing the memory is not a good idea because
-     * there might be pointers pointed to the old memory that we plan on deleting.
+     * there might be pointers pointed to the old memory that we plan on
+     * deleting.
      */
 
-    unsigned int newTotalAllocatedSpace = em->totalAllocatedSpace + FLOOR(em->totalAllocatedSpace * 0.25);
+    unsigned int newTotalAllocatedSpace =
+        em->totalAllocatedSpace + FLOOR(em->totalAllocatedSpace * 0.25);
 
-    Entity *entities = (Entity*)malloc(sizeof(Entity) * newTotalAllocatedSpace);
+    auto *entities =
+        static_cast<Entity *>(malloc(sizeof(Entity) * newTotalAllocatedSpace));
     memset(entities, 0, sizeof(Entity) * newTotalAllocatedSpace);
 
     memcpy(entities, em->entities, sizeof(Entity) * em->totalAllocatedSpace);
     free(em->entities);
 
-    if (!entities || !em->entities) {
+    if ((entities == nullptr) || (em->entities == nullptr))
+    {
         PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
     }
 
@@ -105,7 +121,8 @@ void _allocateMoreMemory(EntityManager *em) {
     em->entities = entities;
 }
 
-struct EntityDynamicArray {
+struct EntityDynamicArray
+{
     Entity *firstEntity;
     Entity *nextEntity;
     Entity *lastEntity;
@@ -120,20 +137,24 @@ struct EntityDynamicArray {
 
 EntityDynamicArray *CreateEntityDynamicArray()
 {
-    EntityDynamicArray *eda = (EntityDynamicArray*)malloc(sizeof(EntityDynamicArray));
+    auto *eda =
+        static_cast<EntityDynamicArray *>(malloc(sizeof(EntityDynamicArray)));
     memset(eda, 0, sizeof(EntityDynamicArray));
     eda->allocatedSize = 20000;
-    eda->entities = (Entity**)malloc(sizeof(Entity*)*eda->allocatedSize);
+    eda->entities =
+        static_cast<Entity **>(malloc(sizeof(Entity *) * eda->allocatedSize));
 
     return eda;
 }
 
 void DeleteEntityDynamicArray(EntityDynamicArray *eda)
 {
-    if (!eda)
+    if (eda == nullptr)
+    {
         return;
+    }
 
-    memset(eda->entities, 0, sizeof(Entity*)*eda->allocatedSize);
+    memset(eda->entities, 0, sizeof(Entity *) * eda->allocatedSize);
     eda->size = 0;
 }
 
@@ -141,20 +162,23 @@ void PushBack(EntityDynamicArray *eda, Entity *entity)
 {
     float expansionRate = 0.25;
 
-    if (eda->allocatedSize <= eda->size) {
-        uint32 newTotalSpace = eda->allocatedSize +
-           (unsigned int)(eda->allocatedSize * expansionRate);
+    if (eda->allocatedSize <= eda->size)
+    {
+        uint32 newTotalSpace =
+            eda->allocatedSize +
+            static_cast<unsigned int>(eda->allocatedSize * expansionRate);
 
         Entity *tmp = *eda->entities;
         unsigned int oldSize = eda->size;
 
-        *eda->entities = (Entity*)malloc(sizeof(Entity*) * newTotalSpace);
+        *eda->entities =
+            static_cast<Entity *>(malloc(sizeof(Entity *) * newTotalSpace));
         memset(*eda->entities, 0, sizeof(Entity) * newTotalSpace);
         memcpy(*eda->entities, tmp, sizeof(Entity) * oldSize);
 
         free(tmp);
 
-        eda->allocatedSize  = newTotalSpace;
+        eda->allocatedSize = newTotalSpace;
     }
 
     eda->entities[eda->size] = entity;

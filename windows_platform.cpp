@@ -1,9 +1,13 @@
 #ifndef __WINDOWS_PLATFORM__
 #define __WINDOWS_PLATFORM__
 
-typedef bool (__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GameTimestep **gameTimestep);
+typedef bool(__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID,
+                                       GLuint program, GLuint debugProgram,
+                                       v2 screenResolution,
+                                       GameTimestep **gameTimestep);
 
-struct RenderAPI {
+struct RenderAPI
+{
     std::string libraryName;
     HMODULE libHandle;
     UPDATEANDRENDER updateAndRender;
@@ -27,7 +31,8 @@ bool WindowSetup()
     }
 
     mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+                                  SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
+                                  SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
     if (!mainWindow)
     {
@@ -41,7 +46,8 @@ bool WindowSetup()
 
 bool WindowsSDLTTFSetup()
 {
-    if (TTF_Init() < 0) {
+    if (TTF_Init() < 0)
+    {
         printf("TTF failed to init\n");
         return false;
     }
@@ -62,22 +68,24 @@ bool WindowsOpenGLSetup()
     GLenum glewError = glewInit();
 
     GLenum err;
-    if ((err = glGetError()) != GL_NO_ERROR) {
+    if ((err = glGetError()) != GL_NO_ERROR)
+    {
         /* Ignore GL_INVALID_ENUM. There are cases where using glewExperimental
          * can cause a GL_INVALID_ENUM, which is fine -- just ignore it.
          * Otherwise, we do have a problem.
          */
-        if ( err != GL_INVALID_ENUM )
+        if (err != GL_INVALID_ENUM)
             printf("OpenGL: found true error x%x\n", err);
     }
 
-    if( glewError != GLEW_OK ) {
-        std::cout << "Error initializing GLEW! " << glewGetErrorString( glewError ) << std::endl;
+    if (glewError != GLEW_OK)
+    {
+        std::cout << "Error initializing GLEW! "
+                  << glewGetErrorString(glewError) << std::endl;
         return false;
     }
 
-
-    if( SDL_GL_SetSwapInterval( 1 ) < 0 ) 
+    if (SDL_GL_SetSwapInterval(1) < 0)
         printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
 
     /* clean up the screen */
@@ -91,8 +99,10 @@ bool WindowsOpenGLSetup()
 void _setOpenGLSettings()
 {
     // Set our OpenGL version.
-    // SDL_GL_CONTEXT_CORE gives us only the newer version, deprecated functions are disabled
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    // SDL_GL_CONTEXT_CORE gives us only the newer version, deprecated functions
+    // are disabled
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -102,7 +112,8 @@ void _setOpenGLSettings()
     // You may need to change this to 16 or 32 for your system
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    // This makes our buffer swap syncronized with the monitor's vertical refresh
+    // This makes our buffer swap syncronized with the monitor's vertical
+    // refresh
     SDL_GL_SetSwapInterval(1);
 }
 
@@ -125,16 +136,18 @@ void WindowsCleanup()
 bool LoadDLLWindows(RenderAPI *renderAPI)
 {
     renderAPI->libHandle = LoadLibrary("render.dll");
-    if(!renderAPI->libHandle) {
+    if (!renderAPI->libHandle)
+    {
         printf("Failed to load library! \n");
         return false;
     }
 
     HMODULE RenderDLL = renderAPI->libHandle;
-    renderAPI->updateAndRender = (UPDATEANDRENDER)GetProcAddress(RenderDLL,
-            "UpdateAndRender");
+    renderAPI->updateAndRender =
+        (UPDATEANDRENDER)GetProcAddress(RenderDLL, "UpdateAndRender");
 
-    if(!renderAPI->updateAndRender) {
+    if (!renderAPI->updateAndRender)
+    {
         printf("Failed to load function \"UpdateAndRender\"!\n");
         return false;
     }
@@ -150,21 +163,24 @@ void PrintSDLTTFVersion()
     SDL_TTF_VERSION(&compiledVersion);
 
     std::cout << "Linked version:\n"
-        << linkedVersion->major << "." << linkedVersion->minor << "." << linkedVersion->patch;
+              << linkedVersion->major << "." << linkedVersion->minor << "."
+              << linkedVersion->patch;
 
     std::cout << "Compiled version:\n"
-        << compiledVersion.major << "." << compiledVersion.minor << "." << compiledVersion.patch
-        << std::endl;
-
+              << compiledVersion.major << "." << compiledVersion.minor << "."
+              << compiledVersion.patch << std::endl;
 }
 
 char *GetProgramPath()
 {
     char *dataPath = NULL;
     char *basePath = SDL_GetBasePath();
-    if (basePath) {
+    if (basePath)
+    {
         dataPath = basePath;
-    } else {
+    }
+    else
+    {
         dataPath = SDL_strdup("./");
     }
     return dataPath;
@@ -179,9 +195,8 @@ void PrintFileTimeStamp(WIN32_FIND_DATA searchData)
     FileTimeToSystemTime(&searchData.ftCreationTime, &stUTC);
     SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
 
-    printf("%02d/%02d/%d  %02d:%02d\n",
-            stLocal.wMonth, stLocal.wDay, stLocal.wYear,
-            stLocal.wHour, stLocal.wMinute);
+    printf("%02d/%02d/%d  %02d:%02d\n", stLocal.wMonth, stLocal.wDay,
+           stLocal.wYear, stLocal.wHour, stLocal.wMinute);
 }
 
 void FindFile(const char *dirPath, const char *fileRegex)
@@ -189,20 +204,21 @@ void FindFile(const char *dirPath, const char *fileRegex)
     const unsigned BUFFER_SIZE = 256;
     char searchPath[BUFFER_SIZE];
 
-    std::strncpy(searchPath, dirPath, BUFFER_SIZE-1);
-    std::strncat(searchPath, fileRegex, BUFFER_SIZE-strlen(searchPath)-1);
+    std::strncpy(searchPath, dirPath, BUFFER_SIZE - 1);
+    std::strncat(searchPath, fileRegex, BUFFER_SIZE - strlen(searchPath) - 1);
 
     WIN32_FIND_DATA searchData;
     memset(&searchData, 0, sizeof(WIN32_FIND_DATA));
 
     HANDLE handle = FindFirstFile(searchPath, &searchData);
 
-    while(handle != INVALID_HANDLE_VALUE)
+    while (handle != INVALID_HANDLE_VALUE)
     {
-        unsigned long qwResult = (((ULONGLONG)searchData.ftLastWriteTime.dwHighDateTime) << 32) +
-                                 searchData.ftLastWriteTime.dwLowDateTime;
+        unsigned long qwResult =
+            (((ULONGLONG)searchData.ftLastWriteTime.dwHighDateTime) << 32) +
+            searchData.ftLastWriteTime.dwLowDateTime;
 
-        if(FindNextFile(handle, &searchData) == FALSE)
+        if (FindNextFile(handle, &searchData) == FALSE)
             break;
     }
 
@@ -220,17 +236,17 @@ void ListFiles(const char *dirPath)
     char *fileRegex = "*";
     char searchPath[BUFFER_SIZE];
 
-    std::strncpy(searchPath, dirPath, BUFFER_SIZE-1);
-    std::strncat(searchPath, fileRegex, BUFFER_SIZE-strlen(searchPath)-1);
+    std::strncpy(searchPath, dirPath, BUFFER_SIZE - 1);
+    std::strncat(searchPath, fileRegex, BUFFER_SIZE - strlen(searchPath) - 1);
 
     WIN32_FIND_DATA search_data;
     memset(&search_data, 0, sizeof(WIN32_FIND_DATA));
 
     HANDLE handle = FindFirstFile(searchPath, &search_data);
-    while(handle != INVALID_HANDLE_VALUE)
+    while (handle != INVALID_HANDLE_VALUE)
     {
-        //DEBUG_PRINT("\n%s\n", search_data.cFileName);
-        if(FindNextFile(handle, &search_data) == FALSE)
+        // DEBUG_PRINT("\n%s\n", search_data.cFileName);
+        if (FindNextFile(handle, &search_data) == FALSE)
             break;
     }
 

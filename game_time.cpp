@@ -1,16 +1,8 @@
-#ifndef __GAME_TIME__
-#define __GAME_TIME__
-
-struct GameTimestep {
-    uint32 prevTime;
-    uint32 latestTime;
-    uint32 deltaTime;
-    real32 dt;
-};
+#include "game_time.h"
+#include <SDL2/SDL.h>
 
 void PauseGameTimestep()
 {
-
 }
 
 void ResetGameTimestep(GameTimestep *gt)
@@ -22,7 +14,6 @@ void ResetGameTimestep(GameTimestep *gt)
     gt->dt = 0;
 }
 
-
 void UpdateGameTimestep(GameTimestep *gt)
 {
     gt->prevTime = gt->latestTime;
@@ -30,12 +21,12 @@ void UpdateGameTimestep(GameTimestep *gt)
 
     static int counter = 0;
     /* Hardcode timestep for now */
-    if (counter > 1) {
+    if (counter > 1)
+    {
         gt->deltaTime = 5;
-        gt->dt = (real32)5/(real32)1000.0f;
+        gt->dt = static_cast<real32>(5) / static_cast<real32>(1000.0f);
         counter = 0;
     }
-    counter ++;
-    //gt->deltaTime = gt->latestTime - gt->prevTime;
+    counter++;
+    // gt->deltaTime = gt->latestTime - gt->prevTime;
 }
-#endif

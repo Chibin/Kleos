@@ -1,38 +1,22 @@
-#ifndef __OPENGL__
-#define __OPENGL__
-
-#define OpenGLCheckErrors() _defined_openGLCheckErrors(__FILE__, __LINE__)
-void _defined_openGLCheckErrors(const char *file, int line);
-
-struct Vertex {
-    /* 3 + 4 + 3 + 2  = 12 */ 
-    GLfloat position[3];
-    GLfloat color[4];
-    GLfloat normal[3];
-    GLfloat uv[2];
-};
-
-struct Program {
-    GLuint handle;
-
-    /* common things to get passed into a shader program
-     * position
-     * camera view
-     * projection
-     */
-};
+#include "opengl.h"
+#include "main.h"
+#include <SDL2/SDL.h>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
 
 /* texture object 0 is a special number. If a texture object gets
  * deleted, then the texture object gets rebounded to 0.
  */
-void OpenGLBeginUseProgram(GLuint program, GLuint textureID = 0)
+void OpenGLBeginUseProgram(GLuint program, GLuint textureID)
 {
     glUseProgram(program);
 
     /* NOTE: you shouldn't call this function unless you have a shader
      * program already binded (glUseProgram)
      */
-    if (textureID != 0) {
+    if (textureID != 0)
+    {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
         /* TODO:Pass in tex? */
@@ -45,36 +29,38 @@ void OpenGLEndUseProgram()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void OpenGLCreateVAO(GLuint &vao,
-        GLuint &vbo, uint32 vboSize, Vertex *vboVertices,
-        GLuint &ebo, uint32 eboSize, GLuint *eboVertices,
-        GLenum vboUsage = GL_DYNAMIC_DRAW,
-        GLenum eboUsage = GL_STATIC_DRAW)
+void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
+                     Vertex *vboVertices, GLuint &ebo, uint32 eboSize,
+                     GLuint *eboVertices, GLenum vboUsage, GLenum eboUsage)
 {
-    /*  Initialization code (done once (unless your object frequently changes)) */
+    /*  Initialization code (done once (unless your object frequently changes))
+     */
     // 1. Bind Vertex Array Object
     glBindVertexArray(vao);
-        // 2. Copy our vertices array in a buffer for OpenGL to use
+    // 2. Copy our vertices array in a buffer for OpenGL to use
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, vboSize, vboVertices, vboUsage);
-        /* This determines whether you'll use glDrawElements or glDrawArrays.
-         * NOTE: assuming to always use ebo
-         */
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, eboVertices, eboUsage);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vboSize, vboVertices, vboUsage);
+    /* This determines whether you'll use glDrawElements or glDrawArrays.
+     * NOTE: assuming to always use ebo
+     */
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboSize, eboVertices, eboUsage);
 
-        /* common attributes */
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
+    /* common attributes */
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (GLvoid *)offsetof(Vertex, position));
 
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, color));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (GLvoid *)offsetof(Vertex, color));
 
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, uv));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (GLvoid *)offsetof(Vertex, uv));
 
-        /* used for GLSL 4.x */
+    /* used for GLSL 4.x */
 #if 0
         glEnableVertexAttribArray(0);
         glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
@@ -98,16 +84,17 @@ void OpenGLCreateVAO(GLuint &vao,
     glBindVertexArray(0);
 }
 
-GLuint * OpenGLAllocateTexture(int textureFormat, int width, int height, void * data)
+GLuint *OpenGLAllocateTexture(int textureFormat, int width, int height,
+                              void *data)
 {
     /* returns a texture ID "handle" to
      * access it later in OpenGL.
      */
 
-    GLuint *textureID = (GLuint*)malloc(sizeof(GLuint));
+    auto *textureID = static_cast<GLuint *>(malloc(sizeof(GLuint)));
     glGenTextures(1, textureID);
 
-    ASSERT(textureID != NULL);
+    ASSERT(textureID != nullptr);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, *textureID);
@@ -115,22 +102,23 @@ GLuint * OpenGLAllocateTexture(int textureFormat, int width, int height, void * 
     glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, width, height, 0,
                  textureFormat, GL_UNSIGNED_BYTE, data);
 
-    switch(textureFormat){
-        case GL_RGBA:
-            printf("RGBA\n");
-            /* TODO: Will need to remove later on */
-            OpenGLCheckErrors();
-            break;
-        case GL_RGB:
-            printf("RGB\n");
-            glTexParameteri(GL_TEXTURE_2D,  GL_GENERATE_MIPMAP, GL_TRUE);
-            /* TODO: Will need to remove later on */
-            OpenGLCheckErrors();
-            break;
+    switch (textureFormat)
+    {
+    case GL_RGBA:
+        printf("RGBA\n");
+        /* TODO: Will need to remove later on */
+        OpenGLCheckErrors();
+        break;
+    case GL_RGB:
+        printf("RGB\n");
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        /* TODO: Will need to remove later on */
+        OpenGLCheckErrors();
+        break;
 
-        default:
-            printf("Unknown\n");
-            break;
+    default:
+        printf("Unknown\n");
+        break;
     }
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -148,24 +136,37 @@ void _defined_openGLCheckErrors(const char *file, int line)
     /* TODO: change how we print the error? */
     // Process/log the error.
     GLenum err;
-    while((err = glGetError()) != GL_NO_ERROR){
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
         std::string error;
 
         printf("error detected at %s:%d:\n", file, line);
 
-        switch(err) {
-            case GL_INVALID_OPERATION: error="INVALID_OPERATION"; break;
-            case GL_INVALID_ENUM:      error="INVALID_ENUM";      break;
-            case GL_INVALID_VALUE:     error="INVALID_VALUE";     break;
-            case GL_OUT_OF_MEMORY:     error="OUT_OF_MEMORY";     break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION:
-                                       error="INVALID_FRAMEBUFFER_OPERATION";  break;
-            default: printf("something bad happened. "
-                            "unknown error: %d\n", err); break;
+        switch (err)
+        {
+        case GL_INVALID_OPERATION:
+            error = "INVALID_OPERATION";
+            break;
+        case GL_INVALID_ENUM:
+            error = "INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            error = "INVALID_VALUE";
+            break;
+        case GL_OUT_OF_MEMORY:
+            error = "OUT_OF_MEMORY";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            error = "INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        default:
+            printf("something bad happened. "
+                   "unknown error: %d\n",
+                   err);
+            break;
         }
 
         printf("an error occured: %s\n", error.c_str());
         ASSERT(strlen(error.c_str()) == 0);
     }
 }
-#endif
