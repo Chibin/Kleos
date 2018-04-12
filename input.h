@@ -1,5 +1,5 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include "sdl_common.h"
 
 void ProcessInputToMovement(SDL_Keycode sym);

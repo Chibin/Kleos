@@ -6,14 +6,7 @@
 #include <stdlib.h> /* abs */
 #include <string>
 
-#if WINDOWS
-#include <SDL.h>
-#include <SDL_ttf.h>
-#else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#endif
-#define ASSERT(condition) SDL_assert(condition)
+#include "sdl_common.h"
 
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>

@@ -1,5 +1,5 @@
 #include "game_time.h"
-#include <SDL2/SDL.h>
+#include "sdl_common.h"
 
 void PauseGameTimestep()
 {

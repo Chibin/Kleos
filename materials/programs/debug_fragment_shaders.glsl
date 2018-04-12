@@ -1,4 +1,5 @@
 #version 330 core
+precision highp float;
 in vec2 TexCoord;
 in vec4 vColor;
 

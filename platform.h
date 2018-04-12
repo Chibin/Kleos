@@ -1,5 +1,7 @@
+#pragma once
+
 #ifdef WIN32
-#include "windows_platform.h"
+#include "win32_platform.h"
 #else
 #include "linux_platform.h"
 #endif

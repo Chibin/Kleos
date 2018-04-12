@@ -8,12 +8,7 @@
 #include <assert.h>
 #include <cstring>
 
-// #if WINDOWS
-// #include <SDL.h>
-// #else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-// #endif
+#include "sdl_common.h"
 
 struct Texture
 {

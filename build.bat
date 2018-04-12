@@ -26,7 +26,7 @@ REM TODO: we'll need to port over glew32.dll and SDL2.dll SDL2_ttf.dll
 rem mkdir ..\..\build_game
 rem pushd ..\..\build_game
 
-cl /Zi /EHsc -Gm -GS -Gs9999999 %INCLUDE_PATH% %FILES% /link -HEAP:4294967296 /SUBSYSTEM:CONSOLE %LIB_PATH% %LIBS%
+cl /DWIN32#1 /Zi /EHsc -Gm -GS -Gs9999999 %INCLUDE_PATH% %FILES% /link-HEAP:4294967296 /SUBSYSTEM:CONSOLE %LIB_PATH% %LIBS%
 if NOT %errorlevel% == 0 goto :error
 
 
@@ -38,7 +38,7 @@ SET INCLUDE_PATH=/I D:\Libraries\glew-1.13.0\include /I D:\Libraries\glm
 SET INCLUDE_PATH=/I D:\Libraries\SDL2-2.0.7\include %INCLUDE_PATH%
 SET INCLUDE_PATH=/I D:\Libraries\SDL2_ttf-2.0.14 %INCLUDE_PATH%
 
-cl %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender -OUT:render_new.dll 
+cl /DWIN32#1 %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender -OUT:render_new.dll 
 
 copy render_new.dll render.dll
 

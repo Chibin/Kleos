@@ -1,6 +1,6 @@
 #include "opengl.h"
 #include "main.h"
-#include <SDL2/SDL.h>
+#include "sdl_common.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>

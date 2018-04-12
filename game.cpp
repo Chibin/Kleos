@@ -69,7 +69,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     {
         continueRunning = ((renderAPI.updateAndRender)(
                                vao, vbo, *textureID, program, debugProgram,
-                               screenResolution, &gameTimestep) != nullptr);
+                               screenResolution, &gameTimestep) != 0);
 
         ProcessOpenGLErrors();
 

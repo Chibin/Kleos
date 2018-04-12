@@ -9,15 +9,15 @@ int main(int /*unused*/, char ** /*unused*/)
     SDL_GLContext mainContext;
     RenderAPI renderAPI;
 
-    if (!WindowSetup(mainWindow, programName) ||
-        !WindowsOpenGLSetup(mainWindow, mainContext) || !WindowsSDLTTFSetup() ||
+    if (!WindowSetup(&mainWindow, programName) ||
+        !WindowsOpenGLSetup(mainWindow, &mainContext) || !WindowsSDLTTFSetup() ||
         !LoadDLLWindows(&renderAPI))
     {
         return -1;
     }
 
     MainGameLoop(mainWindow, renderAPI);
-    WindowsCleanup(mainWindow, mainContext);
+    WindowsCleanup(mainWindow, &mainContext);
 
     return 0;
 }

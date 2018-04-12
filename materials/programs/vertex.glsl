@@ -11,10 +11,10 @@ uniform uint type;
 out vec2 TexCoord;
 out vec4 vColor;
 
-const uint regular   = 0;
-const uint collision = 1;
-const uint hitbox    = 2;
-const uint hurtbox   = 3;
+const uint regular   = 0u;
+const uint collision = 1u;
+const uint hitbox    = 2u;
+const uint hurtbox   = 3u;
 
 void main()
 {
