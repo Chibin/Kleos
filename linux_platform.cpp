@@ -55,9 +55,11 @@ bool WindowsSDLTTFSetup()
 
 bool WindowsOpenGLSetup()
 {
-    _setOpenGLSettings();
     /* create our opengl context and attach it to our window */
     mainContext = SDL_GL_CreateContext(mainWindow);
+
+    /* This needs to be after the create context in linux for some reason ? */
+    _setOpenGLSettings();
 
     /* initialize to start using opengl */
     glewExperimental = GL_TRUE;
@@ -162,7 +164,7 @@ void LinuxUnloadLibrary(void *Handle)
 bool LoadDLLWindows(RenderAPI *renderAPI)
 {
 
-    const char *DLLName = "render.dll";
+    const char *DLLName = "./render.so";
     renderAPI->libHandle = LinuxLoadLibrary(DLLName);
     if (!renderAPI->libHandle)
     {
@@ -173,7 +175,7 @@ bool LoadDLLWindows(RenderAPI *renderAPI)
     *(void**)(&renderAPI->updateAndRender) = LinuxLoadFunction(
             renderAPI->libHandle, "UpdateAndRender");
 
-    if(renderAPI->updateAndRender) {
+    if(! renderAPI->updateAndRender) {
         printf("Failed to load function \"UpdateAndRender\"!\n");
         return false;
     }

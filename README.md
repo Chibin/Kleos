@@ -31,11 +31,20 @@ aliased:
 `DOSKEY gvim="C:\Program Files (x86)\Vim\vim74\gvim.exe" -- $1`
 
 # LINUX
-apt-get install libsdl2-dev
-apt-get install glm-devel
-apt-get install glm
-apt-get install libsdl2-dev
+apt-get install libsdl2-dev 
+apt-get install libglm-dev
 
-I mnaully built sdl2-ttf and glm
+I manually built sdl2, sdl2-ttf, and glm as well.
 
-``` clang -std=c++14  main.cpp /usr/lib64/libGLEW.a -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ ```
+```
+clang -std=c++14  main.cpp /usr/lib64/libGLEW.a -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++
+
+or
+
+clang++ -std=c++14 main.cpp -lGLEW -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ -lGLU
+```
+
+building render.cpp <needs to be renamed:
+```
+clang -shared -fPIC -std=c++14 render.cpp -lGLEW  -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ -lGLU -o render.so
+```

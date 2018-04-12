@@ -1,19 +1,24 @@
 #ifndef __RENDER__
-#define __RENDER_
+#define __RENDER__
 
 #include <stddef.h> /* offsetof */
 #include <stdio.h>
 #include <string>
 #include <stdlib.h> /* abs */
 
+#if WINDOWS
 #include <SDL.h>
 #include <SDL_ttf.h>
+#else
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#endif
 #define ASSERT(condition) SDL_assert(condition)
 
 #define GL3_PROTOTYPES 1
 #include <GL/glew.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 #pragma warning(push)
 #pragma warning (disable: 4201)
