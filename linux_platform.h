@@ -20,9 +20,9 @@ struct RenderAPI
 
 void _setOpenGLSettings();
 void CheckSDLError(int);
-bool WindowSetup(SDL_Window *mainWindow, std::string &programName);
-bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext &mainContext);
-void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext &mainContext);
+bool WindowSetup(SDL_Window **mainWindow, std::string &programName);
+bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext);
+void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext *mainContext);
 bool WindowsSDLTTFSetup();
 bool LoadDLLWindows(RenderAPI *renderAPI);
 

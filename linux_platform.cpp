@@ -10,7 +10,7 @@
 // #endif
 
 /* functions related to windows specific platform */
-bool WindowSetup(SDL_Window *mainWindow, std::string &programName)
+bool WindowSetup(SDL_Window **mainWindow, std::string &programName)
 {
     // Initialize SDL's video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -19,7 +19,7 @@ bool WindowSetup(SDL_Window *mainWindow, std::string &programName)
         return false;
     }
 
-    mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED,
+    *mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
                                   SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
@@ -46,10 +46,10 @@ bool WindowsSDLTTFSetup()
     return true;
 }
 
-bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext &mainContext)
+bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
 {
     /* create our opengl context and attach it to our window */
-    mainContext = SDL_GL_CreateContext(mainWindow);
+    *mainContext = SDL_GL_CreateContext(mainWindow);
 
     /* This needs to be after the create context in linux for some reason ? */
     _setOpenGLSettings();
@@ -120,7 +120,7 @@ void CheckSDLError(int /*line*/)
     SDL_ClearError();
 }
 
-void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext &mainContext)
+void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
 {
     SDL_GL_DeleteContext(mainContext);
     SDL_DestroyWindow(mainWindow);
