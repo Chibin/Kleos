@@ -5,18 +5,12 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/"
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_PREFIX_PATH "D:/Libraries/glew-1.13.0/include")
-set(CMAKE_LIBRARY_PATH "D:/Libraries/glew-1.13.0/lib/Release/x64")
+set(CMAKE_PREFIX_PATH "D:/Libraries/glew-1.13.0/include" "D:/Libraries/SDL2-2.0.7/include" "D:/Libraries/SDL2_ttf-2.0.14")
+set(CMAKE_LIBRARY_PATH "D:/Libraries/glew-1.13.0/lib/Release/x64" "D:/Libraries/SDL2-2.0.7/VisualC/x64/Release" "D:/Libraries/SDL2_ttf-2.0.14/VisualC/x64/Debug")
 
 find_package (GLEW REQUIRED)
-
-set(CMAKE_PREFIX_PATH "D:/Libraries/SDL2-2.0.7/include")
-set(CMAKE_LIBRARY_PATH "D:/Libraries/SDL2-2.0.7/VisualC/x64/Release")
 find_package (SDL2 REQUIRED)
 find_package (OpenGL REQUIRED)
-
-set(CMAKE_PREFIX_PATH "D:/Libraries/SDL2_ttf-2.0.14")
-set(CMAKE_LIBRARY_PATH "D:/Libraries/SDL2_ttf-2.0.14/VisualC/x64/Debug")
 find_package (SDL2TTF REQUIRED)
 
 include_directories (${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} "D:/Libraries/SDL2_ttf-2.0.14" "D:/Libraries/glm")
@@ -38,8 +32,14 @@ add_executable (main
     rect_manager.cpp
     rectangle.cpp
     shaders.cpp
-    win32_platform.cpp
     )
+
+if (UNIX)
+    target_sources (main PUBLIC linux_platform.cpp)
+elseif (WIN32)
+    add_definitions(-DWIN32=1)
+    target_sources(main PUBLIC win32_platform.cpp)
+endif()
 
 target_link_libraries (main
     ${GLEW_LIBRARY}
@@ -48,3 +48,9 @@ target_link_libraries (main
     ${SDL2TTF_LIBRARY}
     )
 
+if (UNIX)
+    target_link_libraries (main
+        dl
+        m
+        )
+endif()
