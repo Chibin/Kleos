@@ -29,7 +29,7 @@ inline GLuint *ImageToTexture(const char *ImageName)
      * be on the bottom side of the image, but images usually have 0.0 at the
      * top of the y-axis
      */
-    int ImageLen = strlen(ImageName);
+    size_t ImageLen = strlen(ImageName);
     if (ImageLen >= 5 && strcmp(ImageName + ImageLen - 5, ".png"))
         stbi_set_flip_vertically_on_load(true);
 
