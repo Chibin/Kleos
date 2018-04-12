@@ -27,8 +27,8 @@
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "logger.cpp"
-#include "math.cpp"
+#include "logger.h"
+#include "math.h"
 #pragma warning(pop)
 
 /* probably need to be here? depends where we put our game logic */
@@ -93,11 +93,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!g_projection)
     {
-        float SCREEN_WIDTH = screenResolution.v[0];
-        float SCREEN_HEIGHT = screenResolution.v[1];
+        float screen_width = screenResolution.v[0];
+        float screen_height = screenResolution.v[1];
         g_projection = (glm::mat4 *)malloc(sizeof(glm::mat4));
         *g_projection =
-            glm::infinitePerspective(45.0f, SCREEN_WIDTH / SCREEN_HEIGHT, 0.1f);
+            glm::infinitePerspective(45.0f, screen_width / screen_height, 0.1f);
     }
 
     if (!g_rectManager)
