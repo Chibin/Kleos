@@ -5,9 +5,6 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/"
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_PREFIX_PATH "D:/Libraries/glew-1.13.0/include" "D:/Libraries/SDL2-2.0.7/include" "D:/Libraries/SDL2_ttf-2.0.14")
-set(CMAKE_LIBRARY_PATH "D:/Libraries/glew-1.13.0/lib/Release/x64" "D:/Libraries/SDL2-2.0.7/VisualC/x64/Release" "D:/Libraries/SDL2_ttf-2.0.14/VisualC/x64/Debug")
-
 find_package (GLEW REQUIRED)
 find_package (SDL2 REQUIRED)
 find_package (OpenGL REQUIRED)
