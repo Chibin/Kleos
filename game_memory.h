@@ -62,7 +62,7 @@ inline void PushBitmap(Bitmap *oldNode, Bitmap *newNode)
 
 inline Bitmap *FindBitmap(Bitmap *sentinelNode, memory_index bitmapID)
 {
-    for(Bitmap * node = sentinelNode->next; node != sentinelNode; node->next)
+    for(Bitmap * node = sentinelNode->next; node != sentinelNode; node = node->next)
     {
         if (node->bitmapID == bitmapID)
         {
