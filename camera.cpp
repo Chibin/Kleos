@@ -1,18 +1,11 @@
-#ifndef __CAMERA__
-#define __CAMERA__
-
-struct Camera {
-    glm::vec3 pos;
-    glm::vec3 target;
-    glm::vec3 up;
-
-    glm::mat4 view;
-};
-
+#include "camera.h"
+#include <GL/glew.h>
+#include <cstdio>
+#include <glm/gtc/matrix_transform.hpp>
 
 Camera *CreateCamera()
 {
-    Camera *camera = (Camera*)malloc(sizeof(Camera));
+    auto *camera = static_cast<Camera *>(malloc(sizeof(Camera)));
 
     // Camera is at, (0,0,0) in World Space
     camera->pos = glm::vec3(0, 0, 10);
@@ -21,12 +14,9 @@ Camera *CreateCamera()
     camera->target = glm::vec3(0, 0, 0);
 
     // Head is up (set to 0,-1,0 to look upside-down)
-    camera->up = glm::vec3(0, 1, 0); 
+    camera->up = glm::vec3(0, 1, 0);
 
-    camera->view = glm::lookAt(
-            camera->pos,
-            camera->target,
-            camera->up);
+    camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
     return camera;
 }
 
@@ -37,10 +27,7 @@ void CameraZoomOut(Camera *camera)
     GLfloat zoomAmount = 4;
     camera->pos += glm::vec3(0, 0, zoomAmount);
 
-    camera->view = glm::lookAt(
-            camera->pos,
-            camera->target,
-            camera->up);
+    camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
 }
 
 void CameraZoomIn(Camera *camera)
@@ -48,18 +35,17 @@ void CameraZoomIn(Camera *camera)
     printf("up! zooming in\n");
     GLfloat zoomAmount = 4;
 
-    if ( (camera->pos[2] - zoomAmount) <  0) {
+    if ((camera->pos[2] - zoomAmount) < 0)
+    {
         printf("can no longer zoom out reached max zoom!\n"
-               "current camera z-axis value: %f\n", camera->pos[2]);
+               "current camera z-axis value: %f\n",
+               camera->pos[2]);
         return;
     }
 
     camera->pos += glm::vec3(0, -0, -zoomAmount);
 
-    camera->view = glm::lookAt(
-            camera->pos,
-            camera->target,
-            camera->up);
+    camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
 }
 
 void CameraUpdateTarget(Camera *camera, glm::vec3 position)
@@ -75,10 +61,7 @@ void CameraUpdateTarget(Camera *camera, glm::vec3 position)
      * camera functionality working.
      */
 
-    camera->view = glm::lookAt(
-            camera->pos,
-            camera->target,
-            camera->up);
+    camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
 }
 
 void CameraUpdateTarget(Camera *camera, float yaw, float pitch)
@@ -90,4 +73,3 @@ void CameraUpdateTarget(Camera *camera, float yaw, float pitch)
 
     camera->target = glm::normalize(cameraTarget);
 }
-#endif

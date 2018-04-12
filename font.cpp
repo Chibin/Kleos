@@ -1,16 +1,14 @@
-#ifndef __FONT__
-#define __FONT__
+#include "font.h"
+#include <iostream>
 
-TTF_Font* OpenFont();
-inline void CloseFont(TTF_Font *font);
-
-TTF_Font* OpenFont()
+TTF_Font *OpenFont()
 {
     const char *file = "assets/fonts/lato/Lato-Regular.ttf";
     int ptsize = 16;
-    
-    TTF_Font* font = TTF_OpenFont(file, ptsize);
-    if (!font) {
+
+    TTF_Font *font = TTF_OpenFont(file, ptsize);
+    if (font == nullptr)
+    {
         TTF_SetError("Loading failed :( (code: %d)", 142);
         std::cout << "Error: " << TTF_GetError() << std::endl;
 
@@ -22,24 +20,17 @@ TTF_Font* OpenFont()
     return font;
 }
 
-
-SDL_Surface *StringToSDLSurface(TTF_Font *font, const char* msg)
+SDL_Surface *StringToSDLSurface(TTF_Font *font, const char *msg)
 {
     /* TODO: Pass the color */
-    SDL_Color color = {1,1,1,1};
+    SDL_Color color = { 1, 1, 1, 1 };
 
     // Render the message
     SDL_Surface *surface = TTF_RenderText_Blended(font, msg, color);
-    if (surface == NULL){
+    if (surface == nullptr)
+    {
         printf("Failed to TTF_RenderText\n");
-        return NULL;
+        return nullptr;
     }
     return surface;
 }
-
-inline void CloseFont(TTF_Font *font)
-{
-  TTF_CloseFont(font);
-}
-
-#endif

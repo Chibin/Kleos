@@ -1,25 +1,16 @@
-#ifndef __LINUX_PLATFORM__
-#define __LINUX_PLATFORM__
-
+#include "linux_platform.h"
+#include "main.h"
 #include <dlfcn.h>
+#include <iostream>
 
-typedef void* (*UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, GLuint debugProgram, v2 screenResolution, GameTimestep **gameTimestep);
-
-struct RenderAPI {
-    std::string libraryName;
-    void *libHandle;
-    UPDATEANDRENDER updateAndRender;
-};
-
-void _setOpenGLSettings();
-void CheckSDLError(int);
-void WindowsCleanup();
-bool WindowSetup();
-bool WindowsOpenGLSetup();
-bool WindowsSDLTTFSetup();
+// #if WINDOWS
+// #include <SDL.h>
+// #else
+#include <SDL2/SDL_ttf.h>
+// #endif
 
 /* functions related to windows specific platform */
-bool WindowSetup()
+bool WindowSetup(SDL_Window *mainWindow, std::string &programName)
 {
     // Initialize SDL's video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -29,9 +20,10 @@ bool WindowSetup()
     }
 
     mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+                                  SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
+                                  SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
-    if (!mainWindow)
+    if (mainWindow == nullptr)
     {
         std::cout << "Unable to create window\n";
         CheckSDLError(__LINE__);
@@ -43,7 +35,8 @@ bool WindowSetup()
 
 bool WindowsSDLTTFSetup()
 {
-    if (TTF_Init() < 0) {
+    if (TTF_Init() < 0)
+    {
         printf("TTF failed to init\n");
         return false;
     }
@@ -53,7 +46,7 @@ bool WindowsSDLTTFSetup()
     return true;
 }
 
-bool WindowsOpenGLSetup()
+bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext &mainContext)
 {
     /* create our opengl context and attach it to our window */
     mainContext = SDL_GL_CreateContext(mainWindow);
@@ -66,23 +59,29 @@ bool WindowsOpenGLSetup()
     GLenum glewError = glewInit();
 
     GLenum err;
-    if ((err = glGetError()) != GL_NO_ERROR) {
+    if ((err = glGetError()) != GL_NO_ERROR)
+    {
         /* Ignore GL_INVALID_ENUM. There are cases where using glewExperimental
          * can cause a GL_INVALID_ENUM, which is fine -- just ignore it.
          * Otherwise, we do have a problem.
          */
-        if ( err != GL_INVALID_ENUM )
+        if (err != GL_INVALID_ENUM)
+        {
             printf("OpenGL: found true error x%x\n", err);
+        }
     }
 
-    if( glewError != GLEW_OK ) {
-        std::cout << "Error initializing GLEW! " << glewGetErrorString( glewError ) << std::endl;
+    if (glewError != GLEW_OK)
+    {
+        std::cout << "Error initializing GLEW! "
+                  << glewGetErrorString(glewError) << std::endl;
         return false;
     }
 
-
-    if( SDL_GL_SetSwapInterval( 1 ) < 0 ) 
+    if (SDL_GL_SetSwapInterval(1) < 0)
+    {
         printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+    }
 
     /* clean up the screen */
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -95,8 +94,10 @@ bool WindowsOpenGLSetup()
 void _setOpenGLSettings()
 {
     // Set our OpenGL version.
-    // SDL_GL_CONTEXT_CORE gives us only the newer version, deprecated functions are disabled
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    // SDL_GL_CONTEXT_CORE gives us only the newer version, deprecated functions
+    // are disabled
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -106,11 +107,12 @@ void _setOpenGLSettings()
     // You may need to change this to 16 or 32 for your system
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-    // This makes our buffer swap syncronized with the monitor's vertical refresh
+    // This makes our buffer swap syncronized with the monitor's vertical
+    // refresh
     SDL_GL_SetSwapInterval(1);
 }
 
-void CheckSDLError(int line = -1)
+void CheckSDLError(int /*line*/)
 {
     std::string error = SDL_GetError();
 
@@ -118,7 +120,7 @@ void CheckSDLError(int line = -1)
     SDL_ClearError();
 }
 
-void WindowsCleanup()
+void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext &mainContext)
 {
     SDL_GL_DeleteContext(mainContext);
     SDL_DestroyWindow(mainWindow);
@@ -126,11 +128,10 @@ void WindowsCleanup()
     SDL_Quit();
 }
 
-
-void * LinuxLoadFunction(void *LibHandle, const char *Name)
+void *LinuxLoadFunction(void *LibHandle, const char *Name)
 {
     void *Symbol = dlsym(LibHandle, Name);
-    if (!Symbol)
+    if (Symbol == nullptr)
     {
         fprintf(stderr, "dlsym failed: %s\n", dlerror());
     }
@@ -138,26 +139,24 @@ void * LinuxLoadFunction(void *LibHandle, const char *Name)
     return Symbol;
 }
 
-static
-void * LinuxLoadLibrary(const char *LibName)
+static void *LinuxLoadLibrary(const char *LibName)
 {
-    void *Handle = NULL;
+    void *Handle = nullptr;
 
     Handle = dlopen(LibName, RTLD_NOW | RTLD_LOCAL);
-    if (!Handle)
+    if (Handle == nullptr)
     {
         fprintf(stderr, "dlopen failed: %s\n", dlerror());
     }
     return Handle;
 }
 
-static
-void LinuxUnloadLibrary(void *Handle)
+static void LinuxUnloadLibrary(void *Handle)
 {
-    if (Handle != NULL)
+    if (Handle != nullptr)
     {
         dlclose(Handle);
-        Handle = NULL;
+        Handle = nullptr;
     }
 }
 
@@ -166,16 +165,16 @@ bool LoadDLLWindows(RenderAPI *renderAPI)
 
     const char *DLLName = "./render.so";
     renderAPI->libHandle = LinuxLoadLibrary(DLLName);
-    if (!renderAPI->libHandle)
+    if (renderAPI->libHandle == nullptr)
     {
         printf("Failed to load library! \n");
         return false;
     }
 
-    *(void**)(&renderAPI->updateAndRender) = LinuxLoadFunction(
-            renderAPI->libHandle, "UpdateAndRender");
+    *reinterpret_cast<void **>(&renderAPI->updateAndRender) =
+        LinuxLoadFunction(renderAPI->libHandle, "UpdateAndRender");
 
-    if(! renderAPI->updateAndRender) {
+    if( renderAPI->updateAndRender == nullptr) {
         printf("Failed to load function \"UpdateAndRender\"!\n");
         return false;
     }
@@ -188,35 +187,38 @@ bool LoadDLLWindows(RenderAPI *renderAPI)
 void PrintSDLTTFVersion()
 {
     const SDL_version *linkedVersion = TTF_Linked_Version();
-    SDL_version compiledVersion;
+    SDL_version compiledVersion{};
     SDL_TTF_VERSION(&compiledVersion);
 
     std::cout << "Linked version:\n"
-        << linkedVersion->major << "." << linkedVersion->minor << "." << linkedVersion->patch;
+              << linkedVersion->major << "." << linkedVersion->minor << "."
+              << linkedVersion->patch;
 
     std::cout << "Compiled version:\n"
-        << compiledVersion.major << "." << compiledVersion.minor << "." << compiledVersion.patch
-        << std::endl;
-
+              << compiledVersion.major << "." << compiledVersion.minor << "."
+              << compiledVersion.patch << std::endl;
 }
 
 char *GetProgramPath()
 {
-    char *dataPath = NULL;
+    char *dataPath = nullptr;
     char *basePath = SDL_GetBasePath();
-    if (basePath) {
+    if (basePath != nullptr)
+    {
         dataPath = basePath;
-    } else {
+    }
+    else
+    {
         dataPath = SDL_strdup("./");
     }
     return dataPath;
 }
 
-void PrintFileTimeStamp(char searchData)
+void PrintFileTimeStamp(char /*searchData*/)
 {
 }
 
-void FindFile(const char *dirPath, const char *fileRegex)
+void FindFile(const char * /*dirPath*/, const char * /*fileRegex*/)
 {
 }
 
@@ -224,9 +226,6 @@ void GetLatestFile()
 {
 }
 
-void ListFiles(const char *dirPath)
+void ListFiles(const char * /*dirPath*/)
 {
-
 }
-
-#endif

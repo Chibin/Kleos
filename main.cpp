@@ -1,93 +1,23 @@
+#include "main.h"
+#include "game.h"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-
-#include <stddef.h> /* offsetof */
-#include <stdio.h>
-#include <stdlib.h> /* for calloc */
-#include <assert.h>
-
-#define WINDOWS 0
-#if WINDOWS
-#include <windows.h>
-#endif
-
-#if WINDOWS
-#include <SDL.h>
-#include <SDL_ttf.h>
-#else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#endif
-#define ASSERT(condition) SDL_assert(condition)
-
-#define GL3_PROTOTYPES 1
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
-
-#pragma warning(push)
-#pragma warning (disable: 4201)
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/random.hpp>
-#pragma warning(pop)
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#include "math.cpp"
-#include "opengl.cpp"
-
-#include "logger.cpp"
-#include "font.cpp"
-#include "texture.cpp"
-#include "shaders.cpp"
-
-#include "game_time.cpp"
-#include "entity.cpp"
-#include "camera.cpp"
-#include "input.cpp"
-
-#include "rectangle.cpp"
-
-// screen dimension constants
-#define SCREEN_WIDTH 1366
-#define SCREEN_HEIGHT 768
-
-std::string programName = "First game trial :)";
-static SDL_Window *mainWindow;
-/* our opengl context handle */
-static SDL_GLContext mainContext;
-
-#if WINDOWS
-#include "windows_platform.cpp"
-#else
-#include "linux_platform.cpp"
-#endif
-/* different platforms may have different ways to load a library, so creating a
- * struct within the platform file
- * Not sure about the name though.
- */
-static RenderAPI renderAPI;
-
-#include "game.cpp"
-
-int main(int argc, char *argv[])
+int main(int /*unused*/, char ** /*unused*/)
 {
-    if(!WindowSetup() ||
-            !WindowsOpenGLSetup() ||
-            !WindowsSDLTTFSetup() ||
-            !LoadDLLWindows(&renderAPI))
-        return -1;
+    std::string programName = "First game trial :)";
+    SDL_Window *mainWindow = nullptr;
+    /* our opengl context handle */
+    SDL_GLContext mainContext;
+    RenderAPI renderAPI;
 
-    MainGameLoop(mainWindow);
-    WindowsCleanup();
+    if (!WindowSetup(mainWindow, programName) ||
+        !WindowsOpenGLSetup(mainWindow, mainContext) || !WindowsSDLTTFSetup() ||
+        !LoadDLLWindows(&renderAPI))
+    {
+        return -1;
+    }
+
+    MainGameLoop(mainWindow, renderAPI);
+    WindowsCleanup(mainWindow, mainContext);
 
     return 0;
 }
-
