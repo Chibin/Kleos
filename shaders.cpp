@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <regex>
 
 std::string FileToString(const char *filePath)
 {
@@ -40,6 +41,12 @@ GLuint CreateProgram(const char *vertex_file_path,
         return 0;
     }
 
+#if USE_OPENGL_ES
+    VertexShaderCode = std::regex_replace(VertexShaderCode,
+		    std::regex("#version 330 core"),
+		    "#version 300 es");
+#endif
+
     // Read the Fragment Shader code from the file
     std::string FragmentShaderCode;
     FragmentShaderCode = FileToString(fragment_file_path);
@@ -52,6 +59,12 @@ GLuint CreateProgram(const char *vertex_file_path,
         getchar();
         return 0;
     }
+
+#if USE_OPENGL_ES
+    FragmentShaderCode = std::regex_replace(FragmentShaderCode,
+		    std::regex("#version 330 core"),
+		    "#version 300 es");
+#endif
 
     GLint Result = GL_FALSE;
     int InfoLogLength;
