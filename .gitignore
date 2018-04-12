@@ -14,4 +14,12 @@ tags
 *.swn
 *.VC.db
 *.cap
+ALL_BUILD*
+ZERO_CHECK*
+main.vcxproj*
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+main.dir/
+x64/
 build/
