@@ -3,6 +3,7 @@
 
 #include "entity.h"
 #include "logger.h"
+#include "game_memory.h"
 
 struct EntityManager
 {
@@ -30,11 +31,11 @@ struct EntityManager
     unsigned int *entityIDs;
 };
 
-void _allocateMoreMemory(EntityManager *em);
+void _allocateMoreMemory(GameMemory *gm, EntityManager *em);
 
-EntityManager *CreateEntityManger()
+EntityManager *CreateEntityManger(GameMemory *gm)
 {
-    auto *em = static_cast<EntityManager *>(malloc(sizeof(EntityManager)));
+    auto *em = static_cast<EntityManager *>(AllocateMemory(gm, (sizeof(EntityManager))));
     if (em == nullptr)
     {
         PAUSE_HERE("entity manger is NULL? %s\n", __func__);
@@ -46,7 +47,7 @@ EntityManager *CreateEntityManger()
 
     /* TODO: not sure if we should zero the values */
     em->entities =
-        static_cast<Entity *>(malloc(sizeof(Entity) * em->totalAllocatedSpace));
+        static_cast<Entity *>(AllocateMemory(gm, (sizeof(Entity) * em->totalAllocatedSpace)));
     memset(em->entities, 0, sizeof(Entity) * em->totalAllocatedSpace);
 
     /* TODO: This should really be an assert */
@@ -58,12 +59,12 @@ EntityManager *CreateEntityManger()
     return em;
 }
 
-Entity *AddNewEntity(EntityManager *em, v3 position = v3{ 0, 0, 0 })
+Entity *AddNewEntity(GameMemory *gm, EntityManager *em, v3 position = v3{ 0, 0, 0 })
 {
     /* Creates a new entity that's zeroed out */
     if (em->totalAllocatedSpace < em->size)
     {
-        _allocateMoreMemory(em);
+        _allocateMoreMemory(gm, em);
     }
 
     Entity *entity = &(em->entities[em->size]);
@@ -75,7 +76,7 @@ Entity *AddNewEntity(EntityManager *em, v3 position = v3{ 0, 0, 0 })
     return entity;
 }
 
-int Append(EntityManager *em, Entity *entity)
+int Append(GameMemory *gm, EntityManager *em, Entity *entity)
 {
     /* Returns the index of the last appended value.
      * Using append will assume that you want to copy the data.
@@ -84,7 +85,7 @@ int Append(EntityManager *em, Entity *entity)
      */
     if (em->totalAllocatedSpace < em->size)
     {
-        _allocateMoreMemory(em);
+        _allocateMoreMemory(gm, em);
     }
 
     entity->id = em->size;
@@ -95,7 +96,7 @@ int Append(EntityManager *em, Entity *entity)
 }
 
 /* helper functions */
-void _allocateMoreMemory(EntityManager *em)
+void _allocateMoreMemory(GameMemory *gm, EntityManager *em)
 {
     /* TODO: This is broken. freeing the memory is not a good idea because
      * there might be pointers pointed to the old memory that we plan on
@@ -106,7 +107,7 @@ void _allocateMoreMemory(EntityManager *em)
         em->totalAllocatedSpace + FLOOR(em->totalAllocatedSpace * 0.25);
 
     auto *entities =
-        static_cast<Entity *>(malloc(sizeof(Entity) * newTotalAllocatedSpace));
+        static_cast<Entity *>(AllocateMemory(gm, (sizeof(Entity) * newTotalAllocatedSpace)));
     memset(entities, 0, sizeof(Entity) * newTotalAllocatedSpace);
 
     memcpy(entities, em->entities, sizeof(Entity) * em->totalAllocatedSpace);
@@ -135,14 +136,14 @@ struct EntityDynamicArray
     int *indexOfEmptySlots;
 };
 
-EntityDynamicArray *CreateEntityDynamicArray()
+EntityDynamicArray *CreateEntityDynamicArray(GameMemory *gm)
 {
     auto *eda =
-        static_cast<EntityDynamicArray *>(malloc(sizeof(EntityDynamicArray)));
+        static_cast<EntityDynamicArray *>(AllocateMemory(gm, (sizeof(EntityDynamicArray))));
     memset(eda, 0, sizeof(EntityDynamicArray));
     eda->allocatedSize = 20000;
     eda->entities =
-        static_cast<Entity **>(malloc(sizeof(Entity *) * eda->allocatedSize));
+        static_cast<Entity **>(AllocateMemory(gm, (sizeof(Entity *) * eda->allocatedSize)));
 
     return eda;
 }
@@ -158,7 +159,7 @@ void DeleteEntityDynamicArray(EntityDynamicArray *eda)
     eda->size = 0;
 }
 
-void PushBack(EntityDynamicArray *eda, Entity *entity)
+void PushBack(GameMemory *gm, EntityDynamicArray *eda, Entity *entity)
 {
     float expansionRate = 0.25;
 
@@ -172,7 +173,7 @@ void PushBack(EntityDynamicArray *eda, Entity *entity)
         unsigned int oldSize = eda->size;
 
         *eda->entities =
-            static_cast<Entity *>(malloc(sizeof(Entity *) * newTotalSpace));
+            static_cast<Entity *>(AllocateMemory(gm, (sizeof(Entity *) * newTotalSpace)));
         memset(*eda->entities, 0, sizeof(Entity) * newTotalSpace);
         memcpy(*eda->entities, tmp, sizeof(Entity) * oldSize);
 

@@ -1,12 +1,14 @@
 #include "rectangle.h"
+#include "game_memory.h"
 
-Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color,
+Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 color,
                       real32 width, real32 height, bool isTraversable)
 {
     /* NOTE: opengl default is ccw */
 
     Rect *tmp = nullptr;
-    tmp = static_cast<Rect *>(calloc(1, sizeof(Rect)));
+    tmp = static_cast<Rect *>(AllocateMemory(gm, (1, sizeof(Rect))));
+    ZeroSize(tmp, sizeof(Rect));
     tmp->startingPosition = startingPosition;
     tmp->color = color;
     tmp->entity = entity;
@@ -40,7 +42,7 @@ Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color,
     return tmp;
 }
 
-GLfloat *CreateDefaultRectangleVertices()
+GLfloat *CreateDefaultRectangleVertices(GameMemory *gm)
 {
     /*
      *   VertexCoords
@@ -63,7 +65,7 @@ GLfloat *CreateDefaultRectangleVertices()
      */
 
     GLfloat *vertices = nullptr;
-    vertices = static_cast<GLfloat *>(malloc(sizeof(GLfloat) * 36));
+    vertices = static_cast<GLfloat *>(AllocateMemory(gm, (sizeof(GLfloat) * 36)));
 
     vertices[0] = 1;
     vertices[1] = 1;

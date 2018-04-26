@@ -2,10 +2,11 @@
 #include <GL/glew.h>
 #include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
+#include "game_memory.h"
 
-Camera *CreateCamera()
+Camera *CreateCamera(GameMemory *gm)
 {
-    auto *camera = static_cast<Camera *>(malloc(sizeof(Camera)));
+    auto *camera = static_cast<Camera *>(AllocateMemory(gm, (sizeof(Camera))));
 
     // Camera is at, (0,0,0) in World Space
     camera->pos = glm::vec3(0, 0, 10);

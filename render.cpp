@@ -25,6 +25,7 @@
 #pragma warning(pop)
 
 /* probably need to be here? depends where we put our game logic */
+#include "game_memory.h"
 #include "camera.cpp"
 #include "entity.cpp"
 #include "entity_manager.cpp"
@@ -39,7 +40,7 @@
 #define UPDATEANDRENDER(name)                                                  \
     bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,        \
               GLuint debugProgram, v2 screenResolution,                        \
-              GameTimestep **gameTimestep)
+              GameMetadata *gameMetadata)
 #define RENDER(name)                                                           \
     void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,        \
               GLuint debugProgram, Entity *entity)
@@ -47,8 +48,8 @@
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity);
 void RenderAllEntities(GLuint program);
-void Update(Entity *player, GameTimestep *gameTimestep);
-void LoadStuff();
+void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep);
+void LoadStuff(GameMetadata *gameMetadata);
 
 /* TODO: We'll need to get rid of these global variables later on */
 Camera *g_camera = NULL;
@@ -68,34 +69,37 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     SDL_Event event;
     bool continueRunning = true;
 
+    GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+
     if (!*gameTimestep)
     {
-        *gameTimestep = (GameTimestep *)malloc(sizeof(GameTimestep));
+        *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
     }
 
     if (!g_camera)
     {
-        g_camera = CreateCamera();
+        g_camera = CreateCamera(reservedMemory);
     }
 
     if (!g_eda)
     {
-        g_eda = CreateEntityDynamicArray();
+        g_eda = CreateEntityDynamicArray(reservedMemory);
     }
 
     if (!g_projection)
     {
         float screen_width = screenResolution.v[0];
         float screen_height = screenResolution.v[1];
-        g_projection = (glm::mat4 *)malloc(sizeof(glm::mat4));
+        g_projection = (glm::mat4 *)AllocateMemory(reservedMemory, (sizeof(glm::mat4)));
         *g_projection =
             glm::infinitePerspective(45.0f, screen_width / screen_height, 0.1f);
     }
 
     if (!g_rectManager)
     {
-        g_rectManager = CreateRectManager();
+        g_rectManager = CreateRectManager(reservedMemory);
     }
 
     if (!g_entityManager)
@@ -103,13 +107,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         /* TODO: May be the entity manager should be the only one creating the
          * entities?
          */
-        g_entityManager = CreateEntityManger();
+        g_entityManager = CreateEntityManger(reservedMemory);
 
         Entity newPlayer;
         newPlayer.position = glm::vec3(0, 0, 0);
         newPlayer.isPlayer = true;
 
-        int index = Append(g_entityManager, &newPlayer);
+        int index = Append(reservedMemory, g_entityManager, &newPlayer);
 
         /* NOTE: we don't need to free the player since we created it in the
          * stack
@@ -118,14 +122,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
-        g_playerRect = CreateRectangle(g_player, pos, color, 2, 1);
+        g_playerRect = CreateRectangle(reservedMemory, g_player, pos, color, 2, 1);
         g_rectManager->player = g_playerRect;
         g_playerRect->type = REGULAR;
     }
 
     if (!init)
     {
-        LoadStuff();
+        LoadStuff(gameMetadata);
         init = true;
     }
 
@@ -161,7 +165,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Update(g_player, *gameTimestep);
+    Update(gameMetadata, g_player, *gameTimestep);
 
     /* create scene */
     /* filter scene */
@@ -171,8 +175,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     return continueRunning;
 }
 
-void UpdateEntities(Entity *e, GameTimestep *gt, bool isPlayer = false)
+void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, bool isPlayer = false)
 {
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
     /* NOTE: Look at this later Axis-Aligned Bounding Box*/
     // position, velocity, acceleration
     const GLfloat gravity = -4.81f;
@@ -180,8 +185,8 @@ void UpdateEntities(Entity *e, GameTimestep *gt, bool isPlayer = false)
     /* Need a way to detect if hurtboxes collided with hitboxes. n^2 time?*/
     // UpdateAndGenerateHitBoxes();
     // UpdateAndGenerateHurtBoxes();
-    RectDynamicArray *hitBoxes = CreateRectDynamicArray(100);
-    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(100);
+    RectDynamicArray *hitBoxes = CreateRectDynamicArray(reservedMemory, 100);
+    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(reservedMemory, 100);
 
     /* The following order we will resolve issues:
      * collisions -> hitboxes <-> hurtboxes
@@ -276,18 +281,18 @@ void UpdateEntities(Entity *e, GameTimestep *gt, bool isPlayer = false)
         CameraUpdateTarget(g_camera, e->position);
     }
 
-    DeleteRectDynamicArray(hitBoxes);
-    DeleteRectDynamicArray(hurtBoxes);
+    //DeleteRectDynamicArray(hitBoxes);
+    //DeleteRectDynamicArray(hurtBoxes);
 }
 
-void Update(Entity *player, GameTimestep *gameTimestep)
+void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep)
 {
     /* update logics and data here */
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
     /* Update entities */
-    UpdateEntities(player, gameTimestep, true);
+    UpdateEntities(gameMetadata, player, gameTimestep, true);
 }
 
 void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
@@ -453,8 +458,10 @@ void RenderAllEntities(GLuint vbo)
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 }
 
-void LoadStuff()
+void LoadStuff(GameMetadata *gameMetadata)
 {
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+
     v4 color = { 0.4f, 0.0f, 0.4f, 1.0f };
     /* load random data */
     for (int i = 0; i < 100; i++)
@@ -464,10 +471,10 @@ void LoadStuff()
             v3 startingPosition = { (real32)i, (real32)y, 0 };
             /* TODO: extract out creating new entity from the manager */
             Entity *rectEntity =
-                AddNewEntity(g_entityManager, startingPosition);
+                AddNewEntity(reservedMemory, g_entityManager, startingPosition);
             ASSERT(rectEntity != NULL);
             Rect *r =
-                CreateRectangle(rectEntity, startingPosition, color, 1, 1);
+                CreateRectangle(reservedMemory, rectEntity, startingPosition, color, 1, 1);
             rectEntity->isTraversable = true;
             rectEntity->isPlayer = false;
             rectEntity->type = REGULAR;
@@ -480,13 +487,13 @@ void LoadStuff()
     {
         v3 startingPosition = { -3 + 4 * (real32)i, -10, 0 };
         Entity *collisionEntity =
-            AddNewEntity(g_entityManager, startingPosition);
+            AddNewEntity(reservedMemory, g_entityManager, startingPosition);
         ASSERT(collisionEntity != NULL);
         collisionEntity->isTraversable = false;
         collisionEntity->isPlayer = false;
 
         Rect *collissionRect =
-            CreateRectangle(collisionEntity, startingPosition, color, 3, 5);
+            CreateRectangle(reservedMemory, collisionEntity, startingPosition, color, 3, 5);
         collissionRect->type = COLLISION;
         if (i == 2)
         {

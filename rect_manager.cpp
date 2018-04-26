@@ -1,6 +1,7 @@
 #include "logger.h"
 #include "rectangle.h"
 #include <cstdio>
+#include "game_memory.h"
 
 struct RectDynamicArray
 {
@@ -28,24 +29,24 @@ struct RectManager
 };
 #pragma warning(pop)
 
-RectDynamicArray *CreateRectDynamicArray(uint32 size = 15000)
+RectDynamicArray *CreateRectDynamicArray(GameMemory *gm, uint32 size = 15000)
 {
     auto *rda =
-        static_cast<RectDynamicArray *>(malloc(sizeof(RectDynamicArray)));
+        static_cast<RectDynamicArray *>(AllocateMemory(gm, (sizeof(RectDynamicArray))));
     memset(rda, 0, sizeof(RectDynamicArray));
     rda->allocatedSize = size;
     rda->rects =
-        static_cast<Rect **>(malloc(sizeof(Rect) * rda->allocatedSize));
+        static_cast<Rect **>(AllocateMemory(gm, (sizeof(Rect) * rda->allocatedSize)));
 
     return rda;
 }
 
-RectManager *CreateRectManager()
+RectManager *CreateRectManager(GameMemory *gm)
 {
     RectManager *rm = nullptr;
-    rm = static_cast<RectManager *>(malloc(sizeof(RectManager)));
-    rm->rda[0] = *CreateRectDynamicArray();
-    rm->rda[1] = *CreateRectDynamicArray();
+    rm = static_cast<RectManager *>(AllocateMemory(gm, (sizeof(RectManager))));
+    rm->rda[0] = *CreateRectDynamicArray(gm);
+    rm->rda[1] = *CreateRectDynamicArray(gm);
     return rm;
 }
 

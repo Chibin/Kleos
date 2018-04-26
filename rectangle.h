@@ -2,6 +2,7 @@
 #define __RECTANGLE__
 
 #include "entity.h"
+#include "game_memory.h"
 
 #define RECT_SIZE 36
 #define NUM_OF_RECT_CORNER 4
@@ -61,7 +62,7 @@ struct Rect
     uint32 ttl; /* time to live / duration */
 };
 
-Rect *CreateRectangle(Entity *entity, v3 startingPosition, v4 color,
+Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 color,
                       real32 width, real32 height, bool isTraversable = true);
 GLfloat *CreateDefaultRectangleVertices();
 

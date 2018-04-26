@@ -1,4 +1,6 @@
 #include "game.h"
+#include "logger.h"
+#include "game_memory.h"
 #include "entity.h"
 #include "game_time.h"
 #include "main.h"
@@ -41,11 +43,23 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     Entity entity;
     GLuint *textureID;
 
+    struct GameMetadata gameMetadata = {};
+    gameMetadata.maxBlockSize = GIGABYTE(1);
+    gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
+
+    u32 transientSize = MEGABYTE(4);
+    gameMetadata.transientMemory.base = (u8 *)AllocateMemory(&gameMetadata, transientSize);
+    gameMetadata.transientMemory.maxSize = transientSize;
+
+    u32 reservedSize = MEGABYTE(900);
+    gameMetadata.reservedMemory.base = (u8 *)AllocateMemory(&gameMetadata, reservedSize);
+    gameMetadata.reservedMemory.maxSize = reservedSize;
+
     /* *entity, startingPosition, color, width, height, isTraversable */
     Rect *firstRect =
-        CreateRectangle(&entity, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2, false);
+        CreateRectangle(&gameMetadata.reservedMemory, &entity, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2, false);
 
-#if 1
+#if 0
     TTF_Font *font = OpenFont();
     assert(font != NULL);
     textureID = StringToTexture(font, "testing this");
@@ -68,7 +82,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     {
         continueRunning = ((renderAPI.updateAndRender)(
                                vao, vbo, *textureID, program, debugProgram,
-                               screenResolution, &gameTimestep) != 0);
+                               screenResolution,  &gameMetadata) != 0);
 
         ProcessOpenGLErrors();
 
