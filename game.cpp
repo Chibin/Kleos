@@ -45,11 +45,10 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     Rect *firstRect =
         CreateRectangle(&entity, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2, false);
 
-#if 0
+#if 1
     TTF_Font *font = OpenFont();
     assert(font != NULL);
     textureID = StringToTexture(font, "testing this");
-    firstRect->isTextureUpsideDown = true;
 #else
     textureID = ImageToTexture("./materials/textures/awesomeface.png");
 #endif

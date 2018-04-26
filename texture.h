@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math.h"
 #include "font.h"
 #include "main.h"
 #include "opengl.h"
@@ -48,6 +49,47 @@ inline GLuint *ImageToTexture(const char *ImageName)
     return textureID;
 }
 
+inline void swap(u32 *first, u32 *second)
+{
+    u32 temp = *first;
+    *first = *second;
+    *second = temp;
+}
+
+#define SWAP_POINTER_VALUES(x, y, T) do { T SWAP = *x; *x = *y; *y = SWAP; } while (0)
+
+inline u32 *Get2DOffSet(u32 *base, u32 xOffset, u32 yOffset, u32 width)
+{
+    u32 height = width*yOffset;
+    return base + height + xOffset;
+}
+
+inline void FlipImage(u32 *pixels, u32 width, u32 height)
+{
+#if 0
+    u32 **base = &pixels;
+    for(int y = 0; y < height; y++) {
+        for(int i = 0; i < width; i++) {
+            u32 first = base[y][i];
+            u32 second = base[height-y][i];
+            base[y][i] = second;
+            base[height-y-1][i] = first;
+        }
+    }
+#else
+    for(uint32 yOffset = 0; yOffset < height/2; yOffset++) {
+        u32 *firstPixel = pixels + yOffset * width;
+        u32 *secondPixel = pixels + width * (height - 1) - yOffset * width;
+
+        for(uint32 counter = 0; counter < width; counter++) {
+            SWAP_POINTER_VALUES(firstPixel, secondPixel, u32);
+            firstPixel++;
+            secondPixel++;
+        }
+    }
+#endif
+}
+
 inline GLuint *StringToTexture(TTF_Font *font, const char *msg)
 {
     /* FIXME: Is this right? we might not be able to assume that we can just
@@ -58,20 +100,18 @@ inline GLuint *StringToTexture(TTF_Font *font, const char *msg)
     SDL_Surface *surface = StringToSDLSurface(font, msg);
     assert(surface != NULL);
 
-    Texture *texture = (Texture *)malloc(sizeof(Texture));
-    ASSERT(texture != NULL);
-
-    texture->format = GL_RGB;
+    Texture texture = {};
+    texture.format = GL_RGB;
     if (surface->format->BytesPerPixel == 4)
-        texture->format = GL_RGBA;
-    texture->width = surface->w;
-    texture->height = surface->h;
+        texture.format = GL_RGBA;
+    texture.width = surface->w;
+    texture.height = surface->h;
 
-    textureID = OpenGLAllocateTexture(texture->format, surface->w, surface->h,
+    FlipImage((u32 *)surface->pixels, texture.width, texture.height);
+    textureID = OpenGLAllocateTexture(texture.format, surface->w, surface->h,
                                       surface->pixels);
 
     // Clean up the surfaceace and font
     SDL_FreeSurface(surface);
-    free(texture);
     return textureID;
 }
