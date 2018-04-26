@@ -58,36 +58,26 @@ inline void swap(u32 *first, u32 *second)
 
 #define SWAP_POINTER_VALUES(x, y, T) do { T SWAP = *x; *x = *y; *y = SWAP; } while (0)
 
-inline u32 *Get2DOffSet(u32 *base, u32 xOffset, u32 yOffset, u32 width)
+inline u32 *Get2DAddress(u32 *base, u32 xOffset, u32 yOffset, u32 maxWidth)
 {
-    u32 height = width*yOffset;
+    u32 height = maxWidth * yOffset;
     return base + height + xOffset;
 }
 
 inline void FlipImage(u32 *pixels, u32 width, u32 height)
 {
-#if 0
-    u32 **base = &pixels;
-    for(int y = 0; y < height; y++) {
-        for(int i = 0; i < width; i++) {
-            u32 first = base[y][i];
-            u32 second = base[height-y][i];
-            base[y][i] = second;
-            base[height-y-1][i] = first;
-        }
-    }
-#else
-    for(uint32 yOffset = 0; yOffset < height/2; yOffset++) {
-        u32 *firstPixel = pixels + yOffset * width;
-        u32 *secondPixel = pixels + width * (height - 1) - yOffset * width;
 
+    for(uint32 yOffset = 0; yOffset < height/2; yOffset++) {
+        u32 heightBottomToTop = height - 1 - yOffset;
+        u32 *firstPixel = pixels + yOffset * width;
+        u32 *secondPixel = pixels + width * heightBottomToTop;
         for(uint32 counter = 0; counter < width; counter++) {
             SWAP_POINTER_VALUES(firstPixel, secondPixel, u32);
             firstPixel++;
             secondPixel++;
         }
     }
-#endif
+
 }
 
 inline GLuint *StringToTexture(TTF_Font *font, const char *msg)
