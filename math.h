@@ -4,6 +4,10 @@
 #include <cinttypes>
 #include <cstring>
 
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xFFFFFFFF
+#endif
+
 #define FLOOR(value) int(value)
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))

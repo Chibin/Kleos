@@ -71,6 +71,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+    GameMemory *perFrameMemory = &gameMetadata->transientMemory;
+    ClearMemoryUsed(perFrameMemory);
 
     if (!*gameTimestep)
     {
@@ -177,7 +179,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
 void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, bool isPlayer = false)
 {
-    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+    //GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+    GameMemory *perFrameMemory = &gameMetadata->transientMemory;
+
     /* NOTE: Look at this later Axis-Aligned Bounding Box*/
     // position, velocity, acceleration
     const GLfloat gravity = -4.81f;
@@ -185,8 +189,8 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
     /* Need a way to detect if hurtboxes collided with hitboxes. n^2 time?*/
     // UpdateAndGenerateHitBoxes();
     // UpdateAndGenerateHurtBoxes();
-    RectDynamicArray *hitBoxes = CreateRectDynamicArray(reservedMemory, 100);
-    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(reservedMemory, 100);
+    RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
+    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
 
     /* The following order we will resolve issues:
      * collisions -> hitboxes <-> hurtboxes
