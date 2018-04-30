@@ -38,6 +38,7 @@ struct GameMetadata {
     u32 usedBlock;
     u8 *base;
 
+    TTF_Font *font;
     GameMemory reservedMemory;
     GameMemory transientMemory;
     GameTimestep *gameTimestep;
@@ -77,8 +78,9 @@ inline void *AllocateMemory(GameMemory *gm, u32 size, const memory_index byteAli
     memory_index padding = GetAlignmentOffSet(gm, byteAlignment);
     size += SafeCastToU32(padding);
 
-    ASSERT(gm->used + size < gm->maxSize);
     u8* newAllocBase = gm->base + gm->used - 1;
+
+    ASSERT(gm->used + size < gm->maxSize);
     gm->used += size;
 
     return newAllocBase;

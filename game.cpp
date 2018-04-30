@@ -16,6 +16,9 @@ void teststuff(GLuint &textureID);
 
 void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
 {
+    /* sanity check */
+    ASSERT(sizeof(real32) == sizeof(GLfloat));
+
     /* TODO: this is probably not the right spot for this */
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -41,7 +44,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     glGenBuffers(1, &ebo);
     glGenBuffers(1, &vbo);
     Entity entity;
-    GLuint *textureID;
+    GLuint textureID;
 
     struct GameMetadata gameMetadata = {};
     gameMetadata.maxBlockSize = GIGABYTE(1);
@@ -59,8 +62,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     Rect *firstRect =
         CreateRectangle(&gameMetadata.reservedMemory, &entity, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2, false);
 
-#if 0
     TTF_Font *font = OpenFont();
+#if 0
     assert(font != NULL);
     textureID = StringToTexture(font, "testing this");
 #else
@@ -81,7 +84,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     while (continueRunning)
     {
         continueRunning = ((renderAPI.updateAndRender)(
-                               vao, vbo, *textureID, program, debugProgram,
+                               vao, vbo, textureID, program, debugProgram,
                                screenResolution,  &gameMetadata) != 0);
 
         ProcessOpenGLErrors();

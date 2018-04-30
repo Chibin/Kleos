@@ -6,14 +6,40 @@
 
 #define OpenGLCheckErrors() _defined_openGLCheckErrors(__FILE__, __LINE__)
 
+#pragma warning(push)
+#pragma warning(disable : 4201)
 struct Vertex
 {
     /* 3 + 4 + 3 + 2  = 12 */
-    GLfloat position[3];
-    GLfloat color[4];
-    GLfloat normal[3];
-    GLfloat uv[2];
+    union {
+        struct {
+            v3 vPosition;
+        };
+        GLfloat position[3];
+    };
+
+    union {
+        struct {
+            v4 vColor;
+        };
+        GLfloat color[4];
+    };
+
+    union {
+        struct {
+            v3 vNormal;
+        };
+        GLfloat normal[3];
+    };
+
+    union {
+        struct {
+            v2 vUv;
+        };
+        GLfloat uv[2];
+    };
 };
+#pragma warning(pop)
 
 struct Program
 {
@@ -32,7 +58,7 @@ void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
                      Vertex *vboVertices, GLuint &ebo, uint32 eboSize,
                      GLuint *eboVertices, GLenum vboUsage = GL_DYNAMIC_DRAW,
                      GLenum eboUsage = GL_STATIC_DRAW);
-GLuint *OpenGLAllocateTexture(int textureFormat, int width, int height,
+GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
                               void *data);
 void _defined_openGLCheckErrors(const char *file, int line);
 

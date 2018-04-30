@@ -9,11 +9,8 @@ out vec4 color;
 
 void main()
 {
-    color = texture(tex, TexCoord);
-//    if (vColor.a > 0) {
-//        color.rgb += vColor.rgb;
-//    }
-
-    // color.a = 0.1; alpha channel
-    //color = vColor;
+    color = texture(tex, TexCoord) * vColor;
+    if (color.a < 0.01) {
+        discard;
+    }
 }

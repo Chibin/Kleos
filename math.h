@@ -91,8 +91,6 @@ union v4 {
         real32 a;
     };
     real32 v[4];
-
-    v4 &operator=(const v4 &B);
 };
 
 inline v3 operator+(v3 A, v3 B)
@@ -103,14 +101,6 @@ inline v3 operator+(v3 A, v3 B)
     A.z += B.z;
 
     return A;
-}
-
-inline v4 &v4::operator=(const v4 &B)
-{
-
-    memcpy(this->v, B.v, sizeof(v4));
-
-    return *this;
 }
 
 inline v4 operator+(v4 A, v4 B)

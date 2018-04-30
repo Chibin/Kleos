@@ -84,20 +84,18 @@ void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
     glBindVertexArray(0);
 }
 
-GLuint *OpenGLAllocateTexture(int textureFormat, int width, int height,
+GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
                               void *data)
 {
     /* returns a texture ID "handle" to
      * access it later in OpenGL.
      */
 
-    auto *textureID = static_cast<GLuint *>(malloc(sizeof(GLuint)));
-    glGenTextures(1, textureID);
-
-    ASSERT(textureID != nullptr);
+    GLuint textureID;
+    glGenTextures(1, &textureID);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, *textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
 
     glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, width, height, 0,
                  textureFormat, GL_UNSIGNED_BYTE, data);
@@ -109,6 +107,7 @@ GLuint *OpenGLAllocateTexture(int textureFormat, int width, int height,
         /* TODO: Will need to remove later on */
         OpenGLCheckErrors();
         break;
+
     case GL_RGB:
         printf("RGB\n");
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);

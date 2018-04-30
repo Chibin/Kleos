@@ -80,6 +80,22 @@ inline void DrawRectangle()
     glDrawElements(GL_TRIANGLES, totalIndiciesFromEbo, GL_UNSIGNED_INT, 0);
 }
 
+inline void DrawRawRectangle(memory_index count)
+{
+    const u32 numOfPoints = 6;
+    u32 totalVertices = SafeCastToU32(count) * numOfPoints;
+    glDrawArrays(GL_TRIANGLES, 0, totalVertices);
+}
+
+inline void DrawRawPointRectangle(memory_index count)
+{
+    const u32 numOfPoints = 6;
+    u32 totalVertices = SafeCastToU32(count) * numOfPoints;
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glDrawArrays(GL_POINTS, 0, totalVertices);
+    glDisable(GL_PROGRAM_POINT_SIZE);
+}
+
 inline void DrawPointRectangle()
 {
     glEnable(GL_PROGRAM_POINT_SIZE);
@@ -95,4 +111,56 @@ inline void DrawDebugRectangle()
     glDrawElements(GL_POINTS, totalIndiciesFromEbo, GL_UNSIGNED_INT, 0);
 }
 
+struct RenderGroup
+{
+    GameMemory vertexMemory;
+    memory_index rectCount;
+};
+
+inline void PushRect(GameMemory *gm, Rect *rect)
+{
+    /* We need 6 points because we need to create 2 triangles */
+    const u8 numOfPoints = 6;
+    ASSERT(gm->used + sizeof(Vertex) * numOfPoints <= gm->maxSize);
+
+    Vertex *vertexPointer = (Vertex *) (gm->base + gm->used);
+
+    for (memory_index i = 0; i < numOfPoints; i++)
+    {
+        memory_index index = g_rectIndices[i];
+        *(vertexPointer+i) = rect->vertices[index];
+    }
+
+    gm->used += sizeof(Vertex) * numOfPoints;
+}
+
+inline void UpdatePosition(Rect *r, v3 newPosition)
+{
+    v2 min = {newPosition.x, newPosition.y};
+    v2 max = {newPosition.x + r->width, newPosition.y + r->height};
+
+    v3 topRight = v3{ max.x, max.y, 0 };
+    v3 bottomRight = v3{ max.x, min.y, 0 };
+    v3 bottomLeft = v3{ min.x, min.y, 0 };
+    v3 topLeft = v3{ min.x, max.y, 0 };
+
+    r->vertices[0].vPosition = topRight;
+    r->vertices[1].vPosition = bottomRight;
+    r->vertices[2].vPosition = bottomLeft;
+    r->vertices[3].vPosition = topLeft;
+}
+
+inline void UpdateColors(Rect *r, v4 color)
+{
+    for (memory_index i = 0; i < NUM_OF_RECT_CORNER; i++)
+    {
+        r->vertices[i].vColor = color;
+    }
+}
+
+inline void PushRect(RenderGroup *rg, Rect *rect)
+{
+    PushRect(&rg->vertexMemory, rect);
+    rg->rectCount++;
+}
 #endif

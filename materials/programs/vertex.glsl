@@ -19,21 +19,8 @@ const uint hurtbox   = 3u;
 void main()
 {
     TexCoord = vTexCoord;
-    vColor = vec4(1, 0, 1, 1);
-
-    if (type == collision) {
-        vColor = vec4(0, 0, 1, 0.7);
-    }
-    else if (type == hitbox) {
-
-        vColor = vec4(0, 1, 0, 0.7);
-    }
-    else if ( type == hurtbox) {
-
-        vColor = vec4(1, 0, 0, 0.7);
-    }
-
+    vColor = vTestColor;
 
     gl_PointSize = 10.0;
-    gl_Position = projection * view * model * vec4(vPositionModelSpace, 1.0);
+    gl_Position = projection * view * vec4(vPositionModelSpace, 1.0);
 }

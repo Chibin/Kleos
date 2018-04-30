@@ -18,10 +18,10 @@ struct Texture
     GLenum format;
 };
 
-inline GLuint *ImageToTexture(const char *ImageName)
+inline GLuint ImageToTexture(const char *ImageName)
 {
 
-    GLuint *textureID = NULL;
+    GLuint textureID;
 
     int width, height, componentsPerPixel;
 
@@ -80,12 +80,12 @@ inline void FlipImage(u32 *pixels, u32 width, u32 height)
 
 }
 
-inline GLuint *StringToTexture(TTF_Font *font, const char *msg)
+inline GLuint StringToTexture(TTF_Font *font, const char *msg)
 {
     /* FIXME: Is this right? we might not be able to assume that we can just
      * pick the first glenum texture
      */
-    GLuint *textureID = NULL;
+    GLuint textureID;
 
     SDL_Surface *surface = StringToSDLSurface(font, msg);
     assert(surface != NULL);
@@ -101,7 +101,7 @@ inline GLuint *StringToTexture(TTF_Font *font, const char *msg)
     textureID = OpenGLAllocateTexture(texture.format, surface->w, surface->h,
                                       surface->pixels);
 
-    // Clean up the surfaceace and font
+    // Clean up the surface and font
     SDL_FreeSurface(surface);
     return textureID;
 }

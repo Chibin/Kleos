@@ -24,9 +24,9 @@ void UpdateGameTimestep(GameTimestep *gt)
     if (counter > 1)
     {
         gt->deltaTime = 5;
-        gt->dt = static_cast<real32>(5) / static_cast<real32>(1000.0f);
+        gt->dt = static_cast<real32>(gt->deltaTime) / static_cast<real32>(1000.0f);
         counter = 0;
     }
     counter++;
-    // gt->deltaTime = gt->latestTime - gt->prevTime;
+    gt->deltaTime = gt->latestTime - gt->prevTime;
 }

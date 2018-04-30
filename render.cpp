@@ -45,7 +45,7 @@
     void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,        \
               GLuint debugProgram, Entity *entity)
 
-void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
+void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity);
 void RenderAllEntities(GLuint program);
 void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep);
@@ -74,38 +74,31 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     GameMemory *perFrameMemory = &gameMetadata->transientMemory;
     ClearMemoryUsed(perFrameMemory);
 
-    if (!*gameTimestep)
+    if (!init)
     {
+
+        ASSERT(!*gameTimestep);
+        ASSERT(!g_camera);
+        ASSERT(!g_eda);
+        ASSERT(!g_projection);
+        ASSERT(!g_rectManager);
+        ASSERT(!g_entityManager);
+
         *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
-    }
 
-    if (!g_camera)
-    {
         g_camera = CreateCamera(reservedMemory);
-    }
 
-    if (!g_eda)
-    {
         g_eda = CreateEntityDynamicArray(reservedMemory);
-    }
 
-    if (!g_projection)
-    {
         float screen_width = screenResolution.v[0];
         float screen_height = screenResolution.v[1];
         g_projection = (glm::mat4 *)AllocateMemory(reservedMemory, (sizeof(glm::mat4)));
         *g_projection =
             glm::infinitePerspective(45.0f, screen_width / screen_height, 0.1f);
-    }
 
-    if (!g_rectManager)
-    {
         g_rectManager = CreateRectManager(reservedMemory);
-    }
 
-    if (!g_entityManager)
-    {
         /* TODO: May be the entity manager should be the only one creating the
          * entities?
          */
@@ -127,10 +120,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_playerRect = CreateRectangle(reservedMemory, g_player, pos, color, 2, 1);
         g_rectManager->player = g_playerRect;
         g_playerRect->type = REGULAR;
-    }
 
-    if (!init)
-    {
         LoadStuff(gameMetadata);
         init = true;
     }
@@ -168,12 +158,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Update(gameMetadata, g_player, *gameTimestep);
+    Render(gameMetadata, vao, vbo, textureID, program, debugProgram, g_player);
 
-    /* create scene */
-    /* filter scene */
-    /* render scene */
-
-    Render(vao, vbo, textureID, program, debugProgram, g_player);
     return continueRunning;
 }
 
@@ -283,10 +269,9 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
 
         /* follow the character around */
         CameraUpdateTarget(g_camera, e->position);
+        UpdatePosition(g_playerRect, v3{e->position.x, e->position.y, e->position.z});
     }
 
-    //DeleteRectDynamicArray(hitBoxes);
-    //DeleteRectDynamicArray(hurtBoxes);
 }
 
 void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep)
@@ -299,9 +284,10 @@ void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimest
     UpdateEntities(gameMetadata, player, gameTimestep, true);
 }
 
-void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
+void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity)
 {
+    GameMemory *perFrameMemory = &gameMetadata->transientMemory;
 
     /* TODO: Fix alpha blending... it's currently not true transparency.
      * you need to disable this if you want the back parts to be shown when
@@ -362,57 +348,34 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
      * the background properly. otherwise, you'll just get a blank background.
      */
 
-    int sizeOfVertices = sizeof(GLfloat) * 3;
-    /* cast to Vertex* so that we can get the proper pointer arithmetic */
-    Vertex *offSetOfPosition = (Vertex *)offsetof(Vertex, position);
-    for (int i = 0; i < g_rectManager->Traversable.size; i++)
+    const u32 numOfPointsPerRect = 6;
+    const u16 maxVertexCount = 10001;
+    RenderGroup renderGroup = {};
+    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxVertexCount;
+    renderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
+    renderGroup.vertexMemory.maxSize = vertexBlockSize;
+
+    /* Save player vertices */
+    PushRect(&renderGroup, g_rectManager->player);
+
+    for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
     {
-        Entity *debugEntity = g_rectManager->Traversable.rects[i]->entity;
-        glUniformMatrix4fv(
-            modelLoc, 1, GL_FALSE,
-            glm::value_ptr(glm::translate(glm::mat4(), debugEntity->position)));
-        glUniform1ui(rectTypeLoc, g_rectManager->Traversable.rects[i]->type);
-
-        /* only load once since they're all similar -- just different
-         * positions.*/
-        if (i == 0)
-        {
-            /* If the data is interleaved, you have to do multiple
-             * glBufferSubData calls in order to populate all the right parts */
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 0),
-                            sizeOfVertices, debugEntity->data + 0);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 1),
-                            sizeOfVertices, debugEntity->data + 1);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 2),
-                            sizeOfVertices, debugEntity->data + 2);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 3),
-                            sizeOfVertices, debugEntity->data + 3);
-        }
-
-        DrawRectangle();
+        Rect *rect = g_rectManager->Traversable.rects[i];
+        PushRect(&renderGroup, rect);
     }
 
-    /* Draw the player */
-    Entity *entityToDraw = g_rectManager->player->entity;
-    glUniformMatrix4fv(
-        modelLoc, 1, GL_FALSE,
-        glm::value_ptr(glm::translate(glm::mat4(), entityToDraw->position)));
-    glUniform1ui(rectTypeLoc, 0);
-    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 0),
-                    sizeOfVertices, entityToDraw->data + 0);
-    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 1),
-                    sizeOfVertices, entityToDraw->data + 1);
-    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 2),
-                    sizeOfVertices, entityToDraw->data + 2);
-    glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 3),
-                    sizeOfVertices, entityToDraw->data + 3);
-    DrawRectangle();
+    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+    DrawRawRectangle(renderGroup.rectCount);
 
     OpenGLEndUseProgram();
 
     g_debugMode = true;
     if (g_debugMode)
     {
+        renderGroup.rectCount = 0;
+        ClearMemoryUsed(&renderGroup.vertexMemory);
+
         /* Draw collissions, hurtboxes and hitboxes */
         OpenGLBeginUseProgram(debugProgram, textureID);
 
@@ -428,26 +391,15 @@ void Render(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
 
         for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
         {
-            Entity *debugEntity =
-                g_rectManager->NonTraversable.rects[i]->entity;
-
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE,
-                               glm::value_ptr(glm::translate(
-                                   glm::mat4(), debugEntity->position)));
-            glUniform1ui(rectTypeLoc,
-                         g_rectManager->NonTraversable.rects[i]->type);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 0),
-                            sizeOfVertices, debugEntity->data + 0);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 1),
-                            sizeOfVertices, debugEntity->data + 1);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 2),
-                            sizeOfVertices, debugEntity->data + 2);
-            glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)(offSetOfPosition + 3),
-                            sizeOfVertices, debugEntity->data + 3);
-
-            DrawPointRectangle();
-            DrawRectangle();
+            Rect *rect = g_rectManager->NonTraversable.rects[i];
+            PushRect(&renderGroup, rect);
         }
+
+        glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+                     renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+
+        DrawRawPointRectangle(renderGroup.rectCount);
+        DrawRawRectangle(renderGroup.rectCount);
 
         OpenGLEndUseProgram();
     }
@@ -466,7 +418,7 @@ void LoadStuff(GameMetadata *gameMetadata)
 {
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
-    v4 color = { 0.4f, 0.0f, 0.4f, 1.0f };
+    v4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
     /* load random data */
     for (int i = 0; i < 100; i++)
     {
@@ -486,10 +438,11 @@ void LoadStuff(GameMetadata *gameMetadata)
         }
     }
 
-    /* Let's add a non-traversable entity */
-    for (int i = 0; i < 4; i++)
+    /* Let's add some non-traversable entity */
+    for (int i = 0; i < 5; i++)
     {
         v3 startingPosition = { -3 + 4 * (real32)i, -10, 0 };
+
         Entity *collisionEntity =
             AddNewEntity(reservedMemory, g_entityManager, startingPosition);
         ASSERT(collisionEntity != NULL);
@@ -498,15 +451,24 @@ void LoadStuff(GameMetadata *gameMetadata)
 
         Rect *collissionRect =
             CreateRectangle(reservedMemory, collisionEntity, startingPosition, color, 3, 5);
-        collissionRect->type = COLLISION;
+
         if (i == 2)
         {
+            UpdateColors(collissionRect, v4{1.0f, 0.0f, 0.0f, 0.7f});
             collissionRect->type = HURTBOX;
         }
-        if (i == 3)
-        {
+        else if (i == 3) {
+
             collissionRect->type = HITBOX;
+            UpdateColors(collissionRect, v4{0.0f, 1.0f, 0.0f, 0.7f});
         }
+        else
+        {
+
+            collissionRect->type = COLLISION;
+            UpdateColors(collissionRect, v4{0.0f, 0.0f, 1.0f, 0.7f});
+        }
+
         PushBack(&(g_rectManager->NonTraversable), collissionRect);
     }
 }

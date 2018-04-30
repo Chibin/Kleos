@@ -7,8 +7,9 @@ Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 co
     /* NOTE: opengl default is ccw */
 
     Rect *tmp = nullptr;
-    tmp = static_cast<Rect *>(AllocateMemory(gm, (1, sizeof(Rect))));
+    tmp = static_cast<Rect *>(AllocateMemory(gm, sizeof(Rect)));
     ZeroSize(tmp, sizeof(Rect));
+
     tmp->startingPosition = startingPosition;
     tmp->color = color;
     tmp->entity = entity;
@@ -26,15 +27,17 @@ Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 co
     /* FIXME: This is starting the drawing from the origin, but not centered at
      * the origin
      */
-    tmp->topRight = v3{ width, height, 0 };
-    tmp->bottomRight = v3{ width, 0, 0 };
-    tmp->bottomLeft = v3{ 0, 0, 0 };
-    tmp->topLeft = v3{ 0, height, 0 };
+    v2 min = { startingPosition.x, startingPosition.y};
+    v2 max = {startingPosition.x + width, startingPosition.y + height};
+    tmp->topRight = v3{ max.x, max.y, 0 };
+    tmp->bottomRight = v3{ max.x, min.y, 0 };
+    tmp->bottomLeft = v3{ min.x, min.y, 0 };
+    tmp->topLeft = v3{ min.x, max.y, 0 };
 
-    tmp->minX = startingPosition.x;
-    tmp->minY = startingPosition.y;
-    tmp->maxX = startingPosition.x + width;
-    tmp->maxY = startingPosition.y + height;
+    tmp->minX = min.x;
+    tmp->minY = min.y;
+    tmp->maxX = max.x;
+    tmp->maxY = max.y;
 
     CreateVertices(tmp);
     tmp->entity->data = tmp->vertices;
@@ -120,99 +123,30 @@ GLfloat *CreateDefaultRectangleVertices(GameMemory *gm)
 
 void CreateVertices(Rect *rect)
 {
+    v3 normal = {0.0f, 0.0f, 0.0f};
     /* texCoords + verticesCoords + color*/
     Vertex *vTopRight = &(rect->vertices[0]);
 
-    vTopRight->position[0] = rect->topRight.x;
-    vTopRight->position[1] = rect->topRight.y;
-    vTopRight->position[2] = rect->topRight.z;
-    vTopRight->color[0] = rect->color.r;
-    vTopRight->color[1] = rect->color.g;
-    vTopRight->color[2] = rect->color.b;
-    vTopRight->color[3] = rect->color.a;
-
-    vTopRight->normal[0] = 0;
-    vTopRight->normal[1] = 0;
-    vTopRight->normal[2] = 0;
-
-    if (rect->isTextureUpsideDown)
-    {
-        vTopRight->uv[0] = 1;
-        vTopRight->uv[1] = 0;
-    }
-    else
-    {
-        vTopRight->uv[0] = 1;
-        vTopRight->uv[1] = 1;
-    }
+    vTopRight->vPosition = rect->topRight;
+    vTopRight->vColor = rect->color;
+    vTopRight->vNormal = normal;
+    vTopRight->vUv = v2{1, 1};
 
     Vertex *vBottomRight = &(rect->vertices[1]);
-    vBottomRight->position[0] = rect->bottomRight.x;
-    vBottomRight->position[1] = rect->bottomRight.y;
-    vBottomRight->position[2] = rect->bottomRight.z;
-    vBottomRight->color[0] = rect->color.r;
-    vBottomRight->color[1] = rect->color.g;
-    vBottomRight->color[2] = rect->color.b;
-    vBottomRight->color[3] = rect->color.a;
-    vBottomRight->normal[0] = 0;
-    vBottomRight->normal[1] = 0;
-    vBottomRight->normal[2] = 0;
-
-    if (rect->isTextureUpsideDown)
-    {
-        vBottomRight->uv[0] = 1;
-        vBottomRight->uv[1] = 1;
-    }
-    else
-    {
-        vBottomRight->uv[0] = 1;
-        vBottomRight->uv[1] = 0;
-    }
+    vBottomRight->vPosition = rect->bottomRight;
+    vBottomRight->vColor = rect->color;
+    vBottomRight->vNormal = normal;
+    vBottomRight->vUv = v2{1, 0};
 
     Vertex *vBottomLeft = &(rect->vertices[2]);
-    vBottomLeft->position[0] = rect->bottomLeft.x;
-    vBottomLeft->position[1] = rect->bottomLeft.y;
-    vBottomLeft->position[2] = rect->bottomLeft.z;
-    vBottomLeft->color[0] = rect->color.r;
-    vBottomLeft->color[1] = rect->color.g;
-    vBottomLeft->color[2] = rect->color.b;
-    vBottomLeft->color[3] = rect->color.a;
-    vBottomLeft->normal[0] = 0;
-    vBottomLeft->normal[1] = 0;
-    vBottomLeft->normal[2] = 0;
-
-    if (rect->isTextureUpsideDown)
-    {
-        vBottomLeft->uv[0] = 0;
-        vBottomLeft->uv[1] = 1;
-    }
-    else
-    {
-        vBottomLeft->uv[0] = 0;
-        vBottomLeft->uv[1] = 0;
-    }
+    vBottomLeft->vPosition = rect->bottomLeft;
+    vBottomLeft->vColor = rect->color;
+    vBottomLeft->vNormal = normal;
+    vBottomLeft->vUv = v2{0, 0};
 
     Vertex *topLeft = &(rect->vertices[3]);
-
-    topLeft->position[0] = rect->topLeft.x;
-    topLeft->position[1] = rect->topLeft.y;
-    topLeft->position[2] = rect->topLeft.z;
-    topLeft->color[0] = rect->color.r;
-    topLeft->color[1] = rect->color.g;
-    topLeft->color[2] = rect->color.b;
-    topLeft->color[3] = rect->color.a;
-    topLeft->normal[0] = rect->topLeft.x;
-    topLeft->normal[1] = rect->topLeft.y;
-    topLeft->normal[2] = rect->topLeft.z;
-
-    if (rect->isTextureUpsideDown)
-    {
-        topLeft->uv[0] = 0;
-        topLeft->uv[1] = 0;
-    }
-    else
-    {
-        topLeft->uv[0] = 0;
-        topLeft->uv[1] = 1;
-    }
+    topLeft->vPosition = rect->topLeft;
+    topLeft->vColor = rect->color;
+    topLeft->vNormal = normal;
+    topLeft->vUv = v2{0, 1};
 }
