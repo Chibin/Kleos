@@ -5,6 +5,16 @@
 #include <cstdlib>
 #include <string>
 
+inline void OpenGLBindTexture(GLuint textureID)
+{
+    ASSERT(textureID != 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    /* TODO:Pass in tex? */
+    //glUniform1i(glGetUniformLocation(program, "tex"), 0);
+}
+
 /* texture object 0 is a special number. If a texture object gets
  * deleted, then the texture object gets rebounded to 0.
  */
@@ -15,13 +25,7 @@ void OpenGLBeginUseProgram(GLuint program, GLuint textureID)
     /* NOTE: you shouldn't call this function unless you have a shader
      * program already binded (glUseProgram)
      */
-    if (textureID != 0)
-    {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        /* TODO:Pass in tex? */
-        glUniform1i(glGetUniformLocation(program, "tex"), 0);
-    }
+    OpenGLBindTexture(textureID);
 }
 
 void OpenGLEndUseProgram()

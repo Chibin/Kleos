@@ -1,13 +1,14 @@
 #include "game.h"
-#include "logger.h"
 #include "game_memory.h"
+#include "math.h"
+#include "logger.h"
 #include "entity.h"
 #include "game_time.h"
 #include "main.h"
 #include "rectangle.h"
 #include "shaders.h"
-#include "texture.h"
 #include <GL/glew.h>
+#include "font.h"
 
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
 
@@ -46,7 +47,11 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     Entity entity;
     GLuint textureID;
 
+    TTF_Font *font = OpenFont();
+    assert(font != NULL);
+
     struct GameMetadata gameMetadata = {};
+    gameMetadata.font  = font;
     gameMetadata.maxBlockSize = GIGABYTE(1);
     gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
 
@@ -62,13 +67,15 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     Rect *firstRect =
         CreateRectangle(&gameMetadata.reservedMemory, &entity, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2, false);
 
-    TTF_Font *font = OpenFont();
-#if 0
-    assert(font != NULL);
-    textureID = StringToTexture(font, "testing this");
-#else
-    textureID = ImageToTexture("./materials/textures/awesomeface.png");
-#endif
+    Bitmap firstBitmap = {};
+    Bitmap secondBitmap = {};
+
+    ImageToBitmap(&firstBitmap, "./materials/textures/awesomeface.png");
+    textureID = OpenGLBindBitmapToTexture(&firstBitmap);
+
+    StringToBitmap(&gameMetadata.reservedMemory, &secondBitmap, font, "testing this");
+    gameMetadata.bitmaps[0] = &firstBitmap;
+    gameMetadata.bitmaps[1] = &secondBitmap;
 
     CreateVertices(firstRect);
 

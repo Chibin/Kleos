@@ -3,14 +3,25 @@
 
 #include <cinttypes>
 #include <cstring>
+#include "sdl_common.h"
 
 #ifndef UINT32_MAX
 #define UINT32_MAX 0xFFFFFFFF
 #endif
 
+#ifndef INT32_MAX
+#define INT32_MAX 0x7FFFFFFF
+#endif
+
 #define FLOOR(value) int(value)
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+#define KILOBYTE(x) 1024*x
+#define MEGABYTE(x) KILOBYTE(1024)*x
+#define GIGABYTE(x) MEGABYTE(1024)*x
+
+#define ZeroStruct(x) ZeroSize(&x, sizeof(x))
 
 typedef uint8_t uint8;
 typedef uint16_t uint16;
@@ -201,4 +212,32 @@ union m4 {
     };
     real32 v[16];
 };
+
+inline void ZeroSize(void *_data, memory_index size)
+{
+    u8 *base = (u8 *)_data;
+    while(size--)
+    {
+        *base++ = 0;
+    }
+}
+
+inline u32 SafeCastToU32(memory_index x)
+{
+    ASSERT(x <= UINT32_MAX);
+    return (u32)x;
+}
+
+inline u8 SafeCastToU8(f32 num)
+{
+    ASSERT(num <= 256 && num >= 0);
+    return (u8)num;
+}
+
+inline s32 *SafeCastU32ToS32(u32 *u32Pointer)
+{
+
+    ASSERT(*u32Pointer <= INT32_MAX);
+    return (s32 *)u32Pointer;
+}
 #endif

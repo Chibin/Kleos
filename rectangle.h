@@ -21,6 +21,7 @@ struct Rect
     Vertex vertices[4];
     real32 width, height;
 
+    memory_index bitmapID;
     v3 startingPosition;
 
 #pragma warning(push)

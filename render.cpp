@@ -26,6 +26,7 @@
 
 /* probably need to be here? depends where we put our game logic */
 #include "game_memory.h"
+#include "font.cpp"
 #include "camera.cpp"
 #include "entity.cpp"
 #include "entity_manager.cpp"
@@ -170,25 +171,19 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
 
     /* NOTE: Look at this later Axis-Aligned Bounding Box*/
     // position, velocity, acceleration
-    const GLfloat gravity = -4.81f;
+    const GLfloat gravity = -9.81f;
 
-    /* Need a way to detect if hurtboxes collided with hitboxes. n^2 time?*/
-    // UpdateAndGenerateHitBoxes();
-    // UpdateAndGenerateHurtBoxes();
     RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
 
-    /* The following order we will resolve issues:
-     * collisions -> hitboxes <-> hurtboxes
-     */
-
+    f32 dt = gt->dt;
     for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
     {
         /* This will need to happen for all AABB checks */
         Rect *rect = g_rectManager->NonTraversable.rects[i];
 
-        real32 dX = e->velocity.x * gt->dt;
-        real32 dY = e->velocity.y + (gravity + e->acceleration.y) * gt->dt;
+        real32 dX = e->velocity.x * dt;
+        real32 dY = e->velocity.y + (gravity + e->acceleration.y) * dt;
 
         glm::vec3 rayDirection = { dX, dY, 0 };
         rayDirection = glm::normalize(rayDirection);
@@ -199,33 +194,27 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
         printf("rect X- min: %f max: %f\n", rect->minX, rect->maxX);
         printf("rect Y- min: %f max: %f\n", rect->minY, rect->maxY);
 
-        g_playerRect->min[0] = e->position.x;
-        g_playerRect->max[0] = e->position.x + g_playerRect->width;
-
-        g_playerRect->min[1] = e->position.y;
-        g_playerRect->max[1] = e->position.y + g_playerRect->height;
-
         //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
         //      rayDirection))
         Rect nextUpdate = *g_playerRect;
-        nextUpdate.min[0] = e->position.x + e->velocity.x * gt->dt;
+        nextUpdate.min[0] = e->position.x + e->velocity.x * dt;
         nextUpdate.max[0] =
-            e->position.x + nextUpdate.width + e->velocity.x * gt->dt;
+            e->position.x + nextUpdate.width + e->velocity.x * dt;
         nextUpdate.min[1] =
-            e->position.y +
-            (e->velocity.y + (gravity + e->acceleration.y) * gt->dt) * gt->dt;
+            e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
         nextUpdate.max[1] =
-            e->position.y + nextUpdate.height +
-            (e->velocity.y + (gravity + e->acceleration.y) * gt->dt) * gt->dt;
+            nextUpdate.height +
+            e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
 
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* how to differentiate between x and y axis? */
             printf("I hit something!!!!!!!\n");
-            e->position.y = rect->entity->position.y + rect->height;
+            e->position.y = rect->maxY;
             e->velocity.y = 0;
             e->acceleration.y = 0;
-            e->position.x += e->velocity.x * gt->dt;
+            e->position.x += e->velocity.x * dt;
+            break;
         }
         else
         {
@@ -237,12 +226,16 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
             {
                 PushBack(hurtBoxes, rect);
             }
-            e->acceleration.y += gravity;
-            e->velocity.y += e->acceleration.y * gt->dt;
-            e->position.y += e->velocity.y * gt->dt;
-            e->position.x += e->velocity.x * gt->dt;
         }
     }
+
+    /* TODO: There is a bug here. We're not properly updating the position
+     * based on the collisions
+     */
+    e->acceleration.y += gravity;
+    e->velocity.y += e->acceleration.y * dt;
+    e->position.y += e->velocity.y * dt;
+    e->position.x += e->velocity.x * dt;
 
     for (int i = 0; i < hitBoxes->size; i++)
     {
@@ -284,10 +277,17 @@ void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimest
     UpdateEntities(gameMetadata, player, gameTimestep, true);
 }
 
+void RenderAllEntities(GLuint vbo)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+}
+
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity)
 {
+    Bitmap stringBitmap = {};
     GameMemory *perFrameMemory = &gameMetadata->transientMemory;
+    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, "test frequency");
 
     /* TODO: Fix alpha blending... it's currently not true transparency.
      * you need to disable this if you want the back parts to be shown when
@@ -327,6 +327,19 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         // DrawCollisions();
     }
 
+    const u32 numOfPointsPerRect = 6;
+    const u16 maxVertexCount = 10001;
+    RenderGroup renderGroup = {};
+    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxVertexCount;
+    renderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
+    renderGroup.vertexMemory.maxSize = vertexBlockSize;
+
+    /* Draw text at the corner */
+
+    GLuint temp = StringToTexture(gameMetadata->font, "testing this");
+    OpenGLBindTexture(temp);
+    /* End draw text at corner */
+
     OpenGLBeginUseProgram(program, textureID);
 
     /* load uniform variable to shader program before drawing */
@@ -348,24 +361,48 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
      * the background properly. otherwise, you'll just get a blank background.
      */
 
-    const u32 numOfPointsPerRect = 6;
-    const u16 maxVertexCount = 10001;
-    RenderGroup renderGroup = {};
-    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxVertexCount;
-    renderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
-    renderGroup.vertexMemory.maxSize = vertexBlockSize;
-
     /* Save player vertices */
     PushRect(&renderGroup, g_rectManager->player);
+    OpenGLLoadBitmap(&stringBitmap, textureID);
+    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+    DrawRawRectangle(renderGroup.rectCount);
 
+    renderGroup.rectCount = 0;
+    ClearMemoryUsed(&renderGroup.vertexMemory);
+
+
+    memory_index prevBitmapID = 1;
+    Bitmap *bitmap = nullptr;
     for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
     {
         Rect *rect = g_rectManager->Traversable.rects[i];
+
+        memory_index bitmapID = rect->bitmapID; /* GetBitmap(bitmapID);*/
+        if (bitmapID != prevBitmapID)
+        {
+            glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+                    renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+            DrawRawRectangle(renderGroup.rectCount);
+
+            renderGroup.rectCount = 0;
+            ClearMemoryUsed(&renderGroup.vertexMemory);
+
+            bitmap = gameMetadata->bitmaps[bitmapID];
+            ASSERT(bitmap);
+            /* override the bitmap on this textureID */
+            OpenGLLoadBitmap(bitmap, textureID);
+        }
+
         PushRect(&renderGroup, rect);
+        prevBitmapID = bitmapID;
     }
 
+    /* TODO: need to do a more efficient way of doing this. there's a chance
+     * that an upload and draw to happen twice
+     */
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
     DrawRawRectangle(renderGroup.rectCount);
 
     OpenGLEndUseProgram();
@@ -409,11 +446,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     OpenGLCheckErrors();
 }
 
-void RenderAllEntities(GLuint vbo)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-}
-
 void LoadStuff(GameMetadata *gameMetadata)
 {
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
@@ -429,11 +461,13 @@ void LoadStuff(GameMetadata *gameMetadata)
             Entity *rectEntity =
                 AddNewEntity(reservedMemory, g_entityManager, startingPosition);
             ASSERT(rectEntity != NULL);
-            Rect *r =
-                CreateRectangle(reservedMemory, rectEntity, startingPosition, color, 1, 1);
             rectEntity->isTraversable = true;
             rectEntity->isPlayer = false;
             rectEntity->type = REGULAR;
+
+            Rect *r =
+                CreateRectangle(reservedMemory, rectEntity, startingPosition, color, 1, 1);
+            r->bitmapID = 0;
             PushBack(&(g_rectManager->Traversable), r);
         }
     }
@@ -469,6 +503,7 @@ void LoadStuff(GameMetadata *gameMetadata)
             UpdateColors(collissionRect, v4{0.0f, 0.0f, 1.0f, 0.7f});
         }
 
+        collissionRect->bitmapID = 0;
         PushBack(&(g_rectManager->NonTraversable), collissionRect);
     }
 }

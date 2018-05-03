@@ -5,26 +5,6 @@
 #ifndef __GAME_MEMORY__
 #define __GAME_MEMORY__
 
-#define KILOBYTE(x) 1024*x
-#define MEGABYTE(x) KILOBYTE(1024)*x
-#define GIGABYTE(x) MEGABYTE(1024)*x
-
-#define ZeroStruct(x) ZeroSize(&x, sizeof(x))
-inline void ZeroSize(void *_data, memory_index size)
-{
-    u8 *base = (u8 *)_data;
-    while(size--)
-    { 
-        *base++ = 0;
-    }
-}
-
-inline u32 SafeCastToU32(memory_index x)
-{
-    ASSERT(x <= UINT32_MAX);
-    return (u32)x;
-}
-
 struct GameMemory {
     u32 maxSize;
     u32 used;
@@ -39,6 +19,7 @@ struct GameMetadata {
     u8 *base;
 
     TTF_Font *font;
+    struct Bitmap *bitmaps[3];
     GameMemory reservedMemory;
     GameMemory transientMemory;
     GameTimestep *gameTimestep;

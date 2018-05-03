@@ -23,7 +23,7 @@ void UpdateGameTimestep(GameTimestep *gt)
     /* Hardcode timestep for now */
     if (counter > 1)
     {
-        gt->deltaTime = 5;
+        gt->deltaTime = 16;
         gt->dt = static_cast<real32>(gt->deltaTime) / static_cast<real32>(1000.0f);
         counter = 0;
     }
