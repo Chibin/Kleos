@@ -2,9 +2,9 @@
 #define __RENDER__
 
 #include <stddef.h> /* offsetof */
-#include <stdio.h>
 #include <stdlib.h> /* abs */
 #include <string>
+#include <stdio.h>
 
 #include "sdl_common.h"
 
@@ -287,7 +287,25 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 {
     Bitmap stringBitmap = {};
     GameMemory *perFrameMemory = &gameMetadata->transientMemory;
-    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, "test frequency");
+    GameTimestep *gt = gameMetadata->gameTimestep;
+
+    u64 endCounter = SDL_GetPerformanceCounter();
+    u64 counterElapsed = endCounter - gt->lastCounter;
+
+    f64 MSPerFrame = (((1000.0f * (real64)counterElapsed) / (real64)gt->perfCountFrequency));
+    f64 FPS = (real64)gt->perfCountFrequency / (real64)counterElapsed;
+    gt->lastCounter = endCounter;
+
+    u64 endCycleCount = __rdtsc();
+    u64 cyclesElapsed = endCycleCount - gt->lastCycleCount;
+    f64 MCPF = ((f64)cyclesElapsed / (1000.0f * 1000.0f));
+
+    gt->lastCycleCount = endCycleCount;
+
+    char buffer[150];
+    sprintf_s(buffer, sizeof(char) * 150, "%.02f ms/f    %.0ff/s    %.02fcycles/f", MSPerFrame, FPS, MCPF);
+
+    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
 
     /* TODO: Fix alpha blending... it's currently not true transparency.
      * you need to disable this if you want the back parts to be shown when
@@ -350,27 +368,46 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
-                       glm::value_ptr(*g_projection));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     OpenGLCheckErrors();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    
+    /* DRAW UI */
+
     /* TODO: sort things based on the transparency?? You have to draw the
      * "background" first so that the "transparent" part of the texture renders
      * the background properly. otherwise, you'll just get a blank background.
      */
+    f32 yOffset = 0.8f;
+    f32 width = 10;
+    f32 height = -10;
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::ortho(0.0f, width, height, yOffset, 0.1f, 100.0f)));
 
-    /* Save player vertices */
-    PushRect(&renderGroup, g_rectManager->player);
+    Entity rectEntity = {};
+    /* Need the player position because they are the center of the screen. This may change depending on how we do our camera interaction */
+    v3 startingPosition = v3{g_player->position.x, g_player->position.y, g_player->position.z};
+    v4 color = {1, 1, 1, 1};
+    Rect *statsRect =
+        CreateRectangle(perFrameMemory, &rectEntity, startingPosition, color, 2, 1);
+
+    PushRect(&renderGroup, statsRect);
     OpenGLLoadBitmap(&stringBitmap, textureID);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
             renderGroup.vertexMemory.base, GL_STATIC_DRAW);
     DrawRawRectangle(renderGroup.rectCount);
+    /* END DRAW UI */
 
     renderGroup.rectCount = 0;
     ClearMemoryUsed(&renderGroup.vertexMemory);
 
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+    /* Save player vertices */
+    PushRect(&renderGroup, g_rectManager->player);
+    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+    OpenGLLoadBitmap(gameMetadata->bitmaps[0], textureID);
 
     memory_index prevBitmapID = 1;
     Bitmap *bitmap = nullptr;

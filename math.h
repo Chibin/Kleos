@@ -47,6 +47,7 @@ typedef float real32;
 typedef double real64;
 
 typedef float f32;
+typedef double f64;
 typedef double d64;
 
 typedef bool b32;

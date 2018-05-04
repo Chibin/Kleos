@@ -8,6 +8,14 @@ struct GameTimestep
     uint32 latestTime;
     uint32 deltaTime;
     real32 dt;
+
+    u64 perfCountFrequency;
+    u64 lastCounter;
+    u64 endCounter;
+    u64 counterElapsed;
+
+    u64 lastCycleCount;
+
 };
 
 void PauseGameTimestep();

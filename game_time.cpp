@@ -1,5 +1,10 @@
 #include "game_time.h"
 #include "sdl_common.h"
+#if WIN32
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
 
 void PauseGameTimestep()
 {
@@ -12,6 +17,10 @@ void ResetGameTimestep(GameTimestep *gt)
     gt->latestTime = now;
     gt->deltaTime = 0;
     gt->dt = 0;
+
+    gt->perfCountFrequency = SDL_GetPerformanceFrequency();
+    gt->lastCounter = SDL_GetPerformanceCounter();
+    gt->lastCycleCount = __rdtsc();
 }
 
 void UpdateGameTimestep(GameTimestep *gt)
