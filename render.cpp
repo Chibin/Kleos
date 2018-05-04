@@ -214,7 +214,6 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
             e->velocity.y = 0;
             e->acceleration.y = 0;
             e->position.x += e->velocity.x * dt;
-            break;
         }
         else
         {
@@ -243,7 +242,6 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
         for (int y = 0; y < hurtBoxes->size; y++)
         {
             Rect hb = *(hurtBoxes->rects[i]);
-            // Rect nextUpdate = *g_playerRect;
             if (TestAABBAABB(rect, &hb))
             {
                 printf("CHECKING hitboxes\n");
@@ -285,10 +283,9 @@ void RenderAllEntities(GLuint vbo)
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity)
 {
-    Bitmap stringBitmap = {};
     GameMemory *perFrameMemory = &gameMetadata->transientMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
-
+    char buffer[150];
     u64 endCounter = SDL_GetPerformanceCounter();
     u64 counterElapsed = endCounter - gt->lastCounter;
 
@@ -301,11 +298,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     f64 MCPF = ((f64)cyclesElapsed / (1000.0f * 1000.0f));
 
     gt->lastCycleCount = endCycleCount;
-
-    char buffer[150];
-    sprintf_s(buffer, sizeof(char) * 150, "%.02f ms/f    %.0ff/s    %.02fcycles/f", MSPerFrame, FPS, MCPF);
-
-    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
 
     /* TODO: Fix alpha blending... it's currently not true transparency.
      * you need to disable this if you want the back parts to be shown when
@@ -380,17 +372,32 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
      * "background" first so that the "transparent" part of the texture renders
      * the background properly. otherwise, you'll just get a blank background.
      */
-    f32 yOffset = 0.8f;
-    f32 width = 10;
-    f32 height = -10;
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::ortho(0.0f, width, height, yOffset, 0.1f, 100.0f)));
+#if 0
+    f32  left   = 0 - g_player->position.x;
+    f32  right  = 10 - g_player->position.x;
+    f32  bottom = -10 - g_player->position.y;
+    f32  top    = 0.8f - g_player->position.y;
+    f32  near   = 0.1f;
+    f32  far    = 100.0f;
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::ortho(left, right, bottom, top, near, far)));
+#else
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+#endif
+
+    Bitmap stringBitmap = {};
+    sprintf_s(buffer, sizeof(char) * 150, "%.02f ms/f    %.0ff/s    %.02fcycles/f", MSPerFrame, FPS, MCPF);
+    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
 
     Entity rectEntity = {};
-    /* Need the player position because they are the center of the screen. This may change depending on how we do our camera interaction */
-    v3 startingPosition = v3{g_player->position.x, g_player->position.y, g_player->position.z};
     v4 color = {1, 1, 1, 1};
+    f32 rectWidth = 0.5;
+    f32 rectHeight = 0.25f;
+    f32 padding = 0.05f;
+    /* This is in raw OpenGL coordinates */
+    v3 startingPosition = v3{-1, 1 - rectHeight + padding, 0};
     Rect *statsRect =
-        CreateRectangle(perFrameMemory, &rectEntity, startingPosition, color, 2, 1);
+        CreateRectangle(perFrameMemory, &rectEntity, startingPosition, color, rectWidth, rectHeight);
 
     PushRect(&renderGroup, statsRect);
     OpenGLLoadBitmap(&stringBitmap, textureID);
@@ -402,6 +409,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     renderGroup.rectCount = 0;
     ClearMemoryUsed(&renderGroup.vertexMemory);
 
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
     /* Save player vertices */
     PushRect(&renderGroup, g_rectManager->player);
