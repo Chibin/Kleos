@@ -1,28 +1,19 @@
 #include "rectangle.h"
 #include "game_memory.h"
 
-Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 color,
-                      real32 width, real32 height, bool isTraversable)
-{
-    /* NOTE: opengl default is ccw */
 
+Rect *CreateRectangle(GameMemory *gm, v3 startingPosition, v4 color,
+                      real32 width, real32 height)
+{
     Rect *tmp = nullptr;
     tmp = static_cast<Rect *>(AllocateMemory(gm, sizeof(Rect)));
     ZeroSize(tmp, sizeof(Rect));
 
     tmp->startingPosition = startingPosition;
     tmp->color = color;
-    tmp->entity = entity;
-    tmp->entity->position.x = startingPosition.x;
-    tmp->entity->position.y = startingPosition.y;
-    tmp->entity->position.z = startingPosition.z;
-    tmp->entity->isTraversable = isTraversable;
-    tmp->size = RECT_SIZE;
-
-    tmp->entity->width = width;
-    tmp->entity->height = height;
     tmp->width = width;
     tmp->height = height;
+    tmp->size = RECT_SIZE;
 
     /* FIXME: This is starting the drawing from the origin, but not centered at
      * the origin
@@ -40,9 +31,20 @@ Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 co
     tmp->maxY = max.y;
 
     CreateVertices(tmp);
-    tmp->entity->data = tmp->vertices;
 
     return tmp;
+}
+
+void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable)
+{
+    rect->entity = entity;
+    rect->entity->position.x = rect->startingPosition.x;
+    rect->entity->position.y = rect->startingPosition.y;
+    rect->entity->position.z = rect->startingPosition.z;
+    rect->entity->isTraversable = isTraversable;
+    rect->entity->width = rect->width;
+    rect->entity->height = rect->height;
+    rect->entity->data = rect->vertices;
 }
 
 GLfloat *CreateDefaultRectangleVertices(GameMemory *gm)

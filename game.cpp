@@ -65,7 +65,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
 
     /* *entity, startingPosition, color, width, height, isTraversable */
     Rect *firstRect =
-        CreateRectangle(&gameMetadata.reservedMemory, &entity, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2, false);
+        CreateRectangle(&gameMetadata.reservedMemory, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2);
+    AssociateEntity(firstRect, &entity, false);
 
     Bitmap firstBitmap = {};
     Bitmap secondBitmap = {};

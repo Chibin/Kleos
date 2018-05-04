@@ -63,17 +63,16 @@ struct Rect
     uint32 ttl; /* time to live / duration */
 };
 
-Rect *CreateRectangle(GameMemory *gm, Entity *entity, v3 startingPosition, v4 color,
-                      real32 width, real32 height, bool isTraversable = true);
+Rect *CreateRectangle(GameMemory *gm, v3 startingPosition, v4 color, real32 width, real32 height);
 GLfloat *CreateDefaultRectangleVertices();
+void CreateVertices(Rect *rect);
+void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable);
 
 static GLuint g_rectIndices[] = {
     // Note that we start from 0!
     0, 1, 3, // First Triangle
     1, 2, 3  // Second Triangle
 };
-
-void CreateVertices(Rect *rect);
 
 inline void DrawRectangle()
 {

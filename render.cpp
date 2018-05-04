@@ -118,7 +118,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
-        g_playerRect = CreateRectangle(reservedMemory, g_player, pos, color, 2, 1);
+        g_playerRect = CreateRectangle(reservedMemory, pos, color, 2, 1);
+        AssociateEntity(g_playerRect, g_player, false);
         g_rectManager->player = g_playerRect;
         g_playerRect->type = REGULAR;
 
@@ -386,23 +387,41 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 #endif
 
     Bitmap stringBitmap = {};
-    sprintf_s(buffer, sizeof(char) * 150, "%.02f ms/f    %.0ff/s    %.02fcycles/f", MSPerFrame, FPS, MCPF);
+    Bitmap whiteBitmap = {};
+    u32 width = 1;
+    u32 height = 1;
+    whiteBitmap.width = width;
+    whiteBitmap.height = height;
+    whiteBitmap.format = GL_RGBA;
+    whiteBitmap.data = (u8 *)AllocateMemory(perFrameMemory, width * height * sizeof(u32));
+    for( memory_index i =0; i < width * height; i++)
+    {
+        /* alpha -> blue -> green -> red: 1 byte each */
+        *((u32 *)whiteBitmap.data + i) = 0x33000000;
+    }
+
+    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF);
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
 
     Entity rectEntity = {};
     v4 color = {1, 1, 1, 1};
-    f32 rectWidth = 0.5;
-    f32 rectHeight = 0.25f;
-    f32 padding = 0.05f;
+    f32 rectWidth = 0.35f;
+    f32 rectHeight = 0.175f;
+    f32 padding = rectHeight * 0.1f;
     /* This is in raw OpenGL coordinates */
     v3 startingPosition = v3{-1, 1 - rectHeight + padding, 0};
     Rect *statsRect =
-        CreateRectangle(perFrameMemory, &rectEntity, startingPosition, color, rectWidth, rectHeight);
+        CreateRectangle(perFrameMemory,  startingPosition, color, rectWidth, rectHeight);
+    AssociateEntity(statsRect, &rectEntity, false);
 
     PushRect(&renderGroup, statsRect);
-    OpenGLLoadBitmap(&stringBitmap, textureID);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
             renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+
+    OpenGLLoadBitmap(&stringBitmap, textureID);
+    DrawRawRectangle(renderGroup.rectCount);
+
+    OpenGLLoadBitmap(&whiteBitmap, textureID);
     DrawRawRectangle(renderGroup.rectCount);
     /* END DRAW UI */
 
@@ -511,7 +530,8 @@ void LoadStuff(GameMetadata *gameMetadata)
             rectEntity->type = REGULAR;
 
             Rect *r =
-                CreateRectangle(reservedMemory, rectEntity, startingPosition, color, 1, 1);
+                CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
+            AssociateEntity(r, rectEntity, true);
             r->bitmapID = 0;
             PushBack(&(g_rectManager->Traversable), r);
         }
@@ -529,7 +549,8 @@ void LoadStuff(GameMetadata *gameMetadata)
         collisionEntity->isPlayer = false;
 
         Rect *collissionRect =
-            CreateRectangle(reservedMemory, collisionEntity, startingPosition, color, 3, 5);
+            CreateRectangle(reservedMemory, startingPosition, color, 3, 5);
+        AssociateEntity(collissionRect, collisionEntity, false);
 
         if (i == 2)
         {
