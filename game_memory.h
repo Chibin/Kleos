@@ -5,6 +5,21 @@
 #ifndef __GAME_MEMORY__
 #define __GAME_MEMORY__
 
+#include "opengl.h"
+
+enum ImageType {
+    STB = 0x1,
+    SDL = 0x2,
+};
+
+struct Bitmap {
+    u32 width;
+    u32 height;
+    GLenum format;
+    u8* data;
+    ImageType freeImageType;
+};
+
 struct GameMemory {
     u32 maxSize;
     u32 used;
@@ -19,10 +34,11 @@ struct GameMetadata {
     u8 *base;
 
     TTF_Font *font;
-    struct Bitmap *bitmaps[3];
+    Bitmap *bitmaps[3];
     GameMemory reservedMemory;
     GameMemory transientMemory;
     GameTimestep *gameTimestep;
+    Bitmap whiteBitmap;
 };
 
 inline void InitializeGameMemory(GameMemory *gm, u32 size)

@@ -123,6 +123,16 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_rectManager->player = g_playerRect;
         g_playerRect->type = REGULAR;
 
+        gameMetadata->whiteBitmap.width = 1;
+        gameMetadata->whiteBitmap.height = 1;
+        gameMetadata->whiteBitmap.format = GL_RGBA;
+        gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
+        for( memory_index i =0; i < 1 * 1; i++)
+        {
+            /* alpha -> blue -> green -> red: 1 byte each */
+            *((u32 *)gameMetadata->whiteBitmap.data + i) = 0x33000000;
+        }
+
         LoadStuff(gameMetadata);
         init = true;
     }
@@ -387,19 +397,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 #endif
 
     Bitmap stringBitmap = {};
-    Bitmap whiteBitmap = {};
-    u32 width = 1;
-    u32 height = 1;
-    whiteBitmap.width = width;
-    whiteBitmap.height = height;
-    whiteBitmap.format = GL_RGBA;
-    whiteBitmap.data = (u8 *)AllocateMemory(perFrameMemory, width * height * sizeof(u32));
-    for( memory_index i =0; i < width * height; i++)
-    {
-        /* alpha -> blue -> green -> red: 1 byte each */
-        *((u32 *)whiteBitmap.data + i) = 0x33000000;
-    }
-
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF);
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
 
@@ -421,7 +418,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     OpenGLLoadBitmap(&stringBitmap, textureID);
     DrawRawRectangle(renderGroup.rectCount);
 
-    OpenGLLoadBitmap(&whiteBitmap, textureID);
+    OpenGLLoadBitmap(&gameMetadata->whiteBitmap, textureID);
     DrawRawRectangle(renderGroup.rectCount);
     /* END DRAW UI */
 
