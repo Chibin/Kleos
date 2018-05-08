@@ -87,7 +87,8 @@ Rect *g_playerRect = NULL;
 RectManager *g_rectManager = NULL;
 EntityDynamicArray *g_eda = NULL;
 static bool g_debugMode = false;
-static bool g_isPlayerMovingRight = false;
+static bool g_spriteDirectionToggle = false;
+static Animation2D *g_spriteAnimation = NULL;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -277,11 +278,11 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
     e->position.x += e->velocity.x * dt;
     if ( e->velocity.x > 0 )
     {
-        g_isPlayerMovingRight = true;
+        g_spriteDirectionToggle = true;
     }
     else if ( e->velocity.x < 0)
     {
-        g_isPlayerMovingRight = false;
+        g_spriteDirectionToggle = false;
     }
 
     for (int i = 0; i < hitBoxes->size; i++)
@@ -469,30 +470,21 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             renderGroup.vertexMemory.base, GL_STATIC_DRAW);
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, 1);
     OpenGLLoadBitmap(archeBitmap, textureID);
-    u32 bitmapWidth = archeBitmap->width;
-    u32 bitmapHeight = archeBitmap->height;
 
-    f32 spriteHeight = 60.0f;
-    f32 basePixelHeight = bitmapHeight - spriteHeight;
+    UpdateCurrentFrame(g_spriteAnimation, 17.6f);
 
-    v2 topRight = PixelToUV(v2{60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
-    v2 bottomRight = PixelToUV(v2{60, basePixelHeight}, bitmapWidth, bitmapHeight);
-    v2 bottomLeft = PixelToUV(v2{0, basePixelHeight}, bitmapWidth, bitmapHeight);
-    v2 topLeft = PixelToUV(v2{0, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
-
-    Animation2D spriteAnimation = {};
-    spriteAnimation.UVCoords.topRight = topRight;
-    spriteAnimation.UVCoords.bottomRight = bottomRight;
-    spriteAnimation.UVCoords.bottomLeft = bottomLeft;
-    spriteAnimation.UVCoords.topLeft = topLeft;
-
-    if ( g_isPlayerMovingRight )
+    if ( g_spriteDirectionToggle && (g_spriteAnimation->direction == LEFT))
     {
-        FlipYAxis(&spriteAnimation);
+        g_spriteAnimation->direction = RIGHT;
+        FlipYAxisOnAllFrames(g_spriteAnimation);
+    }
+    else if ( !g_spriteDirectionToggle && g_spriteAnimation->direction == RIGHT)
+    {
+        g_spriteAnimation->direction = LEFT;
+        FlipYAxisOnAllFrames(g_spriteAnimation);
     }
 
-    UpdateAnimation(&spriteAnimation, gameMetadata->gameTimestep->deltaTime);
-    UpdateUV(g_rectManager->player, spriteAnimation);
+    UpdateUV(g_rectManager->player, *g_spriteAnimation->currentFrame);
     DrawRawRectangle(renderGroup.rectCount);
 
     renderGroup.rectCount = 0;
@@ -647,7 +639,40 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     newBitmap->bitmapID = g_bitmapID++;
     PushBitmap(&gameMetadata->sentinelNode, newBitmap);
 
-    Bitmap *node = FindBitmap(&gameMetadata->sentinelNode, newBitmap->bitmapID);
-    ASSERT(node != nullptr);
+    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, 1);
+    ASSERT(archeBitmap != nullptr);
+
+    u32 bitmapWidth = archeBitmap->width;
+    u32 bitmapHeight = archeBitmap->height;
+
+    f32 spriteHeight = 60.0f;
+    f32 basePixelHeight = bitmapHeight - spriteHeight;
+
+    v2 topRight = PixelToUV(v2{60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+    v2 bottomRight = PixelToUV(v2{60, basePixelHeight}, bitmapWidth, bitmapHeight);
+    v2 bottomLeft = PixelToUV(v2{0, basePixelHeight}, bitmapWidth, bitmapHeight);
+    v2 topLeft = PixelToUV(v2{0, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+
+    g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
+    ZeroSize(g_spriteAnimation, sizeof(Animation2D));
+    g_spriteAnimation->direction = LEFT;
+    g_spriteAnimation->totalFrames = 2;
+    g_spriteAnimation->frameCoords = 
+        (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
+    g_spriteAnimation->timePerFrame = 1000 * 1.5;
+
+    g_spriteAnimation->frameCoords[0].topRight = topRight;
+    g_spriteAnimation->frameCoords[0].bottomRight = bottomRight;
+    g_spriteAnimation->frameCoords[0].bottomLeft = bottomLeft;
+    g_spriteAnimation->frameCoords[0].topLeft = topLeft;
+
+    topRight = PixelToUV(v2{60 + 60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+    bottomRight = PixelToUV(v2{60 + 60, basePixelHeight}, bitmapWidth, bitmapHeight);
+    bottomLeft = PixelToUV(v2{0 + 60, basePixelHeight}, bitmapWidth, bitmapHeight);
+    topLeft = PixelToUV(v2{0 + 60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+    g_spriteAnimation->frameCoords[1].topRight = topRight;
+    g_spriteAnimation->frameCoords[1].bottomRight = bottomRight;
+    g_spriteAnimation->frameCoords[1].bottomLeft = bottomLeft;
+    g_spriteAnimation->frameCoords[1].topLeft = topLeft;
 }
 #endif
