@@ -2,6 +2,14 @@
 #define __FONT__
 #include "font.h"
 
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#include "stb_image.h"
+#pragma warning(pop)
+#endif
+
 TTF_Font *OpenFont()
 {
     const char *file = "assets/fonts/lato/Lato-Regular.ttf";
@@ -50,11 +58,6 @@ SDL_Surface *StringToSDLSurface(TTF_Font *font, const char *msg)
     v4 color = { 1, 1, 1, 1 };
     return StringToSDLSurface(font, msg, color);
 }
-#pragma warning(push)
-#pragma warning(disable : 4244)
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#pragma warning(pop)
 
 inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
 {

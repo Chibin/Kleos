@@ -18,6 +18,10 @@ struct Bitmap {
     GLenum format;
     u8* data;
     ImageType freeImageType;
+
+    Bitmap *next;
+    Bitmap *prev;
+    memory_index bitmapID;
 };
 
 struct GameMemory {
@@ -39,7 +43,29 @@ struct GameMetadata {
     GameMemory transientMemory;
     GameTimestep *gameTimestep;
     Bitmap whiteBitmap;
+    Bitmap sentinelNode;
 };
+
+inline void PushBitmap(Bitmap *oldNode, Bitmap *newNode)
+{
+    newNode->next = oldNode->next;
+    newNode->prev = oldNode;
+    oldNode->next->prev = newNode;
+    oldNode->next = newNode;
+}
+
+inline Bitmap *FindBitmap(Bitmap *sentinelNode, memory_index bitmapID)
+{
+    for(Bitmap * node = sentinelNode->next; node != sentinelNode; node->next)
+    {
+        if (node->bitmapID == bitmapID)
+        {
+            return node;
+        }
+    }
+
+    return nullptr;
+}
 
 inline void InitializeGameMemory(GameMemory *gm, u32 size)
 {
@@ -67,7 +93,7 @@ inline memory_index GetAlignmentOffSet(GameMemory *gm, memory_index alignment)
     return alignOffSet;
 }
 
-inline void *AllocateMemory(GameMemory *gm, u32 size, const memory_index byteAlignment = 4)
+inline void *AllocateMemory(GameMemory *gm, memory_index size, const memory_index byteAlignment = 4)
 {
     ASSERT(size != 0);
 
@@ -78,7 +104,7 @@ inline void *AllocateMemory(GameMemory *gm, u32 size, const memory_index byteAli
     u8* newAllocBase = gm->base + gm->used - 1;
 
     ASSERT(gm->used + size < gm->maxSize);
-    gm->used += size;
+    gm->used += SafeCastToU32(size);
 
     return newAllocBase;
 }

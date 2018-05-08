@@ -77,6 +77,9 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     StringToBitmap(&gameMetadata.reservedMemory, &secondBitmap, font, "testing this");
     gameMetadata.bitmaps[0] = &firstBitmap;
     gameMetadata.bitmaps[1] = &secondBitmap;
+    ZeroStruct(gameMetadata.sentinelNode);
+    gameMetadata.sentinelNode.next = &gameMetadata.sentinelNode;
+    gameMetadata.sentinelNode.prev = &gameMetadata.sentinelNode;
 
     CreateVertices(firstRect);
 

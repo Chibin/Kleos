@@ -24,8 +24,25 @@
 #include "math.h"
 #pragma warning(pop)
 
-/* probably need to be here? depends where we put our game logic */
 #include "game_memory.h"
+static GameMemory *g_reservedMemory = NULL;
+inline void *RequestToReservedMemory(memory_index size)
+{
+    ASSERT(g_reservedMemory);
+    return AllocateMemory(g_reservedMemory, size);
+}
+
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_MALLOC(sz) RequestToReservedMemory(sz)
+/* We also need to take care of STBI_FREE(p) */
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#include "stb_image.h"
+#pragma warning(pop)
+#endif
+
+/* probably need to be here? depends where we put our game logic */
 #include "font.cpp"
 #include "camera.cpp"
 #include "entity.cpp"
@@ -46,11 +63,18 @@
     void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,        \
               GLuint debugProgram, Entity *entity)
 
+#define COLOR_WHITE v4{1, 1, 1, 1}
+#define COLOR_RED v4{1, 0, 0, 1}
+#define COLOR_GREEN v4{0, 1, 0, 1}
+#define COLOR_BLUE v4{0, 0, 1, 1}
+#define COLOR_BLACK v4{0, 0, 0, 1}
+
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity);
 void RenderAllEntities(GLuint program);
 void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep);
 void LoadStuff(GameMetadata *gameMetadata);
+inline void LoadAssets(GameMetadata *gameMetadata);
 
 /* TODO: We'll need to get rid of these global variables later on */
 Camera *g_camera = NULL;
@@ -63,6 +87,7 @@ Rect *g_playerRect = NULL;
 RectManager *g_rectManager = NULL;
 EntityDynamicArray *g_eda = NULL;
 static bool g_debugMode = false;
+static bool g_isPlayerMovingRight = false;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -84,6 +109,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ASSERT(!g_projection);
         ASSERT(!g_rectManager);
         ASSERT(!g_entityManager);
+        ASSERT(!g_reservedMemory);
+
+        g_reservedMemory = reservedMemory;
 
         *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
@@ -114,11 +142,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         /* NOTE: we don't need to free the player since we created it in the
          * stack
          */
-        v4 color = { 0.4f, 0.0f, 0.4f, 1.0f };
+        //v4 color = { 0.4f, 0.0f, 0.4f, 1.0f };
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
-        g_playerRect = CreateRectangle(reservedMemory, pos, color, 2, 1);
+        g_playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
         AssociateEntity(g_playerRect, g_player, false);
         g_rectManager->player = g_playerRect;
         g_playerRect->type = REGULAR;
@@ -127,12 +155,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->whiteBitmap.height = 1;
         gameMetadata->whiteBitmap.format = GL_RGBA;
         gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
-        for( memory_index i =0; i < 1 * 1; i++)
+        for(memory_index i =0; i < 1 * 1; i++)
         {
             /* alpha -> blue -> green -> red: 1 byte each */
             *((u32 *)gameMetadata->whiteBitmap.data + i) = 0x33000000;
         }
 
+        LoadAssets(gameMetadata);
         LoadStuff(gameMetadata);
         init = true;
     }
@@ -186,8 +215,20 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
 
     RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
-
     f32 dt = gt->dt;
+
+    //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
+    //      rayDirection))
+    Rect nextUpdate = *g_playerRect;
+    nextUpdate.min[0] = e->position.x + e->velocity.x * dt;
+    nextUpdate.max[0] =
+        e->position.x + nextUpdate.width + e->velocity.x * dt;
+    nextUpdate.min[1] =
+        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
+    nextUpdate.max[1] =
+        nextUpdate.height +
+        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
+
     for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
     {
         /* This will need to happen for all AABB checks */
@@ -204,18 +245,6 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
          */
         printf("rect X- min: %f max: %f\n", rect->minX, rect->maxX);
         printf("rect Y- min: %f max: %f\n", rect->minY, rect->maxY);
-
-        //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
-        //      rayDirection))
-        Rect nextUpdate = *g_playerRect;
-        nextUpdate.min[0] = e->position.x + e->velocity.x * dt;
-        nextUpdate.max[0] =
-            e->position.x + nextUpdate.width + e->velocity.x * dt;
-        nextUpdate.min[1] =
-            e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
-        nextUpdate.max[1] =
-            nextUpdate.height +
-            e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
 
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
@@ -246,6 +275,14 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
     e->velocity.y += e->acceleration.y * dt;
     e->position.y += e->velocity.y * dt;
     e->position.x += e->velocity.x * dt;
+    if ( e->velocity.x > 0 )
+    {
+        g_isPlayerMovingRight = true;
+    }
+    else if ( e->velocity.x < 0)
+    {
+        g_isPlayerMovingRight = false;
+    }
 
     for (int i = 0; i < hitBoxes->size; i++)
     {
@@ -400,16 +437,14 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF);
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
 
-    Entity rectEntity = {};
-    v4 color = {1, 1, 1, 1};
     f32 rectWidth = 0.35f;
     f32 rectHeight = 0.175f;
     f32 padding = rectHeight * 0.1f;
+
     /* This is in raw OpenGL coordinates */
     v3 startingPosition = v3{-1, 1 - rectHeight + padding, 0};
     Rect *statsRect =
-        CreateRectangle(perFrameMemory,  startingPosition, color, rectWidth, rectHeight);
-    AssociateEntity(statsRect, &rectEntity, false);
+        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
 
     PushRect(&renderGroup, statsRect);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
@@ -427,11 +462,41 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-    /* Save player vertices */
+
+    /* Save PLAYER vertices */
     PushRect(&renderGroup, g_rectManager->player);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
             renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-    OpenGLLoadBitmap(gameMetadata->bitmaps[0], textureID);
+    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, 1);
+    OpenGLLoadBitmap(archeBitmap, textureID);
+    u32 bitmapWidth = archeBitmap->width;
+    u32 bitmapHeight = archeBitmap->height;
+
+    f32 spriteHeight = 60.0f;
+    f32 basePixelHeight = bitmapHeight - spriteHeight;
+
+    v2 topRight = PixelToUV(v2{60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+    v2 bottomRight = PixelToUV(v2{60, basePixelHeight}, bitmapWidth, bitmapHeight);
+    v2 bottomLeft = PixelToUV(v2{0, basePixelHeight}, bitmapWidth, bitmapHeight);
+    v2 topLeft = PixelToUV(v2{0, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+
+    Animation2D spriteAnimation = {};
+    spriteAnimation.UVCoords.topRight = topRight;
+    spriteAnimation.UVCoords.bottomRight = bottomRight;
+    spriteAnimation.UVCoords.bottomLeft = bottomLeft;
+    spriteAnimation.UVCoords.topLeft = topLeft;
+
+    if ( g_isPlayerMovingRight )
+    {
+        FlipYAxis(&spriteAnimation);
+    }
+
+    UpdateAnimation(&spriteAnimation, gameMetadata->gameTimestep->deltaTime);
+    UpdateUV(g_rectManager->player, spriteAnimation);
+    DrawRawRectangle(renderGroup.rectCount);
+
+    renderGroup.rectCount = 0;
+    ClearMemoryUsed(&renderGroup.vertexMemory);
 
     memory_index prevBitmapID = 1;
     Bitmap *bitmap = nullptr;
@@ -569,5 +634,20 @@ void LoadStuff(GameMetadata *gameMetadata)
         collissionRect->bitmapID = 0;
         PushBack(&(g_rectManager->NonTraversable), collissionRect);
     }
+}
+
+inline void LoadAssets(GameMetadata *gameMetadata)
+{
+    static memory_index g_bitmapID = 1;
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+    Bitmap *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    ZeroSize(newBitmap, sizeof(Bitmap));
+
+    ImageToBitmap(newBitmap, "./materials/textures/arche.png");
+    newBitmap->bitmapID = g_bitmapID++;
+    PushBitmap(&gameMetadata->sentinelNode, newBitmap);
+
+    Bitmap *node = FindBitmap(&gameMetadata->sentinelNode, newBitmap->bitmapID);
+    ASSERT(node != nullptr);
 }
 #endif

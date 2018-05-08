@@ -15,6 +15,11 @@ Rect *CreateRectangle(GameMemory *gm, v3 startingPosition, v4 color,
     tmp->height = height;
     tmp->size = RECT_SIZE;
 
+    tmp->spriteAnimation.UVCoords.UV[0] = v2{1, 1};
+    tmp->spriteAnimation.UVCoords.UV[1] = v2{1, 0};
+    tmp->spriteAnimation.UVCoords.UV[2] = v2{0, 0};
+    tmp->spriteAnimation.UVCoords.UV[3] = v2{0, 1};
+
     /* FIXME: This is starting the drawing from the origin, but not centered at
      * the origin
      */

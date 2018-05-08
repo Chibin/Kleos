@@ -14,6 +14,25 @@ enum RectType
     HURTBOX = 3
 };
 
+struct RectUVCoords {
+#pragma warning(push)
+#pragma warning(disable : 4201)
+    union {
+        struct {
+            v2 topRight;
+            v2 bottomRight;
+            v2 bottomLeft;
+            v2 topLeft;
+        };
+        v2 UV[4];
+#pragma warning(pop)
+    };
+};
+
+struct Animation2D{
+    RectUVCoords UVCoords;
+};
+
 struct Rect
 {
     Entity *entity;
@@ -56,6 +75,8 @@ struct Rect
     v2 uvTextureTopRight;
     v2 uvTextureBottomLeft;
     v2 uvTextureBottomRight;
+
+    Animation2D spriteAnimation;
 
     bool isTextureUpsideDown;
     int size;
@@ -150,6 +171,14 @@ inline void UpdatePosition(Rect *r, v3 newPosition)
     r->vertices[3].vPosition = topLeft;
 }
 
+inline void UpdateUV(Rect *r, Animation2D spriteAnimation)
+{
+    r->vertices[0].vUv = spriteAnimation.UVCoords.UV[0];
+    r->vertices[1].vUv = spriteAnimation.UVCoords.UV[1];
+    r->vertices[2].vUv = spriteAnimation.UVCoords.UV[2];
+    r->vertices[3].vUv = spriteAnimation.UVCoords.UV[3];
+}
+
 inline void UpdateColors(Rect *r, v4 color)
 {
     for (memory_index i = 0; i < NUM_OF_RECT_CORNER; i++)
@@ -162,5 +191,37 @@ inline void PushRect(RenderGroup *rg, Rect *rect)
 {
     PushRect(&rg->vertexMemory, rect);
     rg->rectCount++;
+}
+
+inline void FlipXCoordinates(Animation2D *a)
+{
+    v2 first  = a->UVCoords.UV[0];
+    v2 second = a->UVCoords.UV[1];
+    v2 third  = a->UVCoords.UV[2];
+    v2 fourth = a->UVCoords.UV[3];
+
+    a->UVCoords.UV[0] = v2{fourth.x, fourth.y};
+    a->UVCoords.UV[1] = v2{third.x, third.y};
+    a->UVCoords.UV[2] = v2{second.x, second.y};
+    a->UVCoords.UV[3] = v2{first.x, first.y};
+}
+
+inline void FlipYAxis(Animation2D *a)
+{
+    FlipXCoordinates(a);
+}
+
+inline v2 PixelToUV(v2 pixel, u32 width, u32 height)
+{
+    return v2{pixel.x / width, pixel.y / height};
+}
+
+inline void UpdateAnimation(Animation2D *a, u32 timeElapsed)
+{
+    a;
+    timeElapsed;
+    //totalSprites = ;
+    //spriteTimeFrame = ;
+    //a->currentSprite = a->nextSprite;
 }
 #endif
