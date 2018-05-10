@@ -24,7 +24,10 @@
 #include "math.h"
 #pragma warning(pop)
 
+#ifndef WIN32
+/* need to figure out where to put this or do something else */
 #define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
+#endif
 
 #include "game_memory.h"
 static GameMemory *g_reservedMemory = NULL;
