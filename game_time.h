@@ -3,6 +3,12 @@
 #include "math.h"
 #include "logger.h"
 
+#if WIN32
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
+
 #define _CAT(x, y) x##y
 #define CAT(x, y) _CAT(x, y)
 

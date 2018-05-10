@@ -3,11 +3,6 @@
 
 #include "game_time.h"
 #include "sdl_common.h"
-#if WIN32
-#include <intrin.h>
-#else
-#include <x86intrin.h>
-#endif
 
 void PauseGameTimestep()
 {
