@@ -7,31 +7,37 @@
 
 #include "opengl.h"
 
-enum ImageType {
+enum ImageType
+{
     STB = 0x1,
     SDL = 0x2,
 };
 
-struct Bitmap {
+struct Bitmap
+{
     u32 width;
     u32 height;
     GLenum format;
     u8* data;
     ImageType freeImageType;
 
+    TextureParam textureParam;
+    memory_index bitmapID;
+
     Bitmap *next;
     Bitmap *prev;
-    memory_index bitmapID;
 };
 
-struct GameMemory {
+struct GameMemory
+{
     u32 maxSize;
     u32 used;
     u8 *base;
 };
 
 struct GameTimestep;
-struct GameMetadata {
+struct GameMetadata
+{
     u32 totalMemoryBlockSize;
     u32 maxBlockSize;
     u32 usedBlock;

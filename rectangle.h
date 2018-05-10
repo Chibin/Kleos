@@ -34,7 +34,8 @@ enum Direction {
     RIGHT = 2,
 };
 
-struct Animation2D{
+struct Animation2D
+{
     RectUVCoords *frameCoords;
     u32 totalFrames;
     /* May be have a function pointer or some type of function to determine how
@@ -93,6 +94,7 @@ struct Rect
 
     Animation2D *sprites;
     u32 totalSprites;
+    Direction frameDirection;
 
     bool isTextureUpsideDown;
     int size;
@@ -236,6 +238,17 @@ inline void FlipYAxisOnAllFrames(Animation2D *a)
 inline v2 PixelToUV(v2 pixel, u32 width, u32 height)
 {
     return v2{pixel.x / width, pixel.y / height};
+}
+
+inline void UpdateFrameDirection(Animation2D *a, Direction d)
+{
+    if (a->direction == d)
+    {
+        return;
+    }
+
+    FlipYAxisOnAllFrames(a);
+    a->direction = d;
 }
 
 inline void UpdateCurrentFrame(Animation2D *a, f32 timeElapsed)

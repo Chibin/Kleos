@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "game_memory.h"
 
 struct Camera
 {
@@ -16,3 +17,4 @@ void CameraZoomOut(Camera *camera);
 void CameraZoomIn(Camera *camera);
 void CameraUpdateTarget(Camera *camera, glm::vec3 position);
 void CameraUpdateTarget(Camera *camera, float yaw, float pitch);
+inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up);

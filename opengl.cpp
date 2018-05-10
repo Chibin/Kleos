@@ -134,6 +134,12 @@ GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
     return textureID;
 }
 
+inline void OpenGLUpdateTextureParameter(TextureParam *textureParam)
+{
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureParam->minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureParam->magFilter);
+}
+
 void _defined_openGLCheckErrors(const char *file, int line)
 {
     /* TODO: change how we print the error? */

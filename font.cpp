@@ -78,8 +78,10 @@ inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
     int textureFormat = GL_RGB;
     if (componentsPerPixel == 4)
         textureFormat = GL_RGBA;
-
     bitmap->format = textureFormat;
+
+    ASSERT(componentsPerPixel == 4);
+
 }
 
 

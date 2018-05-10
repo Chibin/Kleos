@@ -41,6 +41,12 @@ struct Vertex
 };
 #pragma warning(pop)
 
+struct TextureParam
+{
+    s32 magFilter;
+    s32 minFilter;
+};
+
 struct Program
 {
     GLuint handle;

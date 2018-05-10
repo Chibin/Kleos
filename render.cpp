@@ -117,7 +117,12 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
 
-        g_camera = CreateCamera(reservedMemory);
+        v3 cameraPos = {0, 0, 5};
+        // and looks at the origin
+        v3 cameraTarget = {0, 0, 0};
+        // Head is up (set to 0,-1,0 to look upside-down)
+        v3 cameraUp = {0, 1, 0};
+        g_camera = CreateCamera(reservedMemory, cameraPos, cameraTarget, cameraUp);
 
         g_eda = CreateEntityDynamicArray(reservedMemory);
 
@@ -143,7 +148,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         /* NOTE: we don't need to free the player since we created it in the
          * stack
          */
-        //v4 color = { 0.4f, 0.0f, 0.4f, 1.0f };
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
@@ -151,6 +155,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         AssociateEntity(g_playerRect, g_player, false);
         g_rectManager->player = g_playerRect;
         g_playerRect->type = REGULAR;
+        g_playerRect->frameDirection = LEFT;
 
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
@@ -276,14 +281,6 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
     e->velocity.y += e->acceleration.y * dt;
     e->position.y += e->velocity.y * dt;
     e->position.x += e->velocity.x * dt;
-    if ( e->velocity.x > 0 )
-    {
-        g_spriteDirectionToggle = true;
-    }
-    else if ( e->velocity.x < 0)
-    {
-        g_spriteDirectionToggle = false;
-    }
 
     for (int i = 0; i < hitBoxes->size; i++)
     {
@@ -298,19 +295,35 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
         }
     }
 
-    /* Apply "friction" */
-    e->velocity.x = 0;
-
     if (isPlayer)
     {
         /* TODO: bound checking for the camera such that we only move the camera
          * when necessary
          */
+        //UpdateEntityFrameDirection();
+        if ( e->velocity.x > 0 )
+        {
+            g_playerRect->frameDirection = RIGHT;
+        }
+        else if ( e->velocity.x < 0)
+        {
+            g_playerRect->frameDirection = LEFT;
+        }
+        /* else don't update */
+
 
         /* follow the character around */
         CameraUpdateTarget(g_camera, e->position);
         UpdatePosition(g_playerRect, v3{e->position.x, e->position.y, e->position.z});
+
+        UpdateCurrentFrame(g_spriteAnimation, 17.6f);
+        UpdateFrameDirection(g_spriteAnimation, g_playerRect->frameDirection);
+        UpdateUV(g_rectManager->player, *g_spriteAnimation->currentFrame);
     }
+
+    /* Apply "friction" */
+    e->velocity.x = 0;
+
 
 }
 
@@ -471,24 +484,15 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, 1);
     OpenGLLoadBitmap(archeBitmap, textureID);
 
-    UpdateCurrentFrame(g_spriteAnimation, 17.6f);
+    OpenGLUpdateTextureParameter(&archeBitmap->textureParam);
 
-    if ( g_spriteDirectionToggle && (g_spriteAnimation->direction == LEFT))
-    {
-        g_spriteAnimation->direction = RIGHT;
-        FlipYAxisOnAllFrames(g_spriteAnimation);
-    }
-    else if ( !g_spriteDirectionToggle && g_spriteAnimation->direction == RIGHT)
-    {
-        g_spriteAnimation->direction = LEFT;
-        FlipYAxisOnAllFrames(g_spriteAnimation);
-    }
-
-    UpdateUV(g_rectManager->player, *g_spriteAnimation->currentFrame);
     DrawRawRectangle(renderGroup.rectCount);
 
     renderGroup.rectCount = 0;
     ClearMemoryUsed(&renderGroup.vertexMemory);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     memory_index prevBitmapID = 1;
     Bitmap *bitmap = nullptr;
@@ -636,6 +640,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     ZeroSize(newBitmap, sizeof(Bitmap));
 
     ImageToBitmap(newBitmap, "./materials/textures/arche.png");
+    newBitmap->textureParam.magFilter = GL_NEAREST;
+    newBitmap->textureParam.minFilter = GL_NEAREST;
     newBitmap->bitmapID = g_bitmapID++;
     PushBitmap(&gameMetadata->sentinelNode, newBitmap);
 
@@ -659,7 +665,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     g_spriteAnimation->totalFrames = 2;
     g_spriteAnimation->frameCoords = 
         (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
-    g_spriteAnimation->timePerFrame = 1000 * 1.5;
+    g_spriteAnimation->timePerFrame = 1000 * 0.75;
 
     g_spriteAnimation->frameCoords[0].topRight = topRight;
     g_spriteAnimation->frameCoords[0].bottomRight = bottomRight;

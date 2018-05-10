@@ -2,23 +2,35 @@
 #include <GL/glew.h>
 #include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
-#include "game_memory.h"
 
-Camera *CreateCamera(GameMemory *gm)
+
+inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up)
 {
     auto *camera = static_cast<Camera *>(AllocateMemory(gm, (sizeof(Camera))));
 
     // Camera is at, (0,0,0) in World Space
-    camera->pos = glm::vec3(0, 0, 10);
+    camera->pos = glm::vec3(pos.x, pos.y, pos.z);
 
     // and looks at the origin
-    camera->target = glm::vec3(0, 0, 0);
+    camera->target = glm::vec3(target.x, target.y, target.z);
 
     // Head is up (set to 0,-1,0 to look upside-down)
-    camera->up = glm::vec3(0, 1, 0);
+    camera->up = glm::vec3(up.x, up.y, up.z);
 
     camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
     return camera;
+
+}
+
+Camera *CreateCamera(GameMemory *gm)
+{
+    // Camera is at, (0,0,0) in World Space
+    v3 pos = {0, 0, 5};
+    // and looks at the origin
+    v3 target = {0, 0, 0};
+    // Head is up (set to 0,-1,0 to look upside-down)
+    v3 up = {0, 1, 0};
+    return CreateCamera(gm, pos, target, up);
 }
 
 void CameraZoomOut(Camera *camera)
