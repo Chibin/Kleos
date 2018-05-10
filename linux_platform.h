@@ -9,7 +9,7 @@
 typedef void *(*UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID,
                                  GLuint program, GLuint debugProgram,
                                  v2 screenResolution,
-                                 GameTimestep **gameTimestep);
+                                 struct GameMetadata *gameMetadata);
 
 struct RenderAPI
 {

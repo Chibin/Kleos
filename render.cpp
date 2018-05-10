@@ -24,6 +24,8 @@
 #include "math.h"
 #pragma warning(pop)
 
+#define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
+
 #include "game_memory.h"
 static GameMemory *g_reservedMemory = NULL;
 inline void *RequestToReservedMemory(memory_index size)
