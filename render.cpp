@@ -30,6 +30,8 @@
 #endif
 
 #include "game_memory.h"
+#include "game_metadata.h"
+/* cheeky way to replace malloc call for STB */
 static GameMemory *g_reservedMemory = NULL;
 inline void *RequestToReservedMemory(memory_index size)
 {
@@ -55,17 +57,16 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "game_time.cpp"
 #include "input.cpp"
 #include "opengl.cpp"
+#include "shaders.cpp"
 
 #include "collision.cpp"
 #include "rect_manager.cpp"
 #include "rectangle.cpp"
 
-#define UPDATEANDRENDER(name)                                                  \
-    bool name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,        \
-              GLuint debugProgram, v2 screenResolution,                        \
-              GameMetadata *gameMetadata)
-#define RENDER(name)                                                           \
-    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,        \
+#define UPDATEANDRENDER(name)                                            \
+    bool name(GameMetadata *gameMetadata)
+#define RENDER(name)                                                     \
+    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,  \
               GLuint debugProgram, Entity *entity)
 
 #define COLOR_WHITE v4{1, 1, 1, 1}
@@ -77,18 +78,17 @@ inline void *RequestToReservedMemory(memory_index size)
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity);
 void RenderAllEntities(GLuint program);
-void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep);
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep);
 void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
+inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc);
 
 /* TODO: We'll need to get rid of these global variables later on */
 Camera *g_camera = NULL;
 glm::mat4 *g_projection = NULL;
 GLfloat *g_rectangleVertices = NULL;
-static bool init = false;
 EntityManager *g_entityManager = NULL;
 Entity *g_player = NULL;
-Rect *g_playerRect = NULL;
 RectManager *g_rectManager = NULL;
 EntityDynamicArray *g_eda = NULL;
 static bool g_debugMode = false;
@@ -103,10 +103,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
-    GameMemory *perFrameMemory = &gameMetadata->transientMemory;
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     ClearMemoryUsed(perFrameMemory);
+    v2 screenResolution = gameMetadata->screenResolution;
 
-    if (!init)
+    if (!gameMetadata->initFromGameUpdateAndRender)
     {
 
         ASSERT(!*gameTimestep);
@@ -156,11 +157,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
-        g_playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
-        AssociateEntity(g_playerRect, g_player, false);
-        g_rectManager->player = g_playerRect;
-        g_playerRect->type = REGULAR;
-        g_playerRect->frameDirection = LEFT;
+        gameMetadata->playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
+        AssociateEntity(gameMetadata->playerRect, g_player, false);
+        g_rectManager->player = gameMetadata->playerRect;
+        gameMetadata->playerRect->type = REGULAR;
+        gameMetadata->playerRect->frameDirection = LEFT;
 
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
@@ -174,7 +175,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         LoadAssets(gameMetadata);
         LoadStuff(gameMetadata);
-        init = true;
+        gameMetadata->initFromGameUpdateAndRender = true;
+
     }
 
     /* NOTE: Looks very player centric right now, not sure if we need to make it
@@ -209,16 +211,19 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Update(gameMetadata, g_player, *gameTimestep);
-    Render(gameMetadata, vao, vbo, textureID, program, debugProgram, g_player);
+    ASSERT(gameMetadata->program);
+    ASSERT(gameMetadata->debugProgram);
+
+    Update(gameMetadata, *gameTimestep);
+    Render(gameMetadata, gameMetadata->vaoID, gameMetadata->vboID, gameMetadata->textureID, gameMetadata->program, gameMetadata->debugProgram, g_player);
 
     return continueRunning;
 }
 
-void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, bool isPlayer = false)
+void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, bool isPlayer = false)
 {
     //GameMemory *reservedMemory = &gameMetadata->reservedMemory;
-    GameMemory *perFrameMemory = &gameMetadata->transientMemory;
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
     /* NOTE: Look at this later Axis-Aligned Bounding Box*/
     // position, velocity, acceleration
@@ -228,9 +233,11 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     f32 dt = gt->dt;
 
+    Entity *e = GetEntity(gameMetadata->playerRect);
+
     //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
     //      rayDirection))
-    Rect nextUpdate = *g_playerRect;
+    Rect nextUpdate = *gameMetadata->playerRect;
     nextUpdate.min[0] = e->position.x + e->velocity.x * dt;
     nextUpdate.max[0] =
         e->position.x + nextUpdate.width + e->velocity.x * dt;
@@ -308,38 +315,36 @@ void UpdateEntities(GameMetadata *gameMetadata, Entity *e, GameTimestep *gt, boo
         //UpdateEntityFrameDirection();
         if ( e->velocity.x > 0 )
         {
-            g_playerRect->frameDirection = RIGHT;
+            gameMetadata->playerRect->frameDirection = RIGHT;
         }
         else if ( e->velocity.x < 0)
         {
-            g_playerRect->frameDirection = LEFT;
+            gameMetadata->playerRect->frameDirection = LEFT;
         }
         /* else don't update */
 
-
         /* follow the character around */
         CameraUpdateTarget(g_camera, e->position);
-        UpdatePosition(g_playerRect, v3{e->position.x, e->position.y, e->position.z});
+        UpdatePosition(gameMetadata->playerRect, v3{e->position.x, e->position.y, e->position.z});
 
         UpdateCurrentFrame(g_spriteAnimation, 17.6f);
-        UpdateFrameDirection(g_spriteAnimation, g_playerRect->frameDirection);
+        UpdateFrameDirection(g_spriteAnimation, gameMetadata->playerRect->frameDirection);
         UpdateUV(g_rectManager->player, *g_spriteAnimation->currentFrame);
     }
 
     /* Apply "friction" */
     e->velocity.x = 0;
 
-
 }
 
-void Update(GameMetadata *gameMetadata, Entity *player, GameTimestep *gameTimestep)
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep)
 {
     /* update logics and data here */
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
     /* Update entities */
-    UpdateEntities(gameMetadata, player, gameTimestep, true);
+    UpdateEntities(gameMetadata, gameTimestep, true);
 }
 
 void RenderAllEntities(GLuint vbo)
@@ -350,7 +355,7 @@ void RenderAllEntities(GLuint vbo)
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity)
 {
-    GameMemory *perFrameMemory = &gameMetadata->transientMemory;
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[150];
     u64 endCounter = SDL_GetPerformanceCounter();
@@ -435,22 +440,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     
     /* DRAW UI */
 
-    /* TODO: sort things based on the transparency?? You have to draw the
-     * "background" first so that the "transparent" part of the texture renders
-     * the background properly. otherwise, you'll just get a blank background.
-     */
-#if 0
-    f32  left   = 0 - g_player->position.x;
-    f32  right  = 10 - g_player->position.x;
-    f32  bottom = -10 - g_player->position.y;
-    f32  top    = 0.8f - g_player->position.y;
-    f32  near   = 0.1f;
-    f32  far    = 100.0f;
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::ortho(left, right, bottom, top, near, far)));
-#else
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-#endif
+    SetOpenGLDrawToScreenCoordinate(projectionLoc, viewLoc);
 
     Bitmap stringBitmap = {};
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF);
@@ -483,10 +473,11 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     /* Save PLAYER vertices */
-    PushRect(&renderGroup, g_rectManager->player);
+    PushRect(&renderGroup, gameMetadata->playerRect);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
             renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, 1);
+
+    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, gameMetadata->playerRect->bitmapID);
     OpenGLLoadBitmap(archeBitmap, textureID);
 
     OpenGLUpdateTextureParameter(&archeBitmap->textureParam);
@@ -637,10 +628,50 @@ void LoadStuff(GameMetadata *gameMetadata)
     }
 }
 
+inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
+{
+    /* TODO: sort things based on the transparency?? You have to draw the
+     * "background" first so that the "transparent" part of the texture renders
+     * the background properly. otherwise, you'll just get a blank background.
+     */
+#if 0
+    f32  left   = 0 - g_player->position.x;
+    f32  right  = 10 - g_player->position.x;
+    f32  bottom = -10 - g_player->position.y;
+    f32  top    = 0.8f - g_player->position.y;
+    f32  near   = 0.1f;
+    f32  far    = 100.0f;
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::ortho(left, right, bottom, top, near, far)));
+#else
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+#endif
+}
+
+inline void LoadShaders(GameMetadata *gameMetadata)
+{
+    /* load shaders */
+    gameMetadata->program = CreateProgram("materials/programs/vertex.glsl",
+                                   "materials/programs/fragment.glsl");
+    gameMetadata->debugProgram =
+        CreateProgram("materials/programs/vertex.glsl",
+                      "materials/programs/debug_fragment_shaders.glsl");
+}
+
 inline void LoadAssets(GameMetadata *gameMetadata)
 {
+    LoadShaders(gameMetadata);
+
     static memory_index g_bitmapID = 1;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+
+    Bitmap *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    ZeroSize(awesomefaceBitmap, sizeof(Bitmap));
+
+    ImageToBitmap(awesomefaceBitmap, "./materials/textures/awesomeface.png");
+    gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
+    gameMetadata->bitmaps[0] = awesomefaceBitmap;
+
     Bitmap *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     ZeroSize(newBitmap, sizeof(Bitmap));
 
@@ -650,7 +681,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     newBitmap->bitmapID = g_bitmapID++;
     PushBitmap(&gameMetadata->sentinelNode, newBitmap);
 
-    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, 1);
+    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
 
     u32 bitmapWidth = archeBitmap->width;
@@ -685,5 +716,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     g_spriteAnimation->frameCoords[1].bottomRight = bottomRight;
     g_spriteAnimation->frameCoords[1].bottomLeft = bottomLeft;
     g_spriteAnimation->frameCoords[1].topLeft = topLeft;
+
+    gameMetadata->playerRect->bitmapID = archeBitmap->bitmapID;
 }
 #endif

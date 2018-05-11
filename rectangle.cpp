@@ -157,3 +157,8 @@ void CreateVertices(Rect *rect)
     topLeft->vNormal = normal;
     topLeft->vUv = v2{0, 1};
 }
+
+inline Entity *GetEntity(Rect *rect)
+{
+    return rect->entity;
+}

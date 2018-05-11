@@ -1,5 +1,6 @@
 #include "game.h"
 #include "game_memory.h"
+#include "game_metadata.h"
 #include "math.h"
 #include "logger.h"
 #include "entity.h"
@@ -13,7 +14,6 @@
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
 
 void _processOpenGLErrors(const char *file, int line);
-void teststuff(GLuint &textureID);
 
 void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
 {
@@ -25,12 +25,6 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     glEnable(GL_BLEND);
 
     bool continueRunning = true;
-
-    GLuint program = CreateProgram("materials/programs/vertex.glsl",
-                                   "materials/programs/fragment.glsl");
-    GLuint debugProgram =
-        CreateProgram("materials/programs/vertex.glsl",
-                      "materials/programs/debug_fragment_shaders.glsl");
 
     /*  Each vertex attribute takes its data from memory managed by a
      *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
@@ -45,7 +39,6 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     glGenBuffers(1, &ebo);
     glGenBuffers(1, &vbo);
     Entity entity;
-    GLuint textureID;
 
     TTF_Font *font = OpenFont();
     assert(font != NULL);
@@ -55,49 +48,35 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     gameMetadata.maxBlockSize = GIGABYTE(1);
     gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
 
-    u32 transientSize = MEGABYTE(4);
-    gameMetadata.transientMemory.base = (u8 *)AllocateMemory(&gameMetadata, transientSize);
-    gameMetadata.transientMemory.maxSize = transientSize;
+    u32 tempSize = MEGABYTE(4);
+    gameMetadata.temporaryMemory.base = (u8 *)AllocateMemory(&gameMetadata, tempSize);
+    gameMetadata.temporaryMemory.maxSize = tempSize;
 
     u32 reservedSize = MEGABYTE(900);
     gameMetadata.reservedMemory.base = (u8 *)AllocateMemory(&gameMetadata, reservedSize);
     gameMetadata.reservedMemory.maxSize = reservedSize;
 
-    /* *entity, startingPosition, color, width, height, isTraversable */
-    Rect *firstRect =
-        CreateRectangle(&gameMetadata.reservedMemory, v3{ 0, 0, 0 }, v4{ 0, 0, 0, 0 }, 1, 2);
-    AssociateEntity(firstRect, &entity, false);
+    gameMetadata.vaoID = vao;
+    gameMetadata.eboID = ebo;
+    gameMetadata.vboID = vbo;
+    gameMetadata.screenResolution = v2{ SCREEN_WIDTH, SCREEN_HEIGHT };
+    gameMetadata.initFromGameUpdateAndRender = false;
 
-    Bitmap firstBitmap = {};
-    Bitmap secondBitmap = {};
-
-    ImageToBitmap(&firstBitmap, "./materials/textures/awesomeface.png");
-    textureID = OpenGLBindBitmapToTexture(&firstBitmap);
-
-    StringToBitmap(&gameMetadata.reservedMemory, &secondBitmap, font, "testing this");
-    gameMetadata.bitmaps[0] = &firstBitmap;
-    gameMetadata.bitmaps[1] = &secondBitmap;
     ZeroStruct(gameMetadata.sentinelNode);
     gameMetadata.sentinelNode.next = &gameMetadata.sentinelNode;
     gameMetadata.sentinelNode.prev = &gameMetadata.sentinelNode;
-
-    CreateVertices(firstRect);
+    gameMetadata.program = 0;
+    gameMetadata.debugProgram = 0;
 
     OpenGLCreateVAO(vao, vbo, sizeof(Vertex) * NUM_OF_RECT_CORNER,
                     nullptr, /* use null as way to not load anything to vbo*/
                     ebo, sizeof(g_rectIndices), g_rectIndices);
 
-    v2 screenResolution = { SCREEN_WIDTH, SCREEN_HEIGHT };
-    GameTimestep *gameTimestep = nullptr;
-
     FindFile(GetProgramPath(), "render*dll");
 
     while (continueRunning)
     {
-        continueRunning = ((renderAPI.updateAndRender)(
-                               vao, vbo, textureID, program, debugProgram,
-                               screenResolution,  &gameMetadata) != 0);
-
+        continueRunning = ((renderAPI.updateAndRender)(&gameMetadata) != 0);
         ProcessOpenGLErrors();
 
         /* equivalent to glswapbuffer? */

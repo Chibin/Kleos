@@ -6,10 +6,7 @@
 #include <SDL2/SDL.h>
 #include <string>
 
-typedef void *(*UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID,
-                                 GLuint program, GLuint debugProgram,
-                                 v2 screenResolution,
-                                 struct GameMetadata *gameMetadata);
+typedef void *(*UPDATEANDRENDER)(struct GameMetadata *gameMetadata);
 
 struct RenderAPI
 {

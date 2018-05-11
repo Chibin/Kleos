@@ -6,6 +6,8 @@
 
 #define OpenGLCheckErrors() _defined_openGLCheckErrors(__FILE__, __LINE__)
 
+/* TODO: may be a macro that we can add on all opengl functions to detect opengl errors in debug mode */
+
 #pragma warning(push)
 #pragma warning(disable : 4201)
 struct Vertex

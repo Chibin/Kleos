@@ -10,10 +10,7 @@
 
 #include <windows.h>
 
-typedef bool(__cdecl *UPDATEANDRENDER)(GLuint vao, GLuint vbo, GLuint textureID,
-                                       GLuint program, GLuint debugProgram,
-                                       v2 screenResolution,
-                                       struct GameMetadata *gameMetadata);
+typedef bool(__cdecl *UPDATEANDRENDER)(struct GameMetadata *gameMetadata);
 
 struct RenderAPI
 {

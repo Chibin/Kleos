@@ -14,6 +14,11 @@ enum RectType
     HURTBOX = 3
 };
 
+enum Direction {
+    LEFT = 1,
+    RIGHT = 2,
+};
+
 struct RectUVCoords {
 #pragma warning(push)
 #pragma warning(disable : 4201)
@@ -27,11 +32,6 @@ struct RectUVCoords {
         v2 UV[4];
 #pragma warning(pop)
     };
-};
-
-enum Direction {
-    LEFT = 1,
-    RIGHT = 2,
 };
 
 struct Animation2D
