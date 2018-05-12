@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <string>
 
-inline void OpenGLBindTexture(GLuint textureID)
+void OpenGLBindTexture(GLuint textureID)
 {
     ASSERT(textureID != 0);
 
