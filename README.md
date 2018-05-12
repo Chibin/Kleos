@@ -58,3 +58,11 @@ dnf install SDL_ttf-devel
 dnf install glm-devel
 
 ``` clang -std=c++14  main.cpp /usr/lib64/libGLEW.a -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ ```
+
+
+# Docker build
+```
+docker build -t jobless:testing .
+./run.sh
+```
+

@@ -36,6 +36,10 @@ add_executable (main
     shaders.cpp
     )
 
+add_dependencies (main
+    render.so
+    )
+
 if (UNIX)
     target_sources (main PUBLIC linux_platform.cpp)
 elseif (WIN32)
@@ -56,3 +60,7 @@ if (UNIX)
         m
         )
 endif()
+
+add_custom_target(render.so ALL
+    COMMAND clang -shared -fPIC -std=c++14 render.cpp -lGLEW  -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ -lGLU -o render.so
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
