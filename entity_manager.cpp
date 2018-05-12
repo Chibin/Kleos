@@ -4,6 +4,7 @@
 #include "entity.h"
 #include "logger.h"
 #include "game_memory.h"
+#include "game_time.h"
 
 struct EntityManager
 {
@@ -35,6 +36,8 @@ void _allocateMoreMemory(GameMemory *gm, EntityManager *em);
 
 EntityManager *CreateEntityManger(GameMemory *gm)
 {
+    START_DEBUG_TIMING();
+
     auto *em = static_cast<EntityManager *>(AllocateMemory(gm, (sizeof(EntityManager))));
     if (em == nullptr)
     {
@@ -55,6 +58,8 @@ EntityManager *CreateEntityManger(GameMemory *gm)
     {
         PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
     }
+
+    END_DEBUG_TIMING();
 
     return em;
 }

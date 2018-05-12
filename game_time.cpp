@@ -1,3 +1,6 @@
+#ifndef __GAME_TIME__
+#define __GAME_TIME__
+
 #include "game_time.h"
 #include "sdl_common.h"
 #if WIN32
@@ -39,3 +42,5 @@ void UpdateGameTimestep(GameTimestep *gt)
     counter++;
     gt->deltaTime = gt->latestTime - gt->prevTime;
 }
+
+#endif

@@ -109,6 +109,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
+        START_DEBUG_TIMING();
 
         ASSERT(!*gameTimestep);
         ASSERT(!g_camera);
@@ -174,8 +175,12 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         }
 
         LoadAssets(gameMetadata);
+
         LoadStuff(gameMetadata);
+
         gameMetadata->initFromGameUpdateAndRender = true;
+
+        END_DEBUG_TIMING();
 
     }
 
@@ -358,6 +363,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[150];
+
     u64 endCounter = SDL_GetPerformanceCounter();
     u64 counterElapsed = endCounter - gt->lastCounter;
 
