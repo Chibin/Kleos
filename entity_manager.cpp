@@ -51,13 +51,12 @@ EntityManager *CreateEntityManger(GameMemory *gm)
     /* TODO: not sure if we should zero the values */
     em->entities =
         static_cast<Entity *>(AllocateMemory(gm, (sizeof(Entity) * em->totalAllocatedSpace)));
-    memset(em->entities, 0, sizeof(Entity) * em->totalAllocatedSpace);
+
+    /* probably don't need this */
+    //memset(em->entities, 0, sizeof(Entity) * em->totalAllocatedSpace);
 
     /* TODO: This should really be an assert */
-    if (em->entities == nullptr)
-    {
-        PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
-    }
+    ASSERT(em->entities != nullptr);
 
     END_DEBUG_TIMING();
 
