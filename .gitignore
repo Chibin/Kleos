@@ -23,3 +23,5 @@ cmake_install.cmake
 main.dir/
 x64/
 build/
+Makefile
+main
