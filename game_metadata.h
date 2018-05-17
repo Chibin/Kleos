@@ -10,12 +10,12 @@ struct GameMetadata
     u8 *base;
 
     TTF_Font *font;
-    Bitmap *bitmaps[3];
     GameMemory reservedMemory;
     GameMemory temporaryMemory;
     GameTimestep *gameTimestep;
-    Bitmap whiteBitmap;
+    
     Bitmap sentinelNode;
+    Bitmap whiteBitmap;
 
     GLuint vaoID;
     GLuint eboID;

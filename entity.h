@@ -26,6 +26,8 @@ struct Entity
     real32 maxX;
     Vertex *data;
 
+    b32 willAttack;
+
     /* TODO: entity may or may not have stats ...
      * how do we deal with this?
      * may be.. when creating an entity, we use the entity id as a key to store
@@ -57,6 +59,11 @@ inline void EntityMoveLeft(Entity *entity)
 inline void EntityMoveRight(Entity *entity)
 {
     entity->velocity.x += 5.0f;
+}
+
+inline void EntityMoveAttack(Entity *entity)
+{
+    entity->willAttack = true;
 }
 
 Entity *GetNonTraversableEntities(uint32 *out_NumOfNTs);

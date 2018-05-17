@@ -30,6 +30,7 @@
 #endif
 
 #include "game_memory.h"
+#include "bitmap.h"
 #include "game_metadata.h"
 /* cheeky way to replace malloc call for STB */
 static GameMemory *g_reservedMemory = NULL;
@@ -76,9 +77,9 @@ inline void *RequestToReservedMemory(memory_index size)
 #define COLOR_BLACK v4{0, 0, 0, 1}
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity);
+            GLuint debugProgram, Entity *entity, RectDynamicArray *hitboxes, RectDynamicArray *hurtboxes);
 void RenderAllEntities(GLuint program);
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep);
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitboxes, RectDynamicArray *hurtBoxes);
 void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc);
@@ -196,17 +197,23 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     while (SDL_PollEvent(&event))
     {
-        if (event.type == SDL_QUIT)
-            return false;
-
-        if (event.type == SDL_MOUSEWHEEL)
-            ProcessMouseInput(event, g_camera);
-
-        else if (event.type == SDL_KEYDOWN)
-            ProcessInputDown(event.key.keysym.sym, &continueRunning);
-
-        else if (event.type == SDL_KEYUP)
-            ProcessInputUp(event.key.keysym.sym);
+        switch (event.type)
+        {
+            case SDL_QUIT:
+                return false;
+                break;
+            case SDL_MOUSEWHEEL:
+                ProcessMouseInput(event, g_camera);
+                break;
+            case SDL_KEYDOWN:
+                ProcessInputDown(event.key.keysym.sym, &continueRunning);
+                break;
+            case SDL_KEYUP:
+                ProcessInputUp(event.key.keysym.sym);
+                break;
+            default:
+                break;
+        }
     }
 
     /* TODO: One time init might be done here as the game progress ? */
@@ -219,23 +226,39 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     ASSERT(gameMetadata->program);
     ASSERT(gameMetadata->debugProgram);
 
-    Update(gameMetadata, *gameTimestep);
-    Render(gameMetadata, gameMetadata->vaoID, gameMetadata->vboID, gameMetadata->textureID, gameMetadata->program, gameMetadata->debugProgram, g_player);
+    RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
+    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
+
+    Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes);
+    Render(gameMetadata,
+           gameMetadata->vaoID,
+           gameMetadata->vboID,
+           gameMetadata->textureID,
+           gameMetadata->program,
+           gameMetadata->debugProgram,
+           g_player,
+           hitBoxes,
+           hurtBoxes);
 
     return continueRunning;
 }
 
-void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, bool isPlayer = false)
+void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, bool isPlayer = false)
 {
     //GameMemory *reservedMemory = &gameMetadata->reservedMemory;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+
+    /* 
+     * Attack animation startup
+     * Create animation hitboxes
+     * Create animation hurtboxes
+     * Update movement location
+     */
 
     /* NOTE: Look at this later Axis-Aligned Bounding Box*/
     // position, velocity, acceleration
     const GLfloat gravity = -9.81f;
 
-    RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
-    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     f32 dt = gt->dt;
 
     Entity *e = GetEntity(gameMetadata->playerRect);
@@ -299,12 +322,23 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, bool isPlayer 
     e->position.y += e->velocity.y * dt;
     e->position.x += e->velocity.x * dt;
 
+    if (e->willAttack)
+    {
+        v3 startingPosition = v3{e->position.x, e->position.y, e->position.z};
+        startingPosition += v3{-2,0,0};
+        f32 rectWidth = 0.35f;
+        f32 rectHeight = 0.175f;
+        // GenerateAttackFrameRectPosition(rect);
+        Rect *attackHitBox = CreateRectangle(perFrameMemory, startingPosition, COLOR_RED, rectWidth, rectHeight);
+        PushBack(hitBoxes, attackHitBox);
+    }
+
     for (int i = 0; i < hitBoxes->size; i++)
     {
         Rect *rect = hitBoxes->rects[i];
         for (int y = 0; y < hurtBoxes->size; y++)
         {
-            Rect hb = *(hurtBoxes->rects[i]);
+            Rect hb = *(hurtBoxes->rects[y]);
             if (TestAABBAABB(rect, &hb))
             {
                 printf("CHECKING hitboxes\n");
@@ -342,14 +376,14 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, bool isPlayer 
 
 }
 
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep)
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes)
 {
     /* update logics and data here */
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
     /* Update entities */
-    UpdateEntities(gameMetadata, gameTimestep, true);
+    UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, true);
 }
 
 void RenderAllEntities(GLuint vbo)
@@ -358,7 +392,7 @@ void RenderAllEntities(GLuint vbo)
 }
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity)
+            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes)
 {
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
@@ -468,6 +502,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     OpenGLLoadBitmap(&stringBitmap, textureID);
     DrawRawRectangle(renderGroup.rectCount);
 
+    /* TODO: Might be faster to binded white bitmap already? */
     OpenGLLoadBitmap(&gameMetadata->whiteBitmap, textureID);
     DrawRawRectangle(renderGroup.rectCount);
     /* END DRAW UI */
@@ -480,8 +515,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     /* Save PLAYER vertices */
     PushRect(&renderGroup, gameMetadata->playerRect);
-    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used, renderGroup.vertexMemory.base, GL_STATIC_DRAW);
 
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, gameMetadata->playerRect->bitmapID);
     OpenGLLoadBitmap(archeBitmap, textureID);
@@ -509,10 +543,9 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                     renderGroup.vertexMemory.base, GL_STATIC_DRAW);
             DrawRawRectangle(renderGroup.rectCount);
 
-            renderGroup.rectCount = 0;
-            ClearMemoryUsed(&renderGroup.vertexMemory);
+            ClearUsedRenderGroup(&renderGroup);
 
-            bitmap = gameMetadata->bitmaps[bitmapID];
+            bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
             ASSERT(bitmap);
             /* override the bitmap on this textureID */
             OpenGLLoadBitmap(bitmap, textureID);
@@ -528,6 +561,46 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
             renderGroup.vertexMemory.base, GL_STATIC_DRAW);
     DrawRawRectangle(renderGroup.rectCount);
+
+#if 0
+    memory_index prevBitmapID = 1;
+    Bitmap *bitmap = nullptr;
+
+    for (memory_index i = 0; i < rectCount; i++)
+    {
+        assign rect;
+        get bitmapID;
+        OpenGLUpdateTextureParameter(&archeBitmap->textureParam);
+
+        if (bitmapID != prevBitmapID)
+        {
+
+            DrawPreviously loaded rectangles;
+
+            ClearUsedRenderGroup(&renderGroup);
+            Bitmap *bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+            ASSERT(bitmap);
+            /* override the bitmap on this textureID */
+            OpenGLLoadBitmap(bitmap, textureID);
+        }
+        else if (textureParam != prevTextureParam)
+        {
+            glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+                    renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+            DrawRawRectangle(renderGroup.rectCount);
+
+            ClearUsedRenderGroup(&renderGroup);
+
+            OpenGLUpdateTextureParameter(textureParam);
+
+        }
+
+        PushRect(&renderGroup, rect);
+        prevBitmapID = bitmapID;
+
+    }
+
+#endif
 
     OpenGLEndUseProgram();
 
@@ -553,6 +626,18 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
         {
             Rect *rect = g_rectManager->NonTraversable.rects[i];
+            PushRect(&renderGroup, rect);
+        }
+
+        for (memory_index i = 0; i < hitBoxes->size; i++)
+        {
+            Rect *rect = hitBoxes->rects[i];
+            PushRect(&renderGroup, rect);
+        }
+
+        for (memory_index i = 0; i < hurtBoxes->size; i++)
+        {
+            Rect *rect = hurtBoxes->rects[i];
             PushRect(&renderGroup, rect);
         }
 
@@ -668,23 +753,19 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 {
     LoadShaders(gameMetadata);
 
-    static memory_index g_bitmapID = 1;
+    static memory_index g_bitmapID = 0;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     Bitmap *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    ZeroSize(awesomefaceBitmap, sizeof(Bitmap));
+    SetBitmap(awesomefaceBitmap, TextureParam{GL_LINEAR, GL_LINEAR},
+              g_bitmapID++, "./materials/textures/awesomeface.png");
+    PushBitmap(&gameMetadata->sentinelNode, awesomefaceBitmap);
 
-    ImageToBitmap(awesomefaceBitmap, "./materials/textures/awesomeface.png");
     gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
-    gameMetadata->bitmaps[0] = awesomefaceBitmap;
 
     Bitmap *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    ZeroSize(newBitmap, sizeof(Bitmap));
-
-    ImageToBitmap(newBitmap, "./materials/textures/arche.png");
-    newBitmap->textureParam.magFilter = GL_NEAREST;
-    newBitmap->textureParam.minFilter = GL_NEAREST;
-    newBitmap->bitmapID = g_bitmapID++;
+    SetBitmap(newBitmap, TextureParam{GL_NEAREST, GL_NEAREST},
+              g_bitmapID++, "./materials/textures/arche.png");
     PushBitmap(&gameMetadata->sentinelNode, newBitmap);
 
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, newBitmap->bitmapID);

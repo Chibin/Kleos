@@ -3,6 +3,7 @@
 #include "entity.h"
 
 static bool g_canJump = true;
+static bool g_canAttack = true;
 
 void ProcessInputDown(SDL_Keycode sym, bool *continueRunning)
 {
@@ -29,6 +30,9 @@ void ProcessInputUp(SDL_Keycode sym)
     case SDLK_UP:
         g_canJump = true;
         break;
+    case SDLK_s:
+        g_canAttack = true;
+        break;
     default:
         break;
     }
@@ -54,6 +58,11 @@ void ProcessKeysHeldDown(Entity *entity, const Uint8 *keystate)
     {
         EntityMoveUp(entity);
         g_canJump = false;
+    }
+    if ((keystate[SDL_SCANCODE_S] != 0u) && g_canAttack)
+    {
+        EntityMoveAttack(entity);
+        g_canAttack = false;
     }
 
     if (keystate[SDL_SCANCODE_DOWN] != 0u)

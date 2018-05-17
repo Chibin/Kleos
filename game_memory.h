@@ -6,7 +6,6 @@
 #include "sdl_common.h"
 #include "opengl.h"
 #include "game_time.h"
-#include "bitmap.h"
 
 struct GameMemory
 {

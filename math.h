@@ -115,6 +115,16 @@ inline v3 operator+(v3 A, v3 B)
     return A;
 }
 
+inline v3 &operator+=(v3 &A, v3 B)
+{
+
+    A.x += B.x;
+    A.y += B.y;
+    A.z += B.z;
+
+    return A;
+}
+
 inline v4 operator+(v4 A, v4 B)
 {
 

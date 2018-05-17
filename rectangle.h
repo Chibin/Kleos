@@ -156,6 +156,12 @@ struct RenderGroup
     memory_index rectCount;
 };
 
+inline void ClearUsedRenderGroup(RenderGroup *rg)
+{
+    rg->rectCount = 0;
+    ClearMemoryUsed(&rg->vertexMemory);
+};
+
 inline void PushRect(GameMemory *gm, Rect *rect)
 {
     /* We need 6 points because we need to create 2 triangles */

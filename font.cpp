@@ -59,32 +59,6 @@ SDL_Surface *StringToSDLSurface(TTF_Font *font, const char *msg)
     return StringToSDLSurface(font, msg, color);
 }
 
-inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
-{
-    s32 componentsPerPixel;
-
-    /* PNGs are normally 'flipped'.
-     * This happens because OpenGL expects the 0.0 coordinate on the y-axis to
-     * be on the bottom side of the image, but images usually have 0.0 at the
-     * top of the y-axis
-     */
-    size_t ImageLen = strlen(ImageName);
-    if (ImageLen >= 5 && strcmp(ImageName + ImageLen - 5, ".png"))
-        stbi_set_flip_vertically_on_load(true);
-
-    bitmap->data =
-        stbi_load(ImageName, (s32 *)&bitmap->width, (s32 *)&bitmap->height, &componentsPerPixel, 0);
-
-    int textureFormat = GL_RGB;
-    if (componentsPerPixel == 4)
-        textureFormat = GL_RGBA;
-    bitmap->format = textureFormat;
-
-    ASSERT(componentsPerPixel == 4);
-
-}
-
-
 inline GLuint OpenGLBindBitmapToTexture(Bitmap *bitmap)
 {
     return OpenGLAllocateTexture(bitmap->format, bitmap->width, bitmap->height, bitmap->data);
