@@ -1,13 +1,9 @@
+#include "main.h"
 #include "game.h"
 #include "game_memory.h"
 #include "game_metadata.h"
 #include "math.h"
 #include "logger.h"
-#include "entity.h"
-#include "game_time.h"
-#include "main.h"
-#include "rectangle.h"
-#include "shaders.h"
 #include <GL/glew.h>
 #include "font.h"
 
@@ -34,14 +30,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
      * its vertex data.
      */
 
-    GLuint vao, ebo, vbo;
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &ebo);
-    glGenBuffers(1, &vbo);
-    Entity entity;
-
     TTF_Font *font = OpenFont();
-    assert(font != NULL);
+    ASSERT(font != NULL);
 
     struct GameMetadata gameMetadata = {};
     gameMetadata.font  = font;
@@ -56,9 +46,9 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     gameMetadata.reservedMemory.base = (u8 *)AllocateMemory(&gameMetadata, reservedSize);
     gameMetadata.reservedMemory.maxSize = reservedSize;
 
-    gameMetadata.vaoID = vao;
-    gameMetadata.eboID = ebo;
-    gameMetadata.vboID = vbo;
+    gameMetadata.vaoID = 0;
+    gameMetadata.eboID = 0;
+    gameMetadata.vboID = 0;
     gameMetadata.screenResolution = v2{ SCREEN_WIDTH, SCREEN_HEIGHT };
     gameMetadata.initFromGameUpdateAndRender = false;
 
@@ -67,10 +57,6 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     gameMetadata.sentinelNode.prev = &gameMetadata.sentinelNode;
     gameMetadata.program = 0;
     gameMetadata.debugProgram = 0;
-
-    OpenGLCreateVAO(vao, vbo, sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                    nullptr, /* use null as way to not load anything to vbo*/
-                    ebo, sizeof(g_rectIndices), g_rectIndices);
 
     FindFile(GetProgramPath(), "render*dll");
 

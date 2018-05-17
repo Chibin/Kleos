@@ -184,6 +184,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         gameMetadata->initFromGameUpdateAndRender = true;
 
+        glGenVertexArrays(1, &gameMetadata->vaoID);
+        glGenBuffers(1, &gameMetadata->eboID);
+        glGenBuffers(1, &gameMetadata->vboID);
+
+        OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
+                nullptr, /* use null as way to not load anything to vbo*/
+                gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices);
+
         END_DEBUG_TIMING();
 
     }
