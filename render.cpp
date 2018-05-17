@@ -30,8 +30,7 @@
 #endif
 
 #include "game_memory.h"
-#include "bitmap.h"
-#include "game_metadata.h"
+
 /* cheeky way to replace malloc call for STB */
 static GameMemory *g_reservedMemory = NULL;
 inline void *RequestToReservedMemory(memory_index size)
@@ -50,7 +49,11 @@ inline void *RequestToReservedMemory(memory_index size)
 #pragma warning(pop)
 #endif
 
+#include "bitmap.h"
+#include "game_metadata.h"
+
 /* probably need to be here? depends where we put our game logic */
+#include "bitmap.cpp"
 #include "font.cpp"
 #include "camera.cpp"
 #include "entity.cpp"

@@ -1,6 +1,7 @@
 #ifndef __FONT__
 #define __FONT__
 #include "font.h"
+#include "bitmap.h"
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -57,26 +58,6 @@ SDL_Surface *StringToSDLSurface(TTF_Font *font, const char *msg)
     /* TODO: Pass the color */
     v4 color = { 1, 1, 1, 1 };
     return StringToSDLSurface(font, msg, color);
-}
-
-inline GLuint OpenGLBindBitmapToTexture(Bitmap *bitmap)
-{
-    return OpenGLAllocateTexture(bitmap->format, bitmap->width, bitmap->height, bitmap->data);
-}
-
-GLuint ImageToTexture(const char *ImageName)
-{
-    /* This is a one time upload to OpenGL -- you don't get to keep bitmap data */
-    GLuint textureID;
-    Bitmap bitmap = {};
-
-    ImageToBitmap(&bitmap, ImageName);
-
-    textureID = OpenGLBindBitmapToTexture(&bitmap);
-    stbi_image_free(bitmap.data);
-
-    OpenGLCheckErrors();
-    return textureID;
 }
 
 inline void swap(u32 *first, u32 *second)

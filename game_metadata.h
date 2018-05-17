@@ -2,6 +2,8 @@
 #ifndef __GAME_METADATA__
 #define __GAME_METADATA__
 
+#include "bitmap.h"
+
 struct GameMetadata
 {
     u32 totalMemoryBlockSize;
