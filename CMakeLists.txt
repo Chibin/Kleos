@@ -23,17 +23,7 @@ message("test inglibs: " ${SDL2_LIBRARIES})
 add_executable (main
     main.cpp
     game.cpp
-    camera.cpp
-    collision.cpp
-    entity.cpp
-    entity_manager.cpp
-    font.cpp
-    game_time.cpp
-    input.cpp
     opengl.cpp
-    rect_manager.cpp
-    rectangle.cpp
-    shaders.cpp
     )
 
 add_dependencies (main

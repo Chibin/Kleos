@@ -15,7 +15,7 @@ struct GameMetadata
     GameMemory reservedMemory;
     GameMemory temporaryMemory;
     GameTimestep *gameTimestep;
-    
+
     Bitmap sentinelNode;
     Bitmap whiteBitmap;
 

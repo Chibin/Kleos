@@ -49,6 +49,16 @@ struct TextureParam
     s32 minFilter;
 };
 
+inline b32 operator==(TextureParam a, TextureParam b)
+{
+    return (a.magFilter == b.magFilter) && (a.minFilter == b.minFilter);
+}
+
+inline b32 operator!=(TextureParam a, TextureParam b)
+{
+    return (a.magFilter != b.magFilter) || (a.minFilter != b.minFilter);
+}
+
 struct Program
 {
     GLuint handle;

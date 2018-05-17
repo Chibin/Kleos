@@ -5,7 +5,6 @@
 #include "math.h"
 #include "logger.h"
 #include <GL/glew.h>
-#include "font.h"
 
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
 
@@ -22,19 +21,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
 
     bool continueRunning = true;
 
-    /*  Each vertex attribute takes its data from memory managed by a
-     *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
-     *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
-     *  Since the previously defined VBO was bound before
-     *  calling glVertexAttribPointer vertex attribute 0 is now associated with
-     * its vertex data.
-     */
-
-    TTF_Font *font = OpenFont();
-    ASSERT(font != NULL);
-
     struct GameMetadata gameMetadata = {};
-    gameMetadata.font  = font;
+    gameMetadata.font  = nullptr;
     gameMetadata.maxBlockSize = GIGABYTE(1);
     gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
 

@@ -66,6 +66,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "collision.cpp"
 #include "rect_manager.cpp"
 #include "rectangle.cpp"
+#include "render_group.h"
 
 #define UPDATEANDRENDER(name)                                            \
     bool name(GameMetadata *gameMetadata)
@@ -122,6 +123,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ASSERT(!g_rectManager);
         ASSERT(!g_entityManager);
         ASSERT(!g_reservedMemory);
+
+        TTF_Font *font = OpenFont();
+        ASSERT(font != NULL);
+        gameMetadata->font = font;
 
         g_reservedMemory = reservedMemory;
 
@@ -183,6 +188,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         LoadStuff(gameMetadata);
 
         gameMetadata->initFromGameUpdateAndRender = true;
+
+        /*  Each vertex attribute takes its data from memory managed by a
+         *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
+         *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
+         *  Since the previously defined VBO was bound before
+         *  calling glVertexAttribPointer vertex attribute 0 is now associated with
+         * its vertex data.
+         */
 
         glGenVertexArrays(1, &gameMetadata->vaoID);
         glGenBuffers(1, &gameMetadata->eboID);
@@ -574,6 +587,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     DrawRawRectangle(renderGroup.rectCount);
 
 #if 0
+    /* some rect buffer */ ?
     memory_index prevBitmapID = 1;
     Bitmap *bitmap = nullptr;
 
@@ -585,7 +599,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         if (bitmapID != prevBitmapID)
         {
-
             DrawPreviously loaded rectangles;
 
             ClearUsedRenderGroup(&renderGroup);
