@@ -1,6 +1,6 @@
 ---
-Checks:          '*'
-HeaderFilterRegex: ''
+Checks:          '*,-llvm-header-guard'
+HeaderFilterRegex: '$(realpath ..)/src'
 AnalyzeTemporaryDtors: false
 CheckOptions:    
   - key:             google-readability-braces-around-statements.ShortStatementLines
