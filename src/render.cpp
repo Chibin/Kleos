@@ -45,7 +45,7 @@ inline void *RequestToReservedMemory(memory_index size)
 /* We also need to take care of STBI_FREE(p) */
 #pragma warning(push)
 #pragma warning(disable : 4244)
-#include "stb_image.h"
+#include <stb_image.h>
 #pragma warning(pop)
 #endif
 
