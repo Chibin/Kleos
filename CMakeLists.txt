@@ -6,8 +6,8 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_STANDARD 14)
 
 if (${USE_OPENGL_ES})
-	message("Setting USE_OPENGL_ES: " ${USE_OPENGL_ES})
-	add_definitions(-DUSE_OPENGL_ES=${USE_OPENGL_ES})
+    message("Setting USE_OPENGL_ES: " ${USE_OPENGL_ES})
+    add_definitions(-DUSE_OPENGL_ES=${USE_OPENGL_ES})
 endif()
 
 find_package (GLEW REQUIRED)
@@ -26,8 +26,15 @@ add_executable (main
     opengl.cpp
     )
 
+add_library(render SHARED
+    render.cpp
+    )
+
+set_target_properties(render PROPERTIES ENABLE_EXPORTS 1)
+set_target_properties(render PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS 1)
+
 add_dependencies (main
-    render.so
+    render
     )
 
 if (UNIX)
@@ -44,13 +51,16 @@ target_link_libraries (main
     ${SDL2TTF_LIBRARY}
     )
 
+target_link_libraries (render
+    ${GLEW_LIBRARY}
+    ${SDL2_LIBRARIES}
+    ${OPENGL_LIBRARIES}
+    ${SDL2TTF_LIBRARY}
+    )
+
 if (UNIX)
     target_link_libraries (main
         dl
         m
         )
 endif()
-
-add_custom_target(render.so ALL
-    COMMAND clang -shared -fPIC -std=c++14 render.cpp -lGLEW  -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ -lGLU -o render.so
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
