@@ -492,11 +492,15 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     }
 
     const u32 numOfPointsPerRect = 6;
-    const u16 maxVertexCount = 10001;
+    const u16 maxEntityCount = 10001;
     RenderGroup renderGroup = {};
-    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxVertexCount;
+    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxEntityCount;
     renderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
     renderGroup.vertexMemory.maxSize = vertexBlockSize;
+
+    u32 rectMemoryBlockSize = sizeof(Rect) * 100;
+    renderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
+    renderGroup.rectMemory.maxSize = rectMemoryBlockSize;
 
     /* Draw text at the corner */
 
@@ -537,7 +541,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
 
-    PushRect(&renderGroup, statsRect);
+    PushRectVertex(&renderGroup, statsRect);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
                  renderGroup.vertexMemory.base, GL_STATIC_DRAW);
 
@@ -549,14 +553,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     DrawRawRectangle(renderGroup.rectCount);
     /* END DRAW UI */
 
-    renderGroup.rectCount = 0;
-    ClearMemoryUsed(&renderGroup.vertexMemory);
+    ClearUsedRenderGroup(&renderGroup);
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     /* Save PLAYER vertices */
-    PushRect(&renderGroup, gameMetadata->playerRect);
+    PushRectVertex(&renderGroup, gameMetadata->playerRect);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used, renderGroup.vertexMemory.base, GL_STATIC_DRAW);
 
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, gameMetadata->playerRect->bitmapID);
@@ -566,8 +569,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     DrawRawRectangle(renderGroup.rectCount);
 
-    renderGroup.rectCount = 0;
-    ClearMemoryUsed(&renderGroup.vertexMemory);
+    ClearUsedRenderGroup(&renderGroup);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -593,7 +595,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             OpenGLLoadBitmap(bitmap, textureID);
         }
 
-        PushRect(&renderGroup, rect);
+        PushRectVertex(&renderGroup, rect);
         prevBitmapID = bitmapID;
     }
 
@@ -605,8 +607,11 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     DrawRawRectangle(renderGroup.rectCount);
 
 #if 0
+    Difference between PushingVerticesToDraw vs PushingRectData
+    PushToDraw(renderGroup, rect);
+
     /* some rect buffer */ ?
-    memory_index prevBitmapID = 1;
+    memory_index prevBitmapID = 999;
     Bitmap *bitmap = nullptr;
 
     for (memory_index i = 0; i < rectCount; i++)
@@ -668,19 +673,19 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
         {
             Rect *rect = g_rectManager->NonTraversable.rects[i];
-            PushRect(&renderGroup, rect);
+            PushRectVertex(&renderGroup, rect);
         }
 
         for (memory_index i = 0; i < hitBoxes->size; i++)
         {
             Rect *rect = hitBoxes->rects[i];
-            PushRect(&renderGroup, rect);
+            PushRectVertex(&renderGroup, rect);
         }
 
         for (memory_index i = 0; i < hurtBoxes->size; i++)
         {
             Rect *rect = hurtBoxes->rects[i];
-            PushRect(&renderGroup, rect);
+            PushRectVertex(&renderGroup, rect);
         }
 
         glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,

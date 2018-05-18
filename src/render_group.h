@@ -6,7 +6,11 @@
 struct RenderGroup
 {
     GameMemory vertexMemory;
+    GameMemory rectMemory;
+
     memory_index rectCount;
+
+    memory_index rectEntityCount;
 };
 
 inline void ClearUsedRenderGroup(RenderGroup *rg)
@@ -15,10 +19,15 @@ inline void ClearUsedRenderGroup(RenderGroup *rg)
     ClearMemoryUsed(&rg->vertexMemory);
 };
 
-inline void PushRect(RenderGroup *rg, Rect *rect)
+inline void PushRectVertex(RenderGroup *rg, Rect *rect)
 {
-    PushRect(&rg->vertexMemory, rect);
+    PushRectVertex(&rg->vertexMemory, rect);
     rg->rectCount++;
 }
 
+inline void PushRectInfo(RenderGroup *rg, Rect *rect)
+{
+    PushRectInfo(&rg->rectMemory, rect);
+    rg->rectEntityCount++;
+}
 #endif

@@ -153,7 +153,7 @@ inline void DrawDebugRectangle()
     glDrawElements(GL_POINTS, totalIndiciesFromEbo, GL_UNSIGNED_INT, 0);
 }
 
-inline void PushRect(GameMemory *gm, Rect *rect)
+void PushRectVertex(GameMemory *gm, Rect *rect)
 {
     /* We need 6 points because we need to create 2 triangles */
     const u8 numOfPoints = 6;
@@ -168,6 +168,16 @@ inline void PushRect(GameMemory *gm, Rect *rect)
     }
 
     gm->used += sizeof(Vertex) * numOfPoints;
+}
+
+void PushRectInfo(GameMemory *gm, Rect *rect)
+{
+    /* We need 6 points because we need to create 2 triangles */
+    ASSERT(gm->used + sizeof(Rect) <= gm->maxSize);
+
+    Rect *rectPointer = (Rect *) (gm->base + gm->used);
+    *rectPointer =  *rect;
+    gm->used += sizeof(Rect);
 }
 
 inline void UpdatePosition(Rect *r, v3 newPosition)
