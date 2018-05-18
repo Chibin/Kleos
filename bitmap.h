@@ -11,7 +11,7 @@ struct Bitmap
     u32 width;
     u32 height;
     GLenum format;
-    u8* data;
+    u8 *data;
     ImageType freeImageType;
 
     TextureParam textureParam;

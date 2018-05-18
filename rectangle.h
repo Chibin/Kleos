@@ -14,16 +14,19 @@ enum RectType
     HURTBOX = 3
 };
 
-enum Direction {
+enum Direction
+{
     LEFT = 1,
     RIGHT = 2,
 };
 
-struct RectUVCoords {
+struct RectUVCoords
+{
 #pragma warning(push)
 #pragma warning(disable : 4201)
     union {
-        struct {
+        struct
+        {
             v2 topRight;
             v2 bottomRight;
             v2 bottomLeft;
@@ -41,7 +44,7 @@ struct Animation2D
     /* May be have a function pointer or some type of function to determine how
      * long each frames last.
      * Or a waypoint curve?
-     */ 
+     */
     f32 timePerFrame;
     f32 frameTTL;
     RectUVCoords *currentFrame;
@@ -156,12 +159,12 @@ inline void PushRect(GameMemory *gm, Rect *rect)
     const u8 numOfPoints = 6;
     ASSERT(gm->used + sizeof(Vertex) * numOfPoints <= gm->maxSize);
 
-    Vertex *vertexPointer = (Vertex *) (gm->base + gm->used);
+    Vertex *vertexPointer = (Vertex *)(gm->base + gm->used);
 
     for (memory_index i = 0; i < numOfPoints; i++)
     {
         memory_index index = g_rectIndices[i];
-        *(vertexPointer+i) = rect->vertices[index];
+        *(vertexPointer + i) = rect->vertices[index];
     }
 
     gm->used += sizeof(Vertex) * numOfPoints;
@@ -169,8 +172,8 @@ inline void PushRect(GameMemory *gm, Rect *rect)
 
 inline void UpdatePosition(Rect *r, v3 newPosition)
 {
-    v2 min = {newPosition.x, newPosition.y};
-    v2 max = {newPosition.x + r->width, newPosition.y + r->height};
+    v2 min = { newPosition.x, newPosition.y };
+    v2 max = { newPosition.x + r->width, newPosition.y + r->height };
 
     v3 topRight = v3{ max.x, max.y, 0 };
     v3 bottomRight = v3{ max.x, min.y, 0 };
@@ -201,15 +204,15 @@ inline void UpdateColors(Rect *r, v4 color)
 
 inline void FlipXCoordinates(RectUVCoords *uv)
 {
-    v2 first  = uv->UV[0];
+    v2 first = uv->UV[0];
     v2 second = uv->UV[1];
-    v2 third  = uv->UV[2];
+    v2 third = uv->UV[2];
     v2 fourth = uv->UV[3];
 
-    uv->UV[0] = v2{fourth.x, fourth.y};
-    uv->UV[1] = v2{third.x, third.y};
-    uv->UV[2] = v2{second.x, second.y};
-    uv->UV[3] = v2{first.x, first.y};
+    uv->UV[0] = v2{ fourth.x, fourth.y };
+    uv->UV[1] = v2{ third.x, third.y };
+    uv->UV[2] = v2{ second.x, second.y };
+    uv->UV[3] = v2{ first.x, first.y };
 }
 
 inline void FlipYAxis(RectUVCoords *uv)
@@ -225,7 +228,7 @@ inline void FlipYAxisOnAllFrames(Animation2D *a)
 
 inline v2 PixelToUV(v2 pixel, u32 width, u32 height)
 {
-    return v2{pixel.x / width, pixel.y / height};
+    return v2{ pixel.x / width, pixel.y / height };
 }
 
 inline void UpdateFrameDirection(Animation2D *a, Direction d)
@@ -248,13 +251,13 @@ inline void UpdateCurrentFrame(Animation2D *a, f32 timeElapsed)
         a->currentFrameIndex = 0;
         a->frameTTL = a->timePerFrame;
     }
-    else if ( (a->frameTTL = a->frameTTL - timeElapsed ) <= 0)
+    else if ((a->frameTTL = a->frameTTL - timeElapsed) <= 0)
     {
         /* TODO: There should be an assert that checks that we don't skip a minimum time frame */
         /* This could be replaced with a function later on */
         a->currentFrameIndex++;
-        memory_index nextFrameOffset = a->currentFrameIndex  % a->totalFrames;
-        a->currentFrame = a->frameCoords + nextFrameOffset ;
+        memory_index nextFrameOffset = a->currentFrameIndex % a->totalFrames;
+        a->currentFrame = a->frameCoords + nextFrameOffset;
         ASSERT(a->currentFrame <= a->frameCoords + a->totalFrames);
         a->frameTTL = a->timePerFrame;
     }

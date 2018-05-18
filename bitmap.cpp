@@ -12,7 +12,7 @@ inline void PushBitmap(Bitmap *oldNode, Bitmap *newNode)
 
 inline Bitmap *FindBitmap(Bitmap *sentinelNode, memory_index bitmapID)
 {
-    for(Bitmap * node = sentinelNode->next; node != sentinelNode; node = node->next)
+    for (Bitmap *node = sentinelNode->next; node != sentinelNode; node = node->next)
     {
         if (node->bitmapID == bitmapID)
         {
@@ -45,10 +45,9 @@ inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
     bitmap->format = textureFormat;
 
     ASSERT(componentsPerPixel == 4);
-
 }
 
-inline void SetBitmap(Bitmap *bitmap, TextureParam textureParam, memory_index bitmapID, const char * imgPath)
+inline void SetBitmap(Bitmap *bitmap, TextureParam textureParam, memory_index bitmapID, const char *imgPath)
 {
     ZeroSize(bitmap, sizeof(Bitmap));
     ImageToBitmap(bitmap, imgPath);

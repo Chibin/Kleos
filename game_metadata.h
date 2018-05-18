@@ -36,7 +36,7 @@ inline void *AllocateMemory(GameMetadata *gm, u32 size)
 {
     ASSERT(size != 0);
     ASSERT(gm->usedBlock + size <= gm->maxBlockSize);
-    u8* newAllocBase = gm->base + gm->usedBlock - 1;
+    u8 *newAllocBase = gm->base + gm->usedBlock - 1;
     gm->usedBlock += size;
     return newAllocBase;
 }

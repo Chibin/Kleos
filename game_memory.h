@@ -2,10 +2,10 @@
 #ifndef __GAME_MEMORY__
 #define __GAME_MEMORY__
 
-#include "math.h"
-#include "sdl_common.h"
-#include "opengl.h"
 #include "game_time.h"
+#include "math.h"
+#include "opengl.h"
+#include "sdl_common.h"
 
 struct GameMemory
 {
@@ -33,7 +33,8 @@ inline memory_index GetAlignmentOffSet(GameMemory *gm, memory_index alignment)
     memory_index alignmentMask = alignment - 1;
     memory_index tentativePointer = (memory_index)(gm->used + gm->base);
 
-    if (tentativePointer & alignmentMask) {
+    if (tentativePointer & alignmentMask)
+    {
         alignOffSet = alignment - (memory_index)(tentativePointer & alignmentMask);
     }
 
@@ -48,7 +49,7 @@ inline void *AllocateMemory(GameMemory *gm, memory_index size, const memory_inde
     memory_index padding = GetAlignmentOffSet(gm, byteAlignment);
     size += SafeCastToU32(padding);
 
-    u8* newAllocBase = gm->base + gm->used - 1;
+    u8 *newAllocBase = gm->base + gm->used - 1;
 
     ASSERT(gm->used + size < gm->maxSize);
     gm->used += SafeCastToU32(size);

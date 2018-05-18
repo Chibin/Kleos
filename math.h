@@ -1,9 +1,9 @@
 #ifndef __MATH__
 #define __MATH__
 
+#include "sdl_common.h"
 #include <cinttypes>
 #include <cstring>
-#include "sdl_common.h"
 
 #ifndef UINT32_MAX
 #define UINT32_MAX 0xFFFFFFFF
@@ -17,9 +17,9 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define KILOBYTE(x) 1024*x
-#define MEGABYTE(x) KILOBYTE(1024)*x
-#define GIGABYTE(x) MEGABYTE(1024)*x
+#define KILOBYTE(x) 1024 * x
+#define MEGABYTE(x) KILOBYTE(1024) * x
+#define GIGABYTE(x) MEGABYTE(1024) * x
 
 #define ZeroStruct(x) ZeroSize(&x, sizeof(x))
 
@@ -28,7 +28,7 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
-typedef uint8  u8;
+typedef uint8 u8;
 typedef uint16 u16;
 typedef uint32 u32;
 typedef uint64 u64;
@@ -38,7 +38,7 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 
-typedef int8  s8;
+typedef int8 s8;
 typedef int16 s16;
 typedef int32 s32;
 typedef int64 s64;
@@ -227,7 +227,7 @@ union m4 {
 inline void ZeroSize(void *_data, memory_index size)
 {
     u8 *base = (u8 *)_data;
-    while(size--)
+    while (size--)
     {
         *base++ = 0;
     }

@@ -1,14 +1,20 @@
 #pragma once
 
-#include "sdl_common.h"
-#include "math.h"
 #include "game_memory.h"
+#include "math.h"
+#include "sdl_common.h"
 #include <iostream>
 
 #include "opengl.h"
 #include <cstring>
 
-#define SWAP_POINTER_VALUES(x, y, T) do { T SWAP = *x; *x = *y; *y = SWAP; } while (0)
+#define SWAP_POINTER_VALUES(x, y, T) \
+    do                               \
+    {                                \
+        T SWAP = *x;                 \
+        *x = *y;                     \
+        *y = SWAP;                   \
+    } while (0)
 
 TTF_Font *OpenFont();
 SDL_Surface *StringToSDLSurface(TTF_Font *font, const char *msg);

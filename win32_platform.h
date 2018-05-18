@@ -1,12 +1,12 @@
 #pragma once
 
-#include "main.h"
 #include "GL/glew.h"
 #include "game_time.h"
-#include "sdl_common.h"
+#include "main.h"
 #include "math.h"
-#include <string>
+#include "sdl_common.h"
 #include <iostream>
+#include <string>
 
 #include <windows.h>
 
@@ -28,4 +28,3 @@ bool WindowsSDLTTFSetup();
 bool LoadDLLWindows(RenderAPI *renderAPI);
 char *GetProgramPath();
 void FindFile(const char *dirPath, const char *fileRegex);
-

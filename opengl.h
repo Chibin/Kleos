@@ -14,28 +14,32 @@ struct Vertex
 {
     /* 3 + 4 + 3 + 2  = 12 */
     union {
-        struct {
+        struct
+        {
             v3 vPosition;
         };
         GLfloat position[3];
     };
 
     union {
-        struct {
+        struct
+        {
             v4 vColor;
         };
         GLfloat color[4];
     };
 
     union {
-        struct {
+        struct
+        {
             v3 vNormal;
         };
         GLfloat normal[3];
     };
 
     union {
-        struct {
+        struct
+        {
             v2 vUv;
         };
         GLfloat uv[2];
@@ -77,7 +81,7 @@ void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
                      GLuint *eboVertices, GLenum vboUsage = GL_DYNAMIC_DRAW,
                      GLenum eboUsage = GL_STATIC_DRAW);
 GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
-                              void *data);
+                             void *data);
 void _defined_openGLCheckErrors(const char *file, int line);
 
 void OpenGLBindTexture(GLuint textureID);

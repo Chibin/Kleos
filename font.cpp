@@ -67,7 +67,6 @@ inline void swap(u32 *first, u32 *second)
     *second = temp;
 }
 
-
 inline u32 *Get2DAddress(u32 *base, u32 xOffset, u32 yOffset, u32 maxWidth)
 {
     u32 height = maxWidth * yOffset;
@@ -83,8 +82,8 @@ inline void OpenGLLoadBitmap(Bitmap *bitmap, GLuint textureID)
 
 inline void CopyData(u32 *src, u32 *dest, memory_index size)
 {
-    memory_index temp =  size;
-    while(temp--)
+    memory_index temp = size;
+    while (temp--)
     {
         *dest++ = *src++;
     }
@@ -93,12 +92,14 @@ inline void CopyData(u32 *src, u32 *dest, memory_index size)
 inline void FlipImage(u32 *pixels, u32 width, u32 height)
 {
 
-    for(uint32 yOffset = 0; yOffset < height/2; yOffset++) {
+    for (uint32 yOffset = 0; yOffset < height / 2; yOffset++)
+    {
         u32 heightBottomToTop = height - 1 - yOffset;
         u32 *firstPixel = pixels + yOffset * width;
         u32 *secondPixel = pixels + width * heightBottomToTop;
 
-        for(uint32 counter = 0; counter < width; counter++) {
+        for (uint32 counter = 0; counter < width; counter++)
+        {
             u32 temp = *(firstPixel + counter);
             *(firstPixel + counter) = *(secondPixel + counter);
             *(secondPixel + counter) = temp;
@@ -108,7 +109,6 @@ inline void FlipImage(u32 *pixels, u32 width, u32 height)
             //secondPixel++;
         }
     }
-
 }
 
 GLuint StringToTexture(TTF_Font *font, const char *msg)
@@ -147,7 +147,7 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
     FlipImage((u32 *)surface->pixels, width, height);
 
     bitmap->data = (u8 *)AllocateMemory(gm, width * height * sizeof(u32));
-    CopyData((u32* )surface->pixels, (u32 *)bitmap->data, width * height);
+    CopyData((u32 *)surface->pixels, (u32 *)bitmap->data, width * height);
     bitmap->format = format;
     bitmap->width = width;
     bitmap->height = height;
