@@ -155,7 +155,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
          */
         g_entityManager = CreateEntityManger(reservedMemory);
 
-        Entity newPlayer;
+        Entity newPlayer = {};
         newPlayer.position = glm::vec3(0, 0, 0);
         newPlayer.isPlayer = true;
 
