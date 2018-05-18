@@ -25,3 +25,5 @@ x64/
 Makefile
 main
 *build/
+src/assets/
+src/materials/

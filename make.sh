@@ -6,6 +6,8 @@ docker run --rm -it -v"$(pwd)":$(pwd):Z jobless:testing /bin/sh -c "\
     mkdir -p docker-build; \
     clang-format -i src/*.cpp src/*.h; \
     (cd docker-build && \
+        export CC=/usr/bin/clang && \
+        export CXX=/usr/bin/clang++ && \
         cmake -D USE_OPENGL_ES=1 ..; \
         run-clang-tidy-3.8.py && \
         make $* && \
