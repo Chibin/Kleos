@@ -30,6 +30,9 @@ https://www.mkyong.com/linux/grep-for-windows-findstr-example/
 aliased:
 `DOSKEY gvim="C:\Program Files (x86)\Vim\vim74\gvim.exe" -- $1`
 
+nvim looks for python2 and python binaries. I created the
+respected python2 and python3 files by copying the python.exe.
+
 # Debian
 apt-get install libsdl2-dev 
 apt-get install libglm-dev
