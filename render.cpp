@@ -2,14 +2,14 @@
 #define __RENDER__
 
 #include <stddef.h> /* offsetof */
+#include <stdio.h>
 #include <stdlib.h> /* abs */
 #include <string>
-#include <stdio.h>
 
 #include "sdl_common.h"
 
-#define GL3_PROTOTYPES 1
 #include <GL/glew.h>
+#define GL3_PROTOTYPES 1
 #include <GL/gl.h>
 #include <GL/glu.h>
 
@@ -54,10 +54,10 @@ inline void *RequestToReservedMemory(memory_index size)
 
 /* probably need to be here? depends where we put our game logic */
 #include "bitmap.cpp"
-#include "font.cpp"
 #include "camera.cpp"
 #include "entity.cpp"
 #include "entity_manager.cpp"
+#include "font.cpp"
 #include "game_time.cpp"
 #include "input.cpp"
 #include "opengl.cpp"
@@ -68,17 +68,37 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "rectangle.cpp"
 #include "render_group.h"
 
-#define UPDATEANDRENDER(name)                                            \
+#define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
-#define RENDER(name)                                                     \
-    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program,  \
+#define RENDER(name)                                                    \
+    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, \
               GLuint debugProgram, Entity *entity)
 
-#define COLOR_WHITE v4{1, 1, 1, 1}
-#define COLOR_RED v4{1, 0, 0, 1}
-#define COLOR_GREEN v4{0, 1, 0, 1}
-#define COLOR_BLUE v4{0, 0, 1, 1}
-#define COLOR_BLACK v4{0, 0, 0, 1}
+#define COLOR_WHITE \
+    v4              \
+    {               \
+        1, 1, 1, 1  \
+    }
+#define COLOR_RED  \
+    v4             \
+    {              \
+        1, 0, 0, 1 \
+    }
+#define COLOR_GREEN \
+    v4              \
+    {               \
+        0, 1, 0, 1  \
+    }
+#define COLOR_BLUE \
+    v4             \
+    {              \
+        0, 0, 1, 1 \
+    }
+#define COLOR_BLACK \
+    v4              \
+    {               \
+        0, 0, 0, 1  \
+    }
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity, RectDynamicArray *hitboxes, RectDynamicArray *hurtboxes);
@@ -133,11 +153,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
 
-        v3 cameraPos = {0, 0, 5};
+        v3 cameraPos = { 0, 0, 5 };
         // and looks at the origin
-        v3 cameraTarget = {0, 0, 0};
+        v3 cameraTarget = { 0, 0, 0 };
         // Head is up (set to 0,-1,0 to look upside-down)
-        v3 cameraUp = {0, 1, 0};
+        v3 cameraUp = { 0, 1, 0 };
         g_camera = CreateCamera(reservedMemory, cameraPos, cameraTarget, cameraUp);
 
         g_eda = CreateEntityDynamicArray(reservedMemory);
@@ -177,7 +197,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->whiteBitmap.height = 1;
         gameMetadata->whiteBitmap.format = GL_RGBA;
         gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
-        for(memory_index i =0; i < 1 * 1; i++)
+        for (memory_index i = 0; i < 1 * 1; i++)
         {
             /* alpha -> blue -> green -> red: 1 byte each */
             *((u32 *)gameMetadata->whiteBitmap.data + i) = 0x33000000;
@@ -202,11 +222,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         glGenBuffers(1, &gameMetadata->vboID);
 
         OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                nullptr, /* use null as way to not load anything to vbo*/
-                gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices);
+                        nullptr, /* use null as way to not load anything to vbo*/
+                        gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices);
 
         END_DEBUG_TIMING();
-
     }
 
     /* NOTE: Looks very player centric right now, not sure if we need to make it
@@ -223,20 +242,20 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     {
         switch (event.type)
         {
-            case SDL_QUIT:
-                return false;
-                break;
-            case SDL_MOUSEWHEEL:
-                ProcessMouseInput(event, g_camera);
-                break;
-            case SDL_KEYDOWN:
-                ProcessInputDown(event.key.keysym.sym, &continueRunning);
-                break;
-            case SDL_KEYUP:
-                ProcessInputUp(event.key.keysym.sym);
-                break;
-            default:
-                break;
+        case SDL_QUIT:
+            return false;
+            break;
+        case SDL_MOUSEWHEEL:
+            ProcessMouseInput(event, g_camera);
+            break;
+        case SDL_KEYDOWN:
+            ProcessInputDown(event.key.keysym.sym, &continueRunning);
+            break;
+        case SDL_KEYUP:
+            ProcessInputUp(event.key.keysym.sym);
+            break;
+        default:
+            break;
         }
     }
 
@@ -348,8 +367,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     if (e->willAttack)
     {
-        v3 startingPosition = v3{e->position.x, e->position.y, e->position.z};
-        startingPosition += v3{-2,0,0};
+        v3 startingPosition = v3{ e->position.x, e->position.y, e->position.z };
+        startingPosition += v3{ -2, 0, 0 };
         f32 rectWidth = 0.35f;
         f32 rectHeight = 0.175f;
         // GenerateAttackFrameRectPosition(rect);
@@ -376,11 +395,11 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
          * when necessary
          */
         //UpdateEntityFrameDirection();
-        if ( e->velocity.x > 0 )
+        if (e->velocity.x > 0)
         {
             gameMetadata->playerRect->frameDirection = RIGHT;
         }
-        else if ( e->velocity.x < 0)
+        else if (e->velocity.x < 0)
         {
             gameMetadata->playerRect->frameDirection = LEFT;
         }
@@ -388,7 +407,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
         /* follow the character around */
         CameraUpdateTarget(g_camera, e->position);
-        UpdatePosition(gameMetadata->playerRect, v3{e->position.x, e->position.y, e->position.z});
+        UpdatePosition(gameMetadata->playerRect, v3{ e->position.x, e->position.y, e->position.z });
 
         UpdateCurrentFrame(g_spriteAnimation, 17.6f);
         UpdateFrameDirection(g_spriteAnimation, gameMetadata->playerRect->frameDirection);
@@ -397,7 +416,6 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     /* Apply "friction" */
     e->velocity.x = 0;
-
 }
 
 void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes)
@@ -501,7 +519,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     OpenGLCheckErrors();
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
+
     /* DRAW UI */
 
     SetOpenGLDrawToScreenCoordinate(projectionLoc, viewLoc);
@@ -515,13 +533,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     f32 padding = rectHeight * 0.1f;
 
     /* This is in raw OpenGL coordinates */
-    v3 startingPosition = v3{-1, 1 - rectHeight + padding, 0};
+    v3 startingPosition = v3{ -1, 1 - rectHeight + padding, 0 };
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
 
     PushRect(&renderGroup, statsRect);
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
 
     OpenGLLoadBitmap(&stringBitmap, textureID);
     DrawRawRectangle(renderGroup.rectCount);
@@ -564,7 +582,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         if (bitmapID != prevBitmapID)
         {
             glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                    renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+                         renderGroup.vertexMemory.base, GL_STATIC_DRAW);
             DrawRawRectangle(renderGroup.rectCount);
 
             ClearUsedRenderGroup(&renderGroup);
@@ -583,7 +601,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
      * that an upload and draw to happen twice
      */
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
     DrawRawRectangle(renderGroup.rectCount);
 
 #if 0
@@ -723,19 +741,20 @@ void LoadStuff(GameMetadata *gameMetadata)
 
         if (i == 2)
         {
-            UpdateColors(collissionRect, v4{1.0f, 0.0f, 0.0f, 0.7f});
+            UpdateColors(collissionRect, v4{ 1.0f, 0.0f, 0.0f, 0.7f });
             collissionRect->type = HURTBOX;
         }
-        else if (i == 3) {
+        else if (i == 3)
+        {
 
             collissionRect->type = HITBOX;
-            UpdateColors(collissionRect, v4{0.0f, 1.0f, 0.0f, 0.7f});
+            UpdateColors(collissionRect, v4{ 0.0f, 1.0f, 0.0f, 0.7f });
         }
         else
         {
 
             collissionRect->type = COLLISION;
-            UpdateColors(collissionRect, v4{0.0f, 0.0f, 1.0f, 0.7f});
+            UpdateColors(collissionRect, v4{ 0.0f, 0.0f, 1.0f, 0.7f });
         }
 
         collissionRect->bitmapID = 0;
@@ -745,7 +764,7 @@ void LoadStuff(GameMetadata *gameMetadata)
 
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
 {
-    /* TODO: sort things based on the transparency?? You have to draw the
+/* TODO: sort things based on the transparency?? You have to draw the
      * "background" first so that the "transparent" part of the texture renders
      * the background properly. otherwise, you'll just get a blank background.
      */
@@ -767,7 +786,7 @@ inline void LoadShaders(GameMetadata *gameMetadata)
 {
     /* load shaders */
     gameMetadata->program = CreateProgram("materials/programs/vertex.glsl",
-                                   "materials/programs/fragment.glsl");
+                                          "materials/programs/fragment.glsl");
     gameMetadata->debugProgram =
         CreateProgram("materials/programs/vertex.glsl",
                       "materials/programs/debug_fragment_shaders.glsl");
@@ -781,14 +800,14 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     Bitmap *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(awesomefaceBitmap, TextureParam{GL_LINEAR, GL_LINEAR},
+    SetBitmap(awesomefaceBitmap, TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
     PushBitmap(&gameMetadata->sentinelNode, awesomefaceBitmap);
 
     gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
 
     Bitmap *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(newBitmap, TextureParam{GL_NEAREST, GL_NEAREST},
+    SetBitmap(newBitmap, TextureParam{ GL_NEAREST, GL_NEAREST },
               g_bitmapID++, "./materials/textures/arche.png");
     PushBitmap(&gameMetadata->sentinelNode, newBitmap);
 
@@ -801,16 +820,16 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     f32 spriteHeight = 60.0f;
     f32 basePixelHeight = bitmapHeight - spriteHeight;
 
-    v2 topRight = PixelToUV(v2{60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
-    v2 bottomRight = PixelToUV(v2{60, basePixelHeight}, bitmapWidth, bitmapHeight);
-    v2 bottomLeft = PixelToUV(v2{0, basePixelHeight}, bitmapWidth, bitmapHeight);
-    v2 topLeft = PixelToUV(v2{0, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+    v2 topRight = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
+    v2 bottomRight = PixelToUV(v2{ 60, basePixelHeight }, bitmapWidth, bitmapHeight);
+    v2 bottomLeft = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight);
+    v2 topLeft = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
 
     g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
     ZeroSize(g_spriteAnimation, sizeof(Animation2D));
     g_spriteAnimation->direction = LEFT;
     g_spriteAnimation->totalFrames = 2;
-    g_spriteAnimation->frameCoords = 
+    g_spriteAnimation->frameCoords =
         (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
     g_spriteAnimation->timePerFrame = 1000 * 0.75;
 
@@ -819,10 +838,10 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     g_spriteAnimation->frameCoords[0].bottomLeft = bottomLeft;
     g_spriteAnimation->frameCoords[0].topLeft = topLeft;
 
-    topRight = PixelToUV(v2{60 + 60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
-    bottomRight = PixelToUV(v2{60 + 60, basePixelHeight}, bitmapWidth, bitmapHeight);
-    bottomLeft = PixelToUV(v2{0 + 60, basePixelHeight}, bitmapWidth, bitmapHeight);
-    topLeft = PixelToUV(v2{0 + 60, basePixelHeight + spriteHeight}, bitmapWidth, bitmapHeight);
+    topRight = PixelToUV(v2{ 60 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
+    bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight);
+    bottomLeft = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight);
+    topLeft = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
     g_spriteAnimation->frameCoords[1].topRight = topRight;
     g_spriteAnimation->frameCoords[1].bottomRight = bottomRight;
     g_spriteAnimation->frameCoords[1].bottomLeft = bottomLeft;

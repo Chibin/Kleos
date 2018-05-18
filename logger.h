@@ -6,7 +6,7 @@
 #define DEBUG(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__)
 
 #if 1
-#define DEBUG_PRINT(fmt, ...)                                                  \
+#define DEBUG_PRINT(fmt, ...) \
     DEBUG(CALL_LOCATION_FMT fmt, CALL_LOCATION_ARGS, __VA_ARGS__)
 
 #else

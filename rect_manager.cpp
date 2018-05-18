@@ -1,7 +1,7 @@
+#include "game_memory.h"
 #include "logger.h"
 #include "rectangle.h"
 #include <cstdio>
-#include "game_memory.h"
 
 struct RectDynamicArray
 {

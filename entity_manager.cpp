@@ -2,9 +2,9 @@
 #define __ENTITY_MANAGER__
 
 #include "entity.h"
-#include "logger.h"
 #include "game_memory.h"
 #include "game_time.h"
+#include "logger.h"
 
 struct EntityManager
 {

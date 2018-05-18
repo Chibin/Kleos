@@ -1,7 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include "game_memory.h"
+#include <glm/glm.hpp>
 
 struct Camera
 {

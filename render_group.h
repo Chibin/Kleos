@@ -21,5 +21,4 @@ inline void PushRect(RenderGroup *rg, Rect *rect)
     rg->rectCount++;
 }
 
-
 #endif

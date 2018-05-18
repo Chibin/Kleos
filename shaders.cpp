@@ -1,8 +1,8 @@
 #include "shaders.h"
 #include <fstream>
+#include <regex>
 #include <sstream>
 #include <vector>
-#include <regex>
 
 std::string FileToString(const char *filePath)
 {
@@ -43,8 +43,8 @@ GLuint CreateProgram(const char *vertex_file_path,
 
 #if USE_OPENGL_ES
     VertexShaderCode = std::regex_replace(VertexShaderCode,
-		    std::regex("#version 330 core"),
-		    "#version 300 es");
+                                          std::regex("#version 330 core"),
+                                          "#version 300 es");
 #endif
 
     // Read the Fragment Shader code from the file
@@ -62,8 +62,8 @@ GLuint CreateProgram(const char *vertex_file_path,
 
 #if USE_OPENGL_ES
     FragmentShaderCode = std::regex_replace(FragmentShaderCode,
-		    std::regex("#version 330 core"),
-		    "#version 300 es");
+                                            std::regex("#version 330 core"),
+                                            "#version 300 es");
 #endif
 
     GLint Result = GL_FALSE;

@@ -64,7 +64,7 @@ void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (GLvoid *)offsetof(Vertex, uv));
 
-    /* used for GLSL 4.x */
+/* used for GLSL 4.x */
 #if 0
         glEnableVertexAttribArray(0);
         glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
@@ -89,7 +89,7 @@ void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
 }
 
 GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
-                              void *data)
+                             void *data)
 {
     /* returns a texture ID "handle" to
      * access it later in OpenGL.

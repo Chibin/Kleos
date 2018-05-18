@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <glm/gtc/matrix_transform.hpp>
 
-
 inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up)
 {
     auto *camera = static_cast<Camera *>(AllocateMemory(gm, (sizeof(Camera))));
@@ -19,17 +18,16 @@ inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up)
 
     camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
     return camera;
-
 }
 
 Camera *CreateCamera(GameMemory *gm)
 {
     // Camera is at, (0,0,0) in World Space
-    v3 pos = {0, 0, 5};
+    v3 pos = { 0, 0, 5 };
     // and looks at the origin
-    v3 target = {0, 0, 0};
+    v3 target = { 0, 0, 0 };
     // Head is up (set to 0,-1,0 to look upside-down)
-    v3 up = {0, 1, 0};
+    v3 up = { 0, 1, 0 };
     return CreateCamera(gm, pos, target, up);
 }
 

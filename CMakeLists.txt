@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
+
 project (jobless)
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
@@ -30,12 +31,11 @@ add_library(render SHARED
     render.cpp
     )
 
-set_target_properties(render PROPERTIES ENABLE_EXPORTS 1)
-set_target_properties(render PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS 1)
-
-add_dependencies (main
-    render
-    )
+set_target_properties(
+	render PROPERTIES
+	ENABLE_EXPORTS 1
+	WINDOWS_EXPORT_ALL_SYMBOLS 1
+	)
 
 if (UNIX)
     target_sources (main PUBLIC linux_platform.cpp)

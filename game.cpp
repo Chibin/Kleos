@@ -1,9 +1,9 @@
-#include "main.h"
 #include "game.h"
 #include "game_memory.h"
 #include "game_metadata.h"
-#include "math.h"
 #include "logger.h"
+#include "main.h"
+#include "math.h"
 #include <GL/glew.h>
 
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
@@ -22,7 +22,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     bool continueRunning = true;
 
     struct GameMetadata gameMetadata = {};
-    gameMetadata.font  = nullptr;
+    gameMetadata.font = nullptr;
     gameMetadata.maxBlockSize = GIGABYTE(1);
     gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
 
