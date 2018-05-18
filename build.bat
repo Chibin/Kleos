@@ -35,11 +35,11 @@ if NOT %errorlevel% == 0 goto :error
 REM build render as a dll
 set COMPILER_FLAGS=-O2 -MTd -Gm- -GR- -EHa- -Zo -Oi -WX -W4 -FC -Z7 -GS -Gs9999999 /EHsc
 set LINKER_FLAGS=-HEAP:4294967296 -incremental:no -opt:ref User32.lib Gdi32.lib winmm.lib Opengl32.lib glew32.lib glu32.lib SDL2main.lib SDL2_ttf.lib SDL2.lib
-SET INCLUDE_PATH=/I D:\Libraries\glew-1.13.0\include /I D:\Libraries\glm
+SET INCLUDE_PATH=/I D:\Libraries\glew-1.13.0\include /I D:\Libraries\glm /I .\include
 SET INCLUDE_PATH=/I D:\Libraries\SDL2-2.0.7\include %INCLUDE_PATH%
 SET INCLUDE_PATH=/I D:\Libraries\SDL2_ttf-2.0.14 %INCLUDE_PATH%
 
-cl /DWIN32#1 %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender -OUT:render_new.dll 
+cl /DWIN32#1 %COMPILER_FLAGS% -I..\iaca-win64\ %INCLUDE_PATH% src/render.cpp -Fmrender.map -LD /link %LIB_PATH% %LINKER_FLAGS% -incremental:no -opt:ref -PDB:game_%random%.pdb -EXPORT:Render -EXPORT:UpdateAndRender -OUT:render_new.dll 
 
 copy render_new.dll render.dll
 
