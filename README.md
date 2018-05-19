@@ -30,8 +30,10 @@ https://www.mkyong.com/linux/grep-for-windows-findstr-example/
 aliased:
 `DOSKEY gvim="C:\Program Files (x86)\Vim\vim74\gvim.exe" -- $1`
 
+Troubleshooting:
 nvim looks for python2 and python binaries. I created the
 respected python2 and python3 files by copying the python.exe.
+https://www.reddit.com/r/neovim/comments/7l0757/neovim_installation_in_windows_10/
 
 # Debian
 apt-get install libsdl2-dev 

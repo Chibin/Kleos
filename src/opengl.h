@@ -16,7 +16,7 @@ struct Vertex
     union {
         struct
         {
-            v3 vPosition;
+            union v3 vPosition;
         };
         GLfloat position[3];
     };
@@ -24,7 +24,7 @@ struct Vertex
     union {
         struct
         {
-            v4 vColor;
+            union v4 vColor;
         };
         GLfloat color[4];
     };
@@ -32,7 +32,7 @@ struct Vertex
     union {
         struct
         {
-            v3 vNormal;
+            union v3 vNormal;
         };
         GLfloat normal[3];
     };
@@ -40,7 +40,7 @@ struct Vertex
     union {
         struct
         {
-            v2 vUv;
+            union v2 vUv;
         };
         GLfloat uv[2];
     };

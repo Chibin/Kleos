@@ -3,7 +3,6 @@
 #include "game_metadata.h"
 #include "logger.h"
 #include "main.h"
-#include "math.h"
 #include <GL/glew.h>
 
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
@@ -40,7 +39,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
     gameMetadata.screenResolution = v2{ SCREEN_WIDTH, SCREEN_HEIGHT };
     gameMetadata.initFromGameUpdateAndRender = false;
 
-    ZeroStruct(gameMetadata.sentinelNode);
+    gameMetadata.sentinelNode = {};
     gameMetadata.sentinelNode.next = &gameMetadata.sentinelNode;
     gameMetadata.sentinelNode.prev = &gameMetadata.sentinelNode;
     gameMetadata.program = 0;

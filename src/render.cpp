@@ -21,7 +21,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "logger.h"
-#include "math.h"
+#include "math.cpp"
 #pragma warning(pop)
 
 #ifndef WIN32
@@ -32,7 +32,7 @@
 #include "game_memory.h"
 
 /* cheeky way to replace malloc call for STB */
-static GameMemory *g_reservedMemory = NULL;
+static GameMemory *g_reservedMemory = nullptr;
 inline void *RequestToReservedMemory(memory_index size)
 {
     ASSERT(g_reservedMemory);
@@ -101,24 +101,23 @@ inline void *RequestToReservedMemory(memory_index size)
     }
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, RectDynamicArray *hitboxes, RectDynamicArray *hurtboxes);
-void RenderAllEntities(GLuint program);
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitboxes, RectDynamicArray *hurtBoxes);
+            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes);
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes);
 void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc);
 
 /* TODO: We'll need to get rid of these global variables later on */
-Camera *g_camera = NULL;
-glm::mat4 *g_projection = NULL;
-GLfloat *g_rectangleVertices = NULL;
-EntityManager *g_entityManager = NULL;
-Entity *g_player = NULL;
-RectManager *g_rectManager = NULL;
-EntityDynamicArray *g_eda = NULL;
+Camera *g_camera = nullptr;
+glm::mat4 *g_projection = nullptr;
+GLfloat *g_rectangleVertices = nullptr;
+EntityManager *g_entityManager = nullptr;
+Entity *g_player = nullptr;
+RectManager *g_rectManager = nullptr;
+EntityDynamicArray *g_eda = nullptr;
 static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
-static Animation2D *g_spriteAnimation = NULL;
+static Animation2D *g_spriteAnimation = nullptr;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -145,7 +144,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ASSERT(!g_reservedMemory);
 
         TTF_Font *font = OpenFont();
-        ASSERT(font != NULL);
+        ASSERT(font != nullptr);
         gameMetadata->font = font;
 
         g_reservedMemory = reservedMemory;
@@ -235,7 +234,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
      * move. The amount of keyboard repeat depends on the setting the user has
      * on their computer, so not reliable.
      */
-    const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+    const Uint8 *keystate = SDL_GetKeyboardState(nullptr);
     ProcessKeysHeldDown(g_player, keystate);
 
     while (SDL_PollEvent(&event))
@@ -428,11 +427,6 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, true);
 }
 
-void RenderAllEntities(GLuint vbo)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-}
-
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes)
 {
@@ -464,7 +458,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     /* TODO: sort materials to their own group for that specific program
      * bind to the new program
      */
-    Entity *player = NULL;
+    Entity *player = nullptr;
     player = entity;
 
     /* programs used first will have higher priority being shown in the
@@ -482,7 +476,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     OpenGLCheckErrors();
 
-    GLuint modelLoc, viewLoc, projectionLoc, rectTypeLoc;
+    GLuint modelLoc, viewLoc, projectionLoc;
 
     if (g_debugMode)
     {
@@ -514,8 +508,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     modelLoc = glGetUniformLocation(program, "model");
     viewLoc = glGetUniformLocation(program, "view");
     projectionLoc = glGetUniformLocation(program, "projection");
-    rectTypeLoc = glGetUniformLocation(program, "type");
-
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -716,7 +708,7 @@ void LoadStuff(GameMetadata *gameMetadata)
             /* TODO: extract out creating new entity from the manager */
             Entity *rectEntity =
                 AddNewEntity(reservedMemory, g_entityManager, startingPosition);
-            ASSERT(rectEntity != NULL);
+            ASSERT(rectEntity != nullptr);
             rectEntity->isTraversable = true;
             rectEntity->isPlayer = false;
             rectEntity->type = REGULAR;
@@ -736,7 +728,7 @@ void LoadStuff(GameMetadata *gameMetadata)
 
         Entity *collisionEntity =
             AddNewEntity(reservedMemory, g_entityManager, startingPosition);
-        ASSERT(collisionEntity != NULL);
+        ASSERT(collisionEntity != nullptr);
         collisionEntity->isTraversable = false;
         collisionEntity->isPlayer = false;
 
@@ -804,14 +796,14 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     static memory_index g_bitmapID = 0;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
-    Bitmap *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    auto *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(awesomefaceBitmap, TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
     PushBitmap(&gameMetadata->sentinelNode, awesomefaceBitmap);
 
     gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
 
-    Bitmap *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(newBitmap, TextureParam{ GL_NEAREST, GL_NEAREST },
               g_bitmapID++, "./materials/textures/arche.png");
     PushBitmap(&gameMetadata->sentinelNode, newBitmap);

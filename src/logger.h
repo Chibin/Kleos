@@ -13,7 +13,7 @@
 #define DEBUG_PRINT(fmt, ...) EmptyDebugPrint(fmt, __VA_ARGS__)
 #endif
 
-inline void EmptyDebugPrint(const char * /* unused */, ...)
+inline void EmptyDebugPrint(const char * _unused, ...) // NOLINT
 {
 }
 

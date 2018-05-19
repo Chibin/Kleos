@@ -25,7 +25,7 @@ inline Bitmap *FindBitmap(Bitmap *sentinelNode, memory_index bitmapID)
 
 inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
 {
-    s32 componentsPerPixel;
+    s32 componentsPerPixel = 0;
 
     /* PNGs are normally 'flipped'.
      * This happens because OpenGL expects the 0.0 coordinate on the y-axis to

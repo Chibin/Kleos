@@ -26,17 +26,17 @@ bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)
     return tmax > MAX(tmin, 0.0);
 }
 
-int TestAABBAABB(Rect *a, Rect *b)
+b32 TestAABBAABB(Rect *a, Rect *b)
 {
     if (a->max[0] < b->min[0] || a->min[0] > b->max[0])
     {
-        return 0;
+        return false;
     }
     if (a->max[1] < b->min[1] || a->min[1] > b->max[1])
     {
-        return 0;
+        return false;
     }
 
-    return 1;
+    return true;
 }
 #endif

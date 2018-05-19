@@ -3,8 +3,8 @@ devenv src/main.vcxproj /build
 
 if NOT %errorlevel% == 0 goto :error
 
-copy Debug\main.* .
-copy Debug\render.* .
+copy src\Debug\main.* .
+copy src\Debug\render.* .
 goto :EOF
 
 :error

@@ -1,11 +1,13 @@
-#pragma once
 #ifndef __GAME_MEMORY__
 #define __GAME_MEMORY__
+#pragma once
+
+#include <stdlib.h>
 
 #include "game_time.h"
 #include "math.h"
 #include "opengl.h"
-#include "sdl_common.h"
+
 
 struct GameMemory
 {
@@ -41,9 +43,10 @@ inline memory_index GetAlignmentOffSet(GameMemory *gm, memory_index alignment)
     return alignOffSet;
 }
 
-inline void *AllocateMemory(GameMemory *gm, memory_index size, const memory_index byteAlignment = 4)
+inline void *AllocateMemory(GameMemory *gm, memory_index size)
 {
-    ASSERT(size != 0);
+    const memory_index byteAlignment = 4;
+    ASSERT(size != 0); // NOLINT
 
     /* let's default alignment to 4 bytes. */
     memory_index padding = GetAlignmentOffSet(gm, byteAlignment);
@@ -51,7 +54,7 @@ inline void *AllocateMemory(GameMemory *gm, memory_index size, const memory_inde
 
     u8 *newAllocBase = gm->base + gm->used - 1;
 
-    ASSERT(gm->used + size < gm->maxSize);
+    ASSERT(gm->used + size < gm->maxSize); // NOLINT
     gm->used += SafeCastToU32(size);
 
     return newAllocBase;

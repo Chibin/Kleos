@@ -2,8 +2,10 @@
 #define __MATH__
 
 #include "sdl_common.h"
-#include <cinttypes>
-#include <cstring>
+
+#include <inttypes.h>
+#include <stdbool.h>
+#include <string.h>
 
 #ifndef UINT32_MAX
 #define UINT32_MAX 0xFFFFFFFF
@@ -17,11 +19,11 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define KILOBYTE(x) 1024 * x
-#define MEGABYTE(x) KILOBYTE(1024) * x
-#define GIGABYTE(x) MEGABYTE(1024) * x
+#define KILOBYTE(x) (1024 * (x))
+#define MEGABYTE(x) KILOBYTE(1024) * (x)
+#define GIGABYTE(x) MEGABYTE(1024) * (x)
 
-#define ZeroStruct(x) ZeroSize(&x, sizeof(x))
+#define ZeroStruct(x) ZeroSize(&(x), sizeof(x))
 
 typedef uint8_t uint8;
 typedef uint16_t uint16;
@@ -60,7 +62,8 @@ typedef size_t memory_index;
 typedef uintptr_t umm;
 typedef intptr_t smm;
 
-union v2 {
+union v2
+{
     struct
     {
         real32 x;
@@ -69,7 +72,8 @@ union v2 {
     real32 v[2];
 };
 
-union v3 {
+union v3
+{
     struct
     {
         real32 x;
@@ -86,7 +90,8 @@ union v3 {
     real32 v[3];
 };
 
-union v4 {
+union v4
+{
     struct
     {
         real32 x;
@@ -105,150 +110,19 @@ union v4 {
     real32 v[4];
 };
 
-inline v3 operator+(v3 A, v3 B)
-{
-
-    A.x += B.x;
-    A.y += B.y;
-    A.z += B.z;
-
-    return A;
-}
-
-inline v3 &operator+=(v3 &A, v3 B)
-{
-
-    A.x += B.x;
-    A.y += B.y;
-    A.z += B.z;
-
-    return A;
-}
-
-inline v4 operator+(v4 A, v4 B)
-{
-
-    A.x += B.x;
-    A.y += B.y;
-    A.z += B.z;
-    A.w += B.w;
-
-    return A;
-}
-
-inline v4 operator*(v4 A, v4 B)
-{
-
-    A.x *= B.x;
-    A.y *= B.y;
-    A.z *= B.z;
-    A.w *= B.w;
-
-    return A;
-}
-
-inline v4 &operator/(v4 &A, v4 B)
-{
-
-    A.x /= B.x;
-    A.y /= B.y;
-    A.z /= B.z;
-    A.w /= B.w;
-
-    return A;
-}
-
-inline v4 operator-(v4 a, v4 b)
-{
-
-    a.x -= b.x;
-    a.y -= b.y;
-    a.z -= b.z;
-    a.w -= b.w;
-
-    return a;
-}
-
-inline v4 &operator/=(v4 &A, v4 B)
-{
-
-    A.x *= B.x;
-    A.y *= B.y;
-    A.z *= B.z;
-    A.w *= B.w;
-
-    return A;
-}
-
-inline v4 &operator*=(v4 &A, v4 B)
-{
-
-    A.x *= B.x;
-    A.y *= B.y;
-    A.z *= B.z;
-    A.w *= B.w;
-
-    return A;
-}
-
-inline v4 &operator-=(v4 &A, v4 B)
-{
-
-    A.x -= B.x;
-    A.y -= B.y;
-    A.z -= B.z;
-    A.w -= B.w;
-
-    return A;
-}
-
-inline v4 &operator+=(v4 &A, v4 B)
-{
-
-    A.x += B.x;
-    A.y += B.y;
-    A.z += B.z;
-    A.w += B.w;
-
-    return A;
-}
-
 union m4 {
-    struct rv
+    struct
     {
-        v4 a1;
-        v4 a2;
-        v4 a3;
-        v4 a4;
+        union v4 a1;
+        union v4 a2;
+        union v4 a3;
+        union v4 a4;
     };
     real32 v[16];
 };
 
-inline void ZeroSize(void *_data, memory_index size)
-{
-    u8 *base = (u8 *)_data;
-    while (size--)
-    {
-        *base++ = 0;
-    }
-}
-
-inline u32 SafeCastToU32(memory_index x)
-{
-    ASSERT(x <= UINT32_MAX);
-    return (u32)x;
-}
-
-inline u8 SafeCastToU8(f32 num)
-{
-    ASSERT(num <= 256 && num >= 0);
-    return (u8)num;
-}
-
-inline s32 *SafeCastU32ToS32(u32 *u32Pointer)
-{
-
-    ASSERT(*u32Pointer <= INT32_MAX);
-    return (s32 *)u32Pointer;
-}
+inline void ZeroSize(void *_data, memory_index size);
+inline u32 SafeCastToU32(memory_index x);
+inline u8 SafeCastToU8(f32 num);
+inline s32 *SafeCastU32ToS32(u32 *u32Pointer);
 #endif
