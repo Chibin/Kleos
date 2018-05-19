@@ -1,6 +1,20 @@
 ---
-Checks:          '*,-llvm-header-guard'
-HeaderFilterRegex: '$(realpath ..)/src'
+Checks:          '
+                    *,
+                    -llvm-header-guard,
+                    -modernize-deprecated-headers,
+                    -cppcoreguidelines-pro-type-cstyle-cast,
+                    -cppcoreguidelines-pro-type-union-access,
+                    -google-readability-casting,
+                    -hicpp-deprecated-headers,
+                    -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+                    -cppcoreguidelines-pro-type-vararg,
+                    -hicpp-vararg,
+                    -fuchsia-default-arguments,
+                    -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+                    -hicpp-no-array-decay,
+                 '
+HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
 CheckOptions:    
   - key:             google-readability-braces-around-statements.ShortStatementLines
