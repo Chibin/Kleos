@@ -35,6 +35,9 @@ nvim looks for python2 and python binaries. I created the
 respected python2 and python3 files by copying the python.exe.
 https://www.reddit.com/r/neovim/comments/7l0757/neovim_installation_in_windows_10/
 
+To easily generate compile_commands.json on Windows, use ninja for the cmake generator.
+`cmake -G "Ninja" ..."
+
 # Debian
 apt-get install libsdl2-dev 
 apt-get install libglm-dev
