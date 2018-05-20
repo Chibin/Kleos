@@ -1,7 +1,13 @@
 #pragma once
 
-#include "game_memory.h"
+#include <GL/glew.h>
+
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <stdio.h>
+
+#include "game_memory.h"
 
 struct Camera
 {
@@ -12,9 +18,9 @@ struct Camera
     glm::mat4 view;
 };
 
-Camera *CreateCamera();
+Camera *CreateCamera(GameMemory *gm);
+inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up);
 void CameraZoomOut(Camera *camera);
 void CameraZoomIn(Camera *camera);
 void CameraUpdateTarget(Camera *camera, glm::vec3 position);
 void CameraUpdateTarget(Camera *camera, float yaw, float pitch);
-inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up);

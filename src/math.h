@@ -121,7 +121,7 @@ union m4 {
     real32 v[16];
 };
 
-inline void ZeroSize(void *_data, memory_index size);
+void ZeroSize(void *_data, memory_index size);
 inline u32 SafeCastToU32(memory_index x);
 inline u8 SafeCastToU8(f32 num);
 inline s32 *SafeCastU32ToS32(u32 *u32Pointer);

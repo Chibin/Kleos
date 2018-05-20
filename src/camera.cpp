@@ -1,7 +1,7 @@
+#ifndef __CAMERA__
+#define __CAMERA__
+
 #include "camera.h"
-#include <GL/glew.h>
-#include <cstdio>
-#include <glm/gtc/matrix_transform.hpp>
 
 inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up)
 {
@@ -84,3 +84,5 @@ void CameraUpdateTarget(Camera *camera, float yaw, float pitch)
 
     camera->target = glm::normalize(cameraTarget);
 }
+
+#endif

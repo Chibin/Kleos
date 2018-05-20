@@ -1,6 +1,7 @@
 #ifndef __BITMAP__
 #define __BITMAP__
 #include "bitmap.h"
+#include "math.h"
 
 inline void PushBitmap(Bitmap *oldNode, Bitmap *newNode)
 {

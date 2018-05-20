@@ -16,7 +16,7 @@ find_package (SDL2 REQUIRED)
 find_package (OpenGL REQUIRED)
 find_package (SDL2TTF REQUIRED)
 
-include_directories (${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} "D:/Libraries/SDL2_ttf-2.0.14" "D:/Libraries/glm" "${CMAKE_SOURCE_DIR}/include")
+include_directories (SYSTEM ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} "D:/Libraries/SDL2_ttf-2.0.14" "D:/Libraries/glm" "${CMAKE_SOURCE_DIR}/include")
 
 message("test inglibs: " ${GLEW_LIBRARY})
 message("test inglibs: " ${SDL2_LIBRARIES})

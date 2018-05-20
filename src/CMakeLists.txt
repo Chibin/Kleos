@@ -8,6 +8,30 @@ add_library(render SHARED
     render.cpp
     )
 
+list (APPEND justtobuild
+    bitmap.cpp
+    camera.cpp
+    collision.cpp
+    entity.cpp
+    entity_manager.cpp
+    font.cpp
+    game_time.cpp
+    input.cpp
+    main.cpp
+    math.cpp
+    opengl.cpp
+    rect_manager.cpp
+    rectangle.cpp
+    shaders.cpp
+    )
+if (UNIX)
+    list (APPEND justtobuild linux_platform.cpp)
+elseif (WIN32)
+    list(APPEND justtobuild win32_platform.cpp)
+endif()
+
+add_library(dummy OBJECT ${justtobuild})
+
 set_target_properties(
 	render PROPERTIES
 	ENABLE_EXPORTS 1

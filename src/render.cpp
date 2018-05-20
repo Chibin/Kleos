@@ -237,7 +237,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     const Uint8 *keystate = SDL_GetKeyboardState(nullptr);
     ProcessKeysHeldDown(g_player, keystate);
 
-    while (SDL_PollEvent(&event))
+    while (SDL_PollEvent(&event) != 0)
     {
         switch (event.type)
         {
@@ -263,7 +263,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     /* start with a 'clear' screen */
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // NOLINT
 
     ASSERT(gameMetadata->program);
     ASSERT(gameMetadata->debugProgram);

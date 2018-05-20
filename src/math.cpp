@@ -108,7 +108,7 @@ inline v4 &operator+=(v4 &A, v4 B)
     return A;
 }
 
-inline void ZeroSize(void *_data, memory_index size)
+void ZeroSize(void *_data, memory_index size)
 {
     u8 *base = (u8 *)_data;
     while (size--)
