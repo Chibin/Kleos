@@ -7,7 +7,7 @@ int main(int /*unused*/, char ** /*unused*/)
     SDL_Window *mainWindow = nullptr;
     /* our opengl context handle */
     SDL_GLContext mainContext;
-    RenderAPI renderAPI;
+    RenderAPI renderAPI = {};
 
     if (!WindowSetup(&mainWindow, programName) ||
         !WindowsOpenGLSetup(mainWindow, &mainContext) || !WindowsSDLTTFSetup() ||
@@ -16,7 +16,7 @@ int main(int /*unused*/, char ** /*unused*/)
         return -1;
     }
 
-    MainGameLoop(mainWindow, renderAPI);
+    MainGameLoop(mainWindow, &renderAPI);
     WindowsCleanup(mainWindow, &mainContext);
 
     return 0;

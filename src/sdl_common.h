@@ -8,4 +8,4 @@
 #include <SDL2/SDL_ttf.h>
 #endif
 
-#define ASSERT(condition) SDL_assert(condition)
+#define ASSERT(condition) SDL_assert(condition) // NOLINT

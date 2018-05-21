@@ -14,14 +14,13 @@ typedef bool(__cdecl *UPDATEANDRENDER)(struct GameMetadata *gameMetadata);
 
 struct RenderAPI
 {
-    std::string libraryName;
     HMODULE libHandle;
     UPDATEANDRENDER updateAndRender;
 };
 
 void _setOpenGLSettings();
-void CheckSDLError(int);
-bool WindowSetup(SDL_Window **mainWindow, std::string &programName);
+void CheckSDLError(int /*line*/);
+bool WindowSetup(SDL_Window **mainWindow, const std::string &programName);
 bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext);
 void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext *mainContext);
 bool WindowsSDLTTFSetup();

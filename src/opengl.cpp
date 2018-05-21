@@ -1,9 +1,10 @@
-#include "opengl.h"
-#include "main.h"
-#include "sdl_common.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+
+#include "main.h"
+#include "opengl.h"
+#include "sdl_common.h"
 
 void OpenGLBindTexture(GLuint textureID)
 {

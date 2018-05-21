@@ -9,7 +9,7 @@
 
 void _processOpenGLErrors(const char *file, int line);
 
-void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
+void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
 {
     /* sanity check */
     ASSERT(sizeof(real32) == sizeof(GLfloat));
@@ -49,7 +49,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI &renderAPI)
 
     while (continueRunning)
     {
-        continueRunning = ((renderAPI.updateAndRender)(&gameMetadata) != 0);
+        continueRunning = ((renderAPI->updateAndRender)(&gameMetadata) != 0);
         ProcessOpenGLErrors();
 
         /* equivalent to glswapbuffer? */

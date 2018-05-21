@@ -11,7 +11,13 @@ Checks:          '
                     -cppcoreguidelines-pro-type-vararg,
                     -hicpp-vararg,
                     -fuchsia-default-arguments,
+                    -fuchsia-overloaded-operator,
+                    -modernize-use-using,
+                    -readability-implicit-bool-conversion,
+                    -cppcoreguidelines-owning-memory,
+                    -cppcoreguidelines-no-malloc,
                     -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+                    -hicpp-no-malloc,
                     -hicpp-no-array-decay,
                  '
 HeaderFilterRegex: '.*'

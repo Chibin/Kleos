@@ -18,7 +18,7 @@ struct GameMemory
 
 inline void InitializeGameMemory(GameMemory *gm, u32 size)
 {
-    gm->base = (u8 *)malloc(size);
+    gm->base = (u8 *)malloc(size); // NOLINT
     gm->maxSize = size;
     gm->used = 0;
 }
@@ -33,7 +33,7 @@ inline memory_index GetAlignmentOffSet(GameMemory *gm, memory_index alignment)
     memory_index alignOffSet = 0;
 
     memory_index alignmentMask = alignment - 1;
-    memory_index tentativePointer = (memory_index)(gm->used + gm->base);
+    auto tentativePointer = (memory_index)(gm->used + gm->base);
 
     if (tentativePointer & alignmentMask)
     {

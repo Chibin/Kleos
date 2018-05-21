@@ -122,7 +122,7 @@ union m4 {
 };
 
 void ZeroSize(void *_data, memory_index size);
-inline u32 SafeCastToU32(memory_index x);
-inline u8 SafeCastToU8(f32 num);
-inline s32 *SafeCastU32ToS32(u32 *u32Pointer);
+u32 SafeCastToU32(memory_index x);
+u8 SafeCastToU8(f32 num);
+s32 *SafeCastU32ToS32(u32 *u32Pointer);
 #endif

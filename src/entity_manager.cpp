@@ -38,11 +38,9 @@ EntityManager *CreateEntityManger(GameMemory *gm)
 {
     START_DEBUG_TIMING();
 
-    auto *em = static_cast<EntityManager *>(AllocateMemory(gm, (sizeof(EntityManager))));
-    if (em == nullptr)
-    {
-        PAUSE_HERE("entity manger is NULL? %s\n", __func__);
-    }
+    auto *em = (EntityManager *)(AllocateMemory(gm, (sizeof(EntityManager))));
+
+    ASSERT(em != nullptr);
 
     em->size = 0;
     em->entityIDs = nullptr;

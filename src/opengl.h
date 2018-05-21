@@ -76,8 +76,8 @@ struct Program
 
 void OpenGLBeginUseProgram(GLuint program, GLuint textureID = 0);
 void OpenGLEndUseProgram();
-void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
-                     Vertex *vboVertices, GLuint &ebo, uint32 eboSize,
+void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize, // NOLINT
+                     Vertex *vboVertices, GLuint &ebo, uint32 eboSize, // NOLINT
                      GLuint *eboVertices, GLenum vboUsage = GL_DYNAMIC_DRAW,
                      GLenum eboUsage = GL_STATIC_DRAW);
 GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,

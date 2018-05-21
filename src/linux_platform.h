@@ -10,7 +10,6 @@ typedef void *(*UPDATEANDRENDER)(struct GameMetadata *gameMetadata);
 
 struct RenderAPI
 {
-    std::string libraryName;
     void *libHandle;
     UPDATEANDRENDER updateAndRender;
 };

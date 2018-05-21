@@ -42,7 +42,7 @@ inline v4 operator*(v4 A, v4 B)
     return A;
 }
 
-inline v4 &operator/(v4 &A, v4 B)
+inline v4 &operator/(v4 &A, v4 B) // NOLINT
 {
 
     A.x /= B.x;
@@ -110,26 +110,26 @@ inline v4 &operator+=(v4 &A, v4 B)
 
 void ZeroSize(void *_data, memory_index size)
 {
-    u8 *base = (u8 *)_data;
+    auto *base = (u8 *)_data;
     while (size--)
     {
         *base++ = 0;
     }
 }
 
-inline u32 SafeCastToU32(memory_index x)
+u32 SafeCastToU32(memory_index x)
 {
     ASSERT(x <= UINT32_MAX); // NOLINT
     return (u32)x;
 }
 
-inline u8 SafeCastToU8(f32 num)
+u8 SafeCastToU8(f32 num)
 {
     ASSERT(num <= 256 && num >= 0); // NOLINT
     return (u8)num;
 }
 
-inline s32 *SafeCastU32ToS32(u32 *u32Pointer)
+s32 *SafeCastU32ToS32(u32 *u32Pointer)
 {
 
     ASSERT(*u32Pointer <= INT32_MAX); // NOLINT

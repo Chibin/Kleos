@@ -1,7 +1,7 @@
 #ifndef __FONT__
 #define __FONT__
-#include "font.h"
 #include "bitmap.h"
+#include "font.h"
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -83,7 +83,7 @@ inline void OpenGLLoadBitmap(Bitmap *bitmap, GLuint textureID)
 inline void CopyData(u32 *src, u32 *dest, memory_index size)
 {
     memory_index temp = size;
-    while (temp--)
+    while (temp--) // NOLINT
     {
         *dest++ = *src++;
     }
@@ -119,11 +119,13 @@ GLuint StringToTexture(TTF_Font *font, const char *msg)
     GLuint textureID;
 
     SDL_Surface *surface = StringToSDLSurface(font, msg);
-    assert(surface != NULL);
+    assert(surface != nullptr);
 
     GLenum format = GL_RGB;
     if (surface->format->BytesPerPixel == 4)
+    {
         format = GL_RGBA;
+    }
     u32 width = surface->w;
     u32 height = surface->h;
 
@@ -142,7 +144,9 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
     u32 height = surface->h;
     GLenum format = GL_RGB;
     if (surface->format->BytesPerPixel == 4)
+    {
         format = GL_RGBA;
+    }
 
     FlipImage((u32 *)surface->pixels, width, height);
 
@@ -160,7 +164,7 @@ void StringToBitmap(GameMemory *gm, Bitmap *bitmap, TTF_Font *font, const char *
      */
 
     SDL_Surface *surface = StringToSDLSurface(font, msg);
-    ASSERT(surface != NULL);
+    ASSERT(surface != nullptr);
 
     SDLSurfaceToBitmap(gm, surface, bitmap);
 

@@ -222,7 +222,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
                         nullptr, /* use null as way to not load anything to vbo*/
-                        gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices);
+                        gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
 
         END_DEBUG_TIMING();
     }
@@ -521,8 +521,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     SetOpenGLDrawToScreenCoordinate(projectionLoc, viewLoc);
 
     Bitmap stringBitmap = {};
-    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF);
-    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);
+    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
+    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer); // NOLINT
 
     f32 rectWidth = 0.35f;
     f32 rectHeight = 0.175f;

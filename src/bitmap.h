@@ -1,8 +1,8 @@
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
-#include "sdl_common.h"
 #include "math.h"
 #include "opengl.h"
+#include "sdl_common.h"
 
 #include <GL/glew.h>
 #define GL3_PROTOTYPES 1

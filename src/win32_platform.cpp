@@ -1,7 +1,7 @@
 #include "win32_platform.h"
 
 /* functions related to windows specific platform */
-bool WindowSetup(SDL_Window **mainWindow, std::string &programName)
+bool WindowSetup(SDL_Window **mainWindow, const std::string &programName)
 {
     // Initialize SDL's video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -10,8 +10,8 @@ bool WindowSetup(SDL_Window **mainWindow, std::string &programName)
         return false;
     }
 
-    *mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED,
-                                   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
+    *mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED, // NOLINT
+                                   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, // NOLINT
                                    SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
     if (!*mainWindow)
@@ -55,7 +55,9 @@ bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
          * Otherwise, we do have a problem.
          */
         if (err != GL_INVALID_ENUM)
+        {
             printf("OpenGL: found true error x%x\n", err);
+        }
     }
 
     if (glewError != GLEW_OK)
@@ -66,7 +68,9 @@ bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
     }
 
     if (SDL_GL_SetSwapInterval(1) < 0)
+    {
         printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+    }
 
     /* clean up the screen */
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -97,7 +101,7 @@ void _setOpenGLSettings()
     SDL_GL_SetSwapInterval(1);
 }
 
-void CheckSDLError(int line = -1)
+void CheckSDLError(int /*line*/)
 {
     std::string error = SDL_GetError();
 
@@ -153,7 +157,7 @@ void PrintSDLTTFVersion()
 
 char *GetProgramPath()
 {
-    char *dataPath = NULL;
+    char *dataPath = nullptr;
     char *basePath = SDL_GetBasePath();
     if (basePath)
     {
@@ -172,7 +176,7 @@ void PrintFileTimeStamp(WIN32_FIND_DATA searchData)
 
     /* Convert the last-write time to local time. */
     FileTimeToSystemTime(&searchData.ftCreationTime, &stUTC);
-    SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
+    SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLocal);
 
     printf("%02d/%02d/%d  %02d:%02d\n", stLocal.wMonth, stLocal.wDay,
            stLocal.wYear, stLocal.wHour, stLocal.wMinute);
@@ -193,12 +197,17 @@ void FindFile(const char *dirPath, const char *fileRegex)
 
     while (handle != INVALID_HANDLE_VALUE)
     {
+
+#if 0
         unsigned long qwResult =
             (((ULONGLONG)searchData.ftLastWriteTime.dwHighDateTime) << 32) +
             searchData.ftLastWriteTime.dwLowDateTime;
+#endif
 
         if (FindNextFile(handle, &searchData) == FALSE)
+        {
             break;
+        }
     }
 
     /* Close the handle after use or memory/resource leak */
@@ -212,7 +221,7 @@ void GetLatestFile()
 void ListFiles(const char *dirPath)
 {
     const unsigned BUFFER_SIZE = 256;
-    char *fileRegex = "*";
+    const char *fileRegex = "*";
     char searchPath[BUFFER_SIZE];
 
     strncpy_s(searchPath, dirPath, BUFFER_SIZE - 1);
@@ -224,9 +233,10 @@ void ListFiles(const char *dirPath)
     HANDLE handle = FindFirstFile(searchPath, &search_data);
     while (handle != INVALID_HANDLE_VALUE)
     {
-        // DEBUG_PRINT("\n%s\n", search_data.cFileName);
         if (FindNextFile(handle, &search_data) == FALSE)
+        {
             break;
+        }
     }
 
     /* Close the handle after use or memory/resource leak */

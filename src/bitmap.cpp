@@ -34,15 +34,19 @@ inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
      * top of the y-axis
      */
     size_t ImageLen = strlen(ImageName);
-    if (ImageLen >= 5 && strcmp(ImageName + ImageLen - 5, ".png"))
-        stbi_set_flip_vertically_on_load(true);
+    if ((ImageLen >= 5) && (strcmp(ImageName + ImageLen - 5, ".png") != 0))
+    {
+        stbi_set_flip_vertically_on_load(1);
+    }
 
     bitmap->data =
         stbi_load(ImageName, (s32 *)&bitmap->width, (s32 *)&bitmap->height, &componentsPerPixel, 0);
 
     int textureFormat = GL_RGB;
     if (componentsPerPixel == 4)
+    {
         textureFormat = GL_RGBA;
+    }
     bitmap->format = textureFormat;
 
     ASSERT(componentsPerPixel == 4);
