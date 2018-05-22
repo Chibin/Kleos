@@ -13,6 +13,12 @@ struct RenderGroup
     memory_index rectEntityCount;
 };
 
+inline void ClearUsedVertexRenderGroup(RenderGroup *rg)
+{
+    rg->rectCount = 0;
+    ClearMemoryUsed(&rg->vertexMemory);
+};
+
 inline void ClearUsedRenderGroup(RenderGroup *rg)
 {
     rg->rectCount = 0;

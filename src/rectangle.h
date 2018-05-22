@@ -60,6 +60,8 @@ struct Rect
     real32 width, height;
 
     memory_index bitmapID;
+    Bitmap *bitmap;
+    b32 isScreenCoordinateSpace;
     v3 startingPosition;
 
 #pragma warning(push)

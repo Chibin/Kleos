@@ -170,7 +170,6 @@ void PushRectVertex(GameMemory *gm, Rect *rect)
 
     auto *vertexPointer = (Vertex *)(gm->base + gm->used);
 
-    ASSERT(numOfPoints < sizeof(g_rectIndices));
     for (memory_index i = 0; i < numOfPoints; i++)
     {
         memory_index index = g_rectIndices[i]; // NOLINT

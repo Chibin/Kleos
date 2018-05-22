@@ -195,6 +195,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
         gameMetadata->whiteBitmap.format = GL_RGBA;
+        gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
         gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
         for (memory_index i = 0; i < 1 * 1; i++)
         {
@@ -434,6 +435,10 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[150];
 
+    Bitmap perFrameSentinelNode = {};
+    perFrameSentinelNode.next = &perFrameSentinelNode;
+    perFrameSentinelNode.prev = &perFrameSentinelNode;
+
     u64 endCounter = SDL_GetPerformanceCounter();
     u64 counterElapsed = endCounter - gt->lastCounter;
 
@@ -492,7 +497,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     renderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
     renderGroup.vertexMemory.maxSize = vertexBlockSize;
 
-    u32 rectMemoryBlockSize = sizeof(Rect) * 100;
+    u32 rectMemoryBlockSize = sizeof(Rect) * 10010;
     renderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
     renderGroup.rectMemory.maxSize = rectMemoryBlockSize;
 
@@ -523,6 +528,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     Bitmap stringBitmap = {};
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer); // NOLINT
+    stringBitmap.textureParam = TextureParam{GL_NEAREST, GL_NEAREST};
 
     f32 rectWidth = 0.35f;
     f32 rectHeight = 0.175f;
@@ -533,113 +539,84 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
 
-    PushRectVertex(&renderGroup, statsRect);
-    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+    statsRect->isScreenCoordinateSpace = true;
+    statsRect->bitmap = &stringBitmap;
+    PushRectInfo(&renderGroup, statsRect);
 
-    OpenGLLoadBitmap(&stringBitmap, textureID);
-    DrawRawRectangle(renderGroup.rectCount);
+    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+    statsRect->bitmap = &gameMetadata->whiteBitmap;
+    PushRectInfo(&renderGroup, statsRect);
 
-    /* TODO: Might be faster to binded white bitmap already? */
-    OpenGLLoadBitmap(&gameMetadata->whiteBitmap, textureID);
-    DrawRawRectangle(renderGroup.rectCount);
-    /* END DRAW UI */
+    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode, gameMetadata->playerRect->bitmapID);
+    PushRectInfo(&renderGroup, gameMetadata->playerRect);
 
-    ClearUsedRenderGroup(&renderGroup);
-
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
-    /* Save PLAYER vertices */
-    PushRectVertex(&renderGroup, gameMetadata->playerRect);
-    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used, renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-
-    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, gameMetadata->playerRect->bitmapID);
-    OpenGLLoadBitmap(archeBitmap, textureID);
-
-    OpenGLUpdateTextureParameter(&archeBitmap->textureParam);
-
-    DrawRawRectangle(renderGroup.rectCount);
-
-    ClearUsedRenderGroup(&renderGroup);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    memory_index prevBitmapID = 1;
-    Bitmap *bitmap = nullptr;
     for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
     {
         Rect *rect = g_rectManager->Traversable.rects[i];
-
-        memory_index bitmapID = rect->bitmapID; /* GetBitmap(bitmapID);*/
-        if (bitmapID != prevBitmapID)
-        {
-            glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                         renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-            DrawRawRectangle(renderGroup.rectCount);
-
-            ClearUsedRenderGroup(&renderGroup);
-
-            bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
-            ASSERT(bitmap);
-            /* override the bitmap on this textureID */
-            OpenGLLoadBitmap(bitmap, textureID);
-        }
-
-        PushRectVertex(&renderGroup, rect);
-        prevBitmapID = bitmapID;
+        rect->bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+        ASSERT(rect->bitmap);
+        PushRectInfo(&renderGroup, rect);
     }
 
-    /* TODO: need to do a more efficient way of doing this. there's a chance
-     * that an upload and draw to happen twice
-     */
-    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-    DrawRawRectangle(renderGroup.rectCount);
-
-#if 0
-    Difference between PushingVerticesToDraw vs PushingRectData
-    PushToDraw(renderGroup, rect);
-
-    /* some rect buffer */ ?
-    memory_index prevBitmapID = 999;
     Bitmap *bitmap = nullptr;
+    Bitmap *prevBitmap = nullptr;
+    TextureParam prevTextureParam = {};
+    b32 isPrevScreenCoordinateSpace = false;
 
-    for (memory_index i = 0; i < rectCount; i++)
+    for (memory_index i = 0; i < renderGroup.rectEntityCount; i++)
     {
-        assign rect;
-        get bitmapID;
-        OpenGLUpdateTextureParameter(&archeBitmap->textureParam);
+        Rect *rect = (Rect *)renderGroup.rectMemory.base + i;
 
-        if (bitmapID != prevBitmapID)
-        {
-            DrawPreviously loaded rectangles;
+        //bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+        bitmap = rect->bitmap;
+        ASSERT(bitmap != nullptr);
 
-            ClearUsedRenderGroup(&renderGroup);
-            Bitmap *bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
-            ASSERT(bitmap);
-            /* override the bitmap on this textureID */
-            OpenGLLoadBitmap(bitmap, textureID);
-        }
-        else if (textureParam != prevTextureParam)
+        TextureParam textureParam  = bitmap->textureParam;
+
+        /* This part is questionable -- doesn't feel right */
+        if (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)
         {
             glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
                     renderGroup.vertexMemory.base, GL_STATIC_DRAW);
             DrawRawRectangle(renderGroup.rectCount);
 
-            ClearUsedRenderGroup(&renderGroup);
+            ClearUsedVertexRenderGroup(&renderGroup);
 
-            OpenGLUpdateTextureParameter(textureParam);
-
+            if (rect->isScreenCoordinateSpace)
+            {
+                SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
+            }
+            else
+            {
+                glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+                glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+            }
+            isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
         }
 
-        PushRect(&renderGroup, rect);
-        prevBitmapID = bitmapID;
+        if ((bitmap != prevBitmap) || (textureParam != prevTextureParam))
+        {
+            glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+                    renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+            DrawRawRectangle(renderGroup.rectCount);
+
+            ClearUsedVertexRenderGroup(&renderGroup);
+
+            OpenGLUpdateTextureParameter(&textureParam);
+            OpenGLLoadBitmap(bitmap, textureID);
+            prevBitmap = bitmap;
+        }
+
+        PushRectVertex(&renderGroup, rect);
+        prevTextureParam = textureParam;
 
     }
 
-#endif
+    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
+            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+    DrawRawRectangle(renderGroup.rectCount);
+
+    ClearUsedVertexRenderGroup(&renderGroup);
 
     OpenGLEndUseProgram();
 
