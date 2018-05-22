@@ -1,0 +1,7 @@
+render.dir/*
+*.plist
+render.vcx*
+render.cp*~
+assets/
+materials/
+dummy.vcx*

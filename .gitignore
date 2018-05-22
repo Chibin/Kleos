@@ -26,8 +26,6 @@ Makefile
 main
 *build/
 *.ninja
-src/assets/
-src/materials/
-src/dummy.vcx*
 build.ninja
 compile_commands.json
+*.plist
