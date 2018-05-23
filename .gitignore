@@ -29,3 +29,5 @@ main
 build.ninja
 compile_commands.json
 *.plist
+src/assets/
+src/materials/

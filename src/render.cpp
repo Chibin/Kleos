@@ -222,7 +222,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         glGenBuffers(1, &gameMetadata->vboID);
 
         OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                        nullptr, /* use null as way to not load anything to vbo*/
+                        nullptr,                                                    /* use null as way to not load anything to vbo*/
                         gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
 
         END_DEBUG_TIMING();
@@ -527,8 +527,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     Bitmap stringBitmap = {};
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
-    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer); // NOLINT
-    stringBitmap.textureParam = TextureParam{GL_NEAREST, GL_NEAREST};
+    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
+    stringBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
 
     f32 rectWidth = 0.35f;
     f32 rectHeight = 0.175f;
@@ -571,13 +571,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         bitmap = rect->bitmap;
         ASSERT(bitmap != nullptr);
 
-        TextureParam textureParam  = bitmap->textureParam;
+        TextureParam textureParam = bitmap->textureParam;
 
         /* This part is questionable -- doesn't feel right */
         if (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)
         {
             glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                    renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+                         renderGroup.vertexMemory.base, GL_STATIC_DRAW);
             DrawRawRectangle(renderGroup.rectCount);
 
             ClearUsedVertexRenderGroup(&renderGroup);
@@ -597,7 +597,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         if ((bitmap != prevBitmap) || (textureParam != prevTextureParam))
         {
             glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                    renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+                         renderGroup.vertexMemory.base, GL_STATIC_DRAW);
             DrawRawRectangle(renderGroup.rectCount);
 
             ClearUsedVertexRenderGroup(&renderGroup);
@@ -609,11 +609,10 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         PushRectVertex(&renderGroup, rect);
         prevTextureParam = textureParam;
-
     }
 
     glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-            renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
     DrawRawRectangle(renderGroup.rectCount);
 
     ClearUsedVertexRenderGroup(&renderGroup);
