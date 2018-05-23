@@ -2,16 +2,20 @@
 
 BUILD_DIR="${BUILD_DIR:-./build}"
 
-cd "$(pwd)" || exit 1
 mkdir -p "$BUILD_DIR"
 clang-format -i src/*.cpp src/*.h
 (
     cd "$BUILD_DIR" &&
-        export CC=/usr/bin/clang &&
-        export CXX=/usr/bin/clang++ &&
+        CC=$(which clang) &&
+        CXX=$(which clang++) &&
+        export CC &&
+        export CXX &&
         cmake -D USE_OPENGL_ES=1 -G Ninja ..
 
     ninja "$@" &&
         echo \"success!\"
+
 ) &&
-    run-clang-tidy-3.8.py
+    clang-tidy src/*.cpp
+
+ln -sf "$BUILD_DIR/compile_commands.json" .

@@ -3,7 +3,6 @@ FROM debian:stretch
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
-    clang \
     cmake \
     libglm-dev \
     libglew-dev \
@@ -12,11 +11,16 @@ RUN apt-get update && \
 
 RUN apt-get update && \
     apt-get install -y \
-    clang-tidy \
-    clang-format \
     cppcheck \
     git
 
 RUN apt-get update && \
     apt-get install -y \
-    ninja-build
+    ninja-build \
+    wget
+
+RUN wget https://releases.llvm.org/6.0.0/clang+llvm-6.0.0-x86_64-linux-gnu-debian8.tar.xz
+
+RUN tar -xvf clang+llvm-6.0.0-x86_64-linux-gnu-debian8.tar.xz
+
+RUN cd clang+llvm-6.0.0-x86_64-linux-gnu-debian8 && cp -r * ..
