@@ -15,4 +15,4 @@ RUN apt-get update && \
     clang-tidy \
     clang-format \
     cppcheck \
-    git \
+    git
