@@ -62,8 +62,7 @@ typedef size_t memory_index;
 typedef uintptr_t umm;
 typedef intptr_t smm;
 
-union v2
-{
+union v2 {
     struct
     {
         real32 x;
@@ -72,8 +71,7 @@ union v2
     real32 v[2];
 };
 
-union v3
-{
+union v3 {
     struct
     {
         real32 x;
@@ -90,8 +88,7 @@ union v3
     real32 v[3];
 };
 
-union v4
-{
+union v4 {
     struct
     {
         real32 x;

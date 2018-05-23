@@ -8,7 +8,6 @@
 #include "math.h"
 #include "opengl.h"
 
-
 struct GameMemory
 {
     u32 maxSize;

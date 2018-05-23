@@ -1,5 +1,5 @@
-#include "game_memory.h"
 #include "rectangle.h"
+#include "game_memory.h"
 
 Rect *CreateRectangle(GameMemory *gm, v3 startingPosition, v4 color,
                       real32 width, real32 height)
@@ -187,7 +187,7 @@ void PushRectInfo(GameMemory *gm, Rect *rect)
     ASSERT(gm->used + sizeof(Rect) <= gm->maxSize);
 
     auto *rectPointer = (Rect *)(gm->base + gm->used);
-    *rectPointer =  *rect;
+    *rectPointer = *rect;
     gm->used += sizeof(Rect);
 }
 

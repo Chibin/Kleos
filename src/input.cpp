@@ -1,6 +1,6 @@
+#include "input.h"
 #include "camera.h"
 #include "entity.h"
-#include "input.h"
 
 static bool g_canJump = true;
 static bool g_canAttack = true;

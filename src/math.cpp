@@ -1,6 +1,6 @@
 #include "math.h"
 
-inline v3 operator+ (v3 A, v3 B) //NOLINT
+inline v3 operator+(v3 A, v3 B) //NOLINT
 {
 
     A.x += B.x;

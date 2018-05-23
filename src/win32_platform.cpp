@@ -11,7 +11,7 @@ bool WindowSetup(SDL_Window **mainWindow, const std::string &programName)
     }
 
     *mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED, // NOLINT
-                                   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, // NOLINT
+                                   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,        // NOLINT
                                    SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
     if (!*mainWindow)
