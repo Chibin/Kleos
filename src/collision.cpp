@@ -3,8 +3,8 @@
 
 #include <cstdio>
 
-#include "rectangle.h"
 #include "bitmap.h"
+#include "rectangle.h"
 
 /* RayCast Intersection */
 bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bitmap.h"
 #include "game_memory.h"
 #include "math.h"
 #include "sdl_common.h"

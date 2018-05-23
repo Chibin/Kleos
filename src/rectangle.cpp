@@ -1,5 +1,6 @@
+#ifndef __RECTANGLE__
+#define __RECTANGLE__
 #include "rectangle.h"
-#include "game_memory.h"
 
 Rect *CreateRectangle(GameMemory *gm, v3 startingPosition, v4 color,
                       real32 width, real32 height)
@@ -290,3 +291,4 @@ inline void UpdateCurrentFrame(Animation2D *a, f32 timeElapsed)
         a->frameTTL = a->timePerFrame;
     }
 }
+#endif

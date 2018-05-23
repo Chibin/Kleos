@@ -1,7 +1,6 @@
 #ifndef __FONT__
 #define __FONT__
 #include "font.h"
-#include "bitmap.h"
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION

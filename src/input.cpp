@@ -1,6 +1,6 @@
+#ifndef __INPUT__
+#define __INPUT__
 #include "input.h"
-#include "camera.h"
-#include "entity.h"
 
 static bool g_canJump = true;
 static bool g_canAttack = true;
@@ -102,3 +102,5 @@ void ProcessInputToMovement(SDL_Keycode sym)
     }
 #endif
 }
+
+#endif
