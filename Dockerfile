@@ -16,3 +16,7 @@ RUN apt-get update && \
     clang-format \
     cppcheck \
     git
+
+RUN apt-get update && \
+    apt-get install -y \
+    ninja-build
