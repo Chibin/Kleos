@@ -3,7 +3,7 @@
 
 int main(int /*unused*/, char ** /*unused*/)
 {
-    std::string programName = "First game trial :)";
+    const char *programName = "First game trial :)";
     SDL_Window *mainWindow = nullptr;
     /* our opengl context handle */
     SDL_GLContext mainContext;

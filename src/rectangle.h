@@ -38,32 +38,26 @@ struct RectUVCoords
     };
 };
 
-struct Animation2D
-{
-    RectUVCoords *frameCoords;
-    u32 totalFrames;
-    /* May be have a function pointer or some type of function to determine how
-     * long each frames last.
-     * Or a waypoint curve?
-     */
-    f32 timePerFrame;
-    f32 frameTTL;
-    RectUVCoords *currentFrame;
-    memory_index currentFrameIndex;
-    Direction direction;
-};
+#include "animation.h"
 
 struct Rect
 {
     Entity *entity;
 
     Vertex vertices[4];
+
+    v3 topLeft;
+    v3 topRight;
+    v3 bottomLeft;
+    v3 bottomRight;
+    v4 color;
+
     real32 width, height;
 
     memory_index bitmapID;
     Bitmap *bitmap;
     b32 isScreenCoordinateSpace;
-    v3 startingPosition;
+    v3 basePosition;
 
 #pragma warning(push)
 #pragma warning(disable : 4201)
@@ -86,18 +80,6 @@ struct Rect
     };
 #pragma warning(pop)
 
-    v3 topLeft;
-    v3 topRight;
-    v3 bottomLeft;
-    v3 bottomRight;
-
-    v4 color;
-
-    v2 uvTextureTopLeft;
-    v2 uvTextureTopRight;
-    v2 uvTextureBottomLeft;
-    v2 uvTextureBottomRight;
-
     Animation2D *sprites;
     u32 totalSprites;
     Direction frameDirection;
@@ -108,10 +90,12 @@ struct Rect
     uint32 ttl; /* time to live / duration */
 };
 
-Rect *CreateRectangle(GameMemory *gm, v3 startingPosition, v4 color, real32 width, real32 height);
-GLfloat *CreateDefaultRectangleVertices();
+Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color, real32 width, real32 height);
 void CreateVertices(Rect *rect);
 void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable);
+inline void UpdateColors(Rect *r, v4 color);
+void PushRectInfo(GameMemory *gm, Rect *rect);
+void PushRectVertex(GameMemory *gm, Rect *rect);
 
 static GLuint g_rectIndices[] = {
     // Note that we start from 0!
@@ -155,4 +139,5 @@ inline void DrawDebugRectangle()
     const int totalIndiciesFromEbo = 6;
     glDrawElements(GL_POINTS, totalIndiciesFromEbo, GL_UNSIGNED_INT, nullptr);
 }
+
 #endif

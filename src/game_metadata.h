@@ -3,6 +3,7 @@
 #define __GAME_METADATA__
 
 #include "bitmap.h"
+#include "particle.h"
 
 struct GameMetadata
 {
@@ -26,6 +27,8 @@ struct GameMetadata
 
     GLuint program;
     GLuint debugProgram;
+
+    ParticleSystem particleSystem;
 
     v2 screenResolution;
     b32 initFromGameUpdateAndRender;

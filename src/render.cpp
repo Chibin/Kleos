@@ -65,7 +65,10 @@ inline void *RequestToReservedMemory(memory_index size)
 
 #include "collision.cpp"
 #include "rect_manager.cpp"
+
 #include "rectangle.cpp"
+
+#include "particle.cpp"
 #include "render_group.h"
 
 #define UPDATEANDRENDER(name) \
@@ -101,8 +104,10 @@ inline void *RequestToReservedMemory(memory_index size)
     }
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes);
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes);
+            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
+            RenderGroup *perFrameRenderGroup);
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes,
+            RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup);
 void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc);
@@ -225,6 +230,33 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                         nullptr,                                                    /* use null as way to not load anything to vbo*/
                         gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
 
+        //ParticleSystem *ps = &gameMetadata->particleSystem;
+        f32 base = 0.01f;
+        f32 width = 0.05f;
+        f32 height = 0.05f;
+        Bitmap *bitmap = FindBitmap(&gameMetadata->sentinelNode, 0);
+        gameMetadata->particleSystem.particleCount = 1000;
+        gameMetadata->particleSystem.particles =
+            (Particle *)AllocateMemory(reservedMemory,
+                                       gameMetadata->particleSystem.particleCount * sizeof(Particle));
+
+        for (memory_index i = 0; i < gameMetadata->particleSystem.particleCount; i++)
+        {
+            Particle *particle = &gameMetadata->particleSystem.particles[i];
+            ZeroSize(particle, sizeof(Particle));
+            particle->TTL = particle->maxTTL = 60000;
+
+            v3 basePosition = { base, base, 0 };
+            base += 0.15f;
+            v4 color = { 1, 1, 1, 1 };
+            particle->rect.color = color;
+            particle->rect.isScreenCoordinateSpace = false;
+            particle->rect.bitmapID = 0;
+            particle->rect.bitmap = bitmap;
+            particle->positionOffset = basePosition;
+            SetRectPoints(&particle->rect, basePosition, width, height);
+        }
+
         END_DEBUG_TIMING();
     }
 
@@ -272,7 +304,18 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
 
-    Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes);
+    const u32 numOfPointsPerRect = 6;
+    const u16 maxEntityCount = 20001;
+    RenderGroup perFrameRenderGroup = {};
+    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxEntityCount;
+    perFrameRenderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
+    perFrameRenderGroup.vertexMemory.maxSize = vertexBlockSize;
+
+    u32 rectMemoryBlockSize = sizeof(Rect) * maxEntityCount;
+    perFrameRenderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
+    perFrameRenderGroup.rectMemory.maxSize = rectMemoryBlockSize;
+
+    Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
     Render(gameMetadata,
            gameMetadata->vaoID,
            gameMetadata->vboID,
@@ -281,12 +324,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
            gameMetadata->debugProgram,
            g_player,
            hitBoxes,
-           hurtBoxes);
+           hurtBoxes,
+           &perFrameRenderGroup);
 
     return continueRunning;
 }
 
-void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, bool isPlayer = false)
+void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup, bool isPlayer = false)
 {
     //GameMemory *reservedMemory = &gameMetadata->reservedMemory;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
@@ -416,20 +460,49 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     /* Apply "friction" */
     e->velocity.x = 0;
+
+    for (memory_index i = 0; i < gameMetadata->particleSystem.particleCount; i++)
+    {
+        Particle *particle = &gameMetadata->particleSystem.particles[i]; // NOLINT
+
+        v3 newPosition = v3{ e->position.x,
+                             e->position.y,
+                             e->position.z};
+        CreateVertices(&particle->rect);
+        particle->acc.y = gravity * 2;
+        particle->vel.x = 0;
+        UpdateParticlePosition(particle, dt);
+        if (particle->positionOffset.y <= gameMetadata->playerRect->minY)
+        {
+            particle->positionOffset.y = newPosition.y;
+            particle->acc.y = 0;
+            UpdatePosition(&particle->rect, particle->positionOffset);
+        }
+        else
+        {
+            UpdatePosition(&particle->rect, particle->positionOffset + newPosition);
+        }
+
+    }
+    UpdateAndGenerateParticleRectInfo(perFrameRenderGroup,
+                                      &gameMetadata->particleSystem,
+                                      (s32)gameMetadata->gameTimestep->deltaTime);
 }
 
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes)
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup)
 {
+
     /* update logics and data here */
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
     /* Update entities */
-    UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, true);
+    UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
 }
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes)
+            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
+            RenderGroup *perFrameRenderGroup)
 {
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
@@ -490,16 +563,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         // DrawCollisions();
     }
 
-    const u32 numOfPointsPerRect = 6;
-    const u16 maxEntityCount = 10001;
-    RenderGroup renderGroup = {};
-    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxEntityCount;
-    renderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
-    renderGroup.vertexMemory.maxSize = vertexBlockSize;
-
-    u32 rectMemoryBlockSize = sizeof(Rect) * 10010;
-    renderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
-    renderGroup.rectMemory.maxSize = rectMemoryBlockSize;
+    /* DrawParticles() */
 
     /* Draw text at the corner */
 
@@ -528,7 +592,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     Bitmap stringBitmap = {};
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
-    stringBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
+    stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
     f32 rectWidth = 0.35f;
     f32 rectHeight = 0.175f;
@@ -541,21 +605,22 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
-    PushRectInfo(&renderGroup, statsRect);
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
     statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
     statsRect->bitmap = &gameMetadata->whiteBitmap;
-    PushRectInfo(&renderGroup, statsRect);
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
-    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode, gameMetadata->playerRect->bitmapID);
-    PushRectInfo(&renderGroup, gameMetadata->playerRect);
+    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
+                                                  gameMetadata->playerRect->bitmapID);
+    PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
 
     for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
     {
         Rect *rect = g_rectManager->Traversable.rects[i];
         rect->bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
-        PushRectInfo(&renderGroup, rect);
+        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
 
     Bitmap *bitmap = nullptr;
@@ -563,9 +628,9 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     TextureParam prevTextureParam = {};
     b32 isPrevScreenCoordinateSpace = false;
 
-    for (memory_index i = 0; i < renderGroup.rectEntityCount; i++)
+    for (memory_index i = 0; i < perFrameRenderGroup->rectEntityCount; i++)
     {
-        Rect *rect = (Rect *)renderGroup.rectMemory.base + i;
+        Rect *rect = (Rect *)perFrameRenderGroup->rectMemory.base + i;
 
         //bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
         bitmap = rect->bitmap;
@@ -573,14 +638,15 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         TextureParam textureParam = bitmap->textureParam;
 
-        /* This part is questionable -- doesn't feel right */
-        if (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)
+        if ((bitmap != prevBitmap) ||
+            (textureParam != prevTextureParam ||
+            (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)))
         {
-            glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                         renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-            DrawRawRectangle(renderGroup.rectCount);
+            glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
+                         perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
+            DrawRawRectangle(perFrameRenderGroup->rectCount);
 
-            ClearUsedVertexRenderGroup(&renderGroup);
+            ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
             if (rect->isScreenCoordinateSpace)
             {
@@ -591,39 +657,36 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
                 glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
             }
+
+            OpenGLUpdateTextureParameter(&textureParam);
+
+            if (bitmap != prevBitmap)
+            {
+                OpenGLLoadBitmap(bitmap, textureID);
+            }
+            prevBitmap = bitmap;
+
             isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
         }
 
-        if ((bitmap != prevBitmap) || (textureParam != prevTextureParam))
-        {
-            glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                         renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-            DrawRawRectangle(renderGroup.rectCount);
-
-            ClearUsedVertexRenderGroup(&renderGroup);
-
-            OpenGLUpdateTextureParameter(&textureParam);
-            OpenGLLoadBitmap(bitmap, textureID);
-            prevBitmap = bitmap;
-        }
-
-        PushRectVertex(&renderGroup, rect);
+        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         prevTextureParam = textureParam;
     }
 
-    glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                 renderGroup.vertexMemory.base, GL_STATIC_DRAW);
-    DrawRawRectangle(renderGroup.rectCount);
+    glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
+                 perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
+    DrawRawRectangle(perFrameRenderGroup->rectCount);
 
-    ClearUsedVertexRenderGroup(&renderGroup);
+    ClearUsedVertexRenderGroup(perFrameRenderGroup);
+    ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
 
     OpenGLEndUseProgram();
 
     g_debugMode = true;
     if (g_debugMode)
     {
-        renderGroup.rectCount = 0;
-        ClearMemoryUsed(&renderGroup.vertexMemory);
+        perFrameRenderGroup->rectCount = 0;
+        ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
 
         /* Draw collissions, hurtboxes and hitboxes */
         OpenGLBeginUseProgram(debugProgram, textureID);
@@ -641,26 +704,26 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
         {
             Rect *rect = g_rectManager->NonTraversable.rects[i];
-            PushRectVertex(&renderGroup, rect);
+            PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
 
         for (memory_index i = 0; i < hitBoxes->size; i++)
         {
             Rect *rect = hitBoxes->rects[i];
-            PushRectVertex(&renderGroup, rect);
+            PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
 
         for (memory_index i = 0; i < hurtBoxes->size; i++)
         {
             Rect *rect = hurtBoxes->rects[i];
-            PushRectVertex(&renderGroup, rect);
+            PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
 
-        glBufferData(GL_ARRAY_BUFFER, renderGroup.vertexMemory.used,
-                     renderGroup.vertexMemory.base, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
+                     perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
 
-        DrawRawPointRectangle(renderGroup.rectCount);
-        DrawRawRectangle(renderGroup.rectCount);
+        DrawRawPointRectangle(perFrameRenderGroup->rectCount);
+        DrawRawRectangle(perFrameRenderGroup->rectCount);
 
         OpenGLEndUseProgram();
     }
@@ -787,16 +850,12 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
 
+    gameMetadata->playerRect->bitmapID = archeBitmap->bitmapID;
+
     u32 bitmapWidth = archeBitmap->width;
     u32 bitmapHeight = archeBitmap->height;
-
     f32 spriteHeight = 60.0f;
     f32 basePixelHeight = bitmapHeight - spriteHeight;
-
-    v2 topRight = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
-    v2 bottomRight = PixelToUV(v2{ 60, basePixelHeight }, bitmapWidth, bitmapHeight);
-    v2 bottomLeft = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight);
-    v2 topLeft = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
 
     g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
     ZeroSize(g_spriteAnimation, sizeof(Animation2D));
@@ -806,20 +865,30 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
     g_spriteAnimation->timePerFrame = 1000 * 0.75;
 
-    g_spriteAnimation->frameCoords[0].topRight = topRight;
-    g_spriteAnimation->frameCoords[0].bottomRight = bottomRight;
-    g_spriteAnimation->frameCoords[0].bottomLeft = bottomLeft;
-    g_spriteAnimation->frameCoords[0].topLeft = topLeft;
+#if 1
+    /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
+    v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
+    g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomRight = PixelToUV(v2{ 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
 
-    topRight = PixelToUV(v2{ 60 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
-    bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight);
-    bottomLeft = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight);
-    topLeft = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight);
-    g_spriteAnimation->frameCoords[1].topRight = topRight;
-    g_spriteAnimation->frameCoords[1].bottomRight = bottomRight;
-    g_spriteAnimation->frameCoords[1].bottomLeft = bottomLeft;
-    g_spriteAnimation->frameCoords[1].topLeft = topLeft;
+    g_spriteAnimation->frameCoords[1] = RectUVCoords{ topRight    = PixelToUV(v2{ 60 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomLeft  = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      topLeft     = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
+#else
+    /* https://en.m.wikipedia.org/wiki/C_syntax#Designated_initializers */
+    g_spriteAnimation->frameCoords[0] = RectUVCoords{ .topRight    = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      .bottomRight = PixelToUV(v2{ 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      .bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      .topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
 
-    gameMetadata->playerRect->bitmapID = archeBitmap->bitmapID;
+    g_spriteAnimation->frameCoords[1] = RectUVCoords{ .topRight    = PixelToUV(v2{ 60 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      .bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      .bottomLeft  = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      .topLeft     = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
+#endif
+
 }
 #endif

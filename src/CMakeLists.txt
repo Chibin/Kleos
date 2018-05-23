@@ -20,6 +20,7 @@ list (APPEND justtobuild
     main.cpp
     math.cpp
     opengl.cpp
+    particle.cpp
     rect_manager.cpp
     rectangle.cpp
     shaders.cpp

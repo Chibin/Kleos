@@ -10,7 +10,7 @@
 // #endif
 
 /* functions related to windows specific platform */
-bool WindowSetup(SDL_Window **mainWindow, std::string &programName)
+bool WindowSetup(SDL_Window **mainWindow, const char *programName)
 {
     // Initialize SDL's video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -19,7 +19,7 @@ bool WindowSetup(SDL_Window **mainWindow, std::string &programName)
         return false;
     }
 
-    *mainWindow = SDL_CreateWindow(programName.c_str(), SDL_WINDOWPOS_CENTERED,
+    *mainWindow = SDL_CreateWindow(programName, SDL_WINDOWPOS_CENTERED,
                                    SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
                                    SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 

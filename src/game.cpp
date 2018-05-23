@@ -25,7 +25,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.maxBlockSize = GIGABYTE(1);
     gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
 
-    u32 tempSize = MEGABYTE(8);
+    u32 tempSize = MEGABYTE(20);
     gameMetadata.temporaryMemory.base = (u8 *)AllocateMemory(&gameMetadata, tempSize);
     gameMetadata.temporaryMemory.maxSize = tempSize;
 
