@@ -1,8 +1,10 @@
 #ifndef __COLLISION__
 #define __COLLISION__
 
-#include "rectangle.h"
 #include <cstdio>
+
+#include "rectangle.h"
+#include "bitmap.h"
 
 /* RayCast Intersection */
 bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)

@@ -2,6 +2,7 @@
 #define __RECTANGLE__
 
 #include "entity.h"
+#include "bitmap.h"
 #include "game_memory.h"
 
 #define RECT_SIZE 36
