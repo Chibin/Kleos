@@ -1,6 +1,7 @@
 #ifndef __RECTANGLE_H__
 #define __RECTANGLE_H__
 
+#include "bitmap.h"
 #include "entity.h"
 #include "game_memory.h"
 
