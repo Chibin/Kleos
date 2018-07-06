@@ -15,8 +15,9 @@ find_package (GLEW REQUIRED)
 find_package (SDL2 REQUIRED)
 find_package (OpenGL REQUIRED)
 find_package (SDL2TTF REQUIRED)
+find_package (Vulkan REQUIRED)
 
-include_directories (SYSTEM ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} "D:/Libraries/SDL2_ttf-2.0.14" "D:/Libraries/glm" "${CMAKE_SOURCE_DIR}/include")
+include_directories (SYSTEM ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} "D:/VulkanSDK/1.1.73.0/Include" "D:/Libraries/SDL2_ttf-2.0.14" "D:/Libraries/glm" "${CMAKE_SOURCE_DIR}/include")
 
 message("test inglibs: " ${GLEW_LIBRARY})
 message("test inglibs: " ${SDL2_LIBRARIES})

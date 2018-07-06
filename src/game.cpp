@@ -5,11 +5,13 @@
 #include "main.h"
 #include <GL/glew.h>
 
+#include "my_vulkan.h"
+
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
 
 void _processOpenGLErrors(const char *file, int line);
 
-void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
+void MainGameLoop(SDL_Window *mainWindow, SDL_Window *secondWindow, RenderAPI *renderAPI)
 {
     /* sanity check */
     ASSERT(sizeof(real32) == sizeof(GLfloat));
@@ -47,8 +49,32 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
 
     FindFile(GetProgramPath(), "render*dll");
 
-    while (continueRunning)
+    VulkanContext *vc = nullptr;
+    vc = VulkanSetup(&secondWindow);
+
+    while (continueRunning && !vc->quit)
     {
+
+        VulkanRender(vc);
+        if (vc->depthStencil > 0.99f)
+        {
+            vc->depthIncrement = -0.001f;
+        }
+        if (vc->depthStencil < 0.8f)
+        {
+            vc->depthIncrement = 0.001f;
+        }
+
+        vc->depthStencil += vc->depthIncrement;
+
+        //Wait for work to finish before updating MVP.
+        vkDeviceWaitIdle(vc->device);
+        vc->curFrame++;
+        if (vc->frameCount != INT32_MAX && vc->curFrame == vc->frameCount)
+        {
+            vc->quit = true;
+        }
+
         continueRunning = ((renderAPI->updateAndRender)(&gameMetadata) != 0);
         ProcessOpenGLErrors();
 

@@ -51,6 +51,7 @@ target_link_libraries (main
     ${SDL2_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${SDL2TTF_LIBRARY}
+    ${VULKAN_LIBRARY}
     )
 
 target_link_libraries (render
