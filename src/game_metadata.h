@@ -4,6 +4,7 @@
 
 #include "bitmap.h"
 #include "particle.h"
+#include "graphics/vulkan.h"
 
 struct GameMetadata
 {
@@ -33,6 +34,8 @@ struct GameMetadata
     v2 screenResolution;
     b32 initFromGameUpdateAndRender;
     struct Rect *playerRect;
+
+    VulkanContext *vulkanContext;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

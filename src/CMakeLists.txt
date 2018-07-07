@@ -59,6 +59,7 @@ target_link_libraries (render
     ${SDL2_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${SDL2TTF_LIBRARY}
+    ${VULKAN_LIBRARY}
     )
 
 if (UNIX)

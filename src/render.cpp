@@ -71,6 +71,8 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "particle.cpp"
 #include "render_group.h"
 
+#include "graphics/my_vulkan.h"
+
 #define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
 #define RENDER(name)                                                    \
@@ -136,8 +138,31 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     ClearMemoryUsed(perFrameMemory);
     v2 screenResolution = gameMetadata->screenResolution;
 
+    VulkanContext *vc = gameMetadata->vulkanContext;
+    VulkanRender(vc);
+
+    if (vc->depthStencil > 0.99f)
+    {
+        vc->depthIncrement = -0.001f;
+    }
+    if (vc->depthStencil < 0.8f)
+    {
+        vc->depthIncrement = 0.001f;
+    }
+
+    vc->depthStencil += vc->depthIncrement;
+
+    //Wait for work to finish before updating MVP.
+    vkDeviceWaitIdle(vc->device);
+    vc->curFrame++;
+    if (vc->frameCount != INT32_MAX && vc->curFrame == vc->frameCount)
+    {
+        vc->quit = true;
+    }
+
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
+
         START_DEBUG_TIMING();
 
         ASSERT(!*gameTimestep);
