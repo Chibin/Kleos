@@ -1520,6 +1520,60 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         ASSERT(err == VK_SUCCESS);
     }
 
+    struct {
+        VkBuffer buf;
+        VkDeviceMemory mem;
+        VkBufferCreateInfo bufInfo;
+        VkDescriptorBufferInfo bufferInfo;
+    } uniformDataFragment;
+
+    {
+        VkBufferCreateInfo bufInfo = {};
+        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufInfo.pNext = NULL;
+        bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        bufInfo.size = sizeof(UniformBufferObject);
+        bufInfo.queueFamilyIndexCount = 0;
+        bufInfo.pQueueFamilyIndices = NULL;
+        bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        bufInfo.flags = 0;
+        err = vkCreateBuffer(device, &bufInfo, NULL, &uniformDataFragment.buf);
+        ASSERT(err == VK_SUCCESS);
+
+        uniformDataFragment.bufferInfo.buffer = uniformDataFragment.buf;
+        uniformDataFragment.bufferInfo.offset = 0;
+        uniformDataFragment.bufferInfo.range = sizeof(UniformBufferObject);
+
+        VkMemoryRequirements memReqs;
+        vkGetBufferMemoryRequirements(device, uniformDataFragment.buf, &memReqs);
+
+        VkMemoryAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.pNext = NULL;
+        allocInfo.memoryTypeIndex = 0;
+
+        allocInfo.allocationSize = memReqs.size;
+        pass = AvailableMemoryTypeFromProperties(
+                &memoryProperties,
+                memReqs.memoryTypeBits,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                &allocInfo.memoryTypeIndex);
+        ASSERT(pass);
+
+        err = vkAllocateMemory(device, &allocInfo, NULL, &uniformDataFragment.mem);
+        ASSERT(err == VK_SUCCESS);
+
+        UniformBufferObject ubo = {};
+        void *data;
+        err = vkMapMemory(device, uniformDataFragment.mem, 0, memReqs.size, 0, &data);
+        ASSERT(err == VK_SUCCESS);
+        memcpy(data, &ubo, sizeof(UniformBufferObject));
+
+        vkUnmapMemory(device, uniformDataFragment.mem);
+
+        err = vkBindBufferMemory(device, uniformDataFragment.buf, uniformDataFragment.mem, 0);
+        ASSERT(err == VK_SUCCESS);
+    }
     /* end prepare uniform buffer */
 
     /* start prepare texture */
@@ -1760,15 +1814,22 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     uboBinding.binding = 0;
     uboBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboBinding.descriptorCount = 1;
-    uboBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    uboBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboBinding.pImmutableSamplers = NULL;
 
-    const VkDescriptorSetLayoutBinding myDescriptorSetLayoutBinding[] = {uboBinding};
+    VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.pImmutableSamplers = NULL;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    const VkDescriptorSetLayoutBinding myDescriptorSetLayoutBinding[] = {uboBinding, samplerLayoutBinding};
 
     VkDescriptorSetLayoutCreateInfo descriptorLayout = {};
     descriptorLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorLayout.pNext = NULL;
-    descriptorLayout.bindingCount = 1;
+    descriptorLayout.bindingCount = 2;
     descriptorLayout.pBindings = &myDescriptorSetLayoutBinding[0];
 
     err = vkCreateDescriptorSetLayout(device, &descriptorLayout, NULL, &descLayout);
@@ -1983,9 +2044,15 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
     };
 #else
-    const VkDescriptorPoolSize typeCount = {
+    const VkDescriptorPoolSize typeCount[] = {
+        {
         /*.type =*/             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
+        },
+        {
+        /*.type =*/             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
+        }
     };
 #endif
 
@@ -1994,8 +2061,8 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         /*.pNext =*/            NULL,
         /*.flags =*/            0,
         /*.maxSets =*/          1,
-        /*.poolSizeCount =*/    1,
-        /*.pPoolSizes =*/       &typeCount,
+        /*.poolSizeCount =*/    2,
+        /*.pPoolSizes =*/       &typeCount[0],
     };
 
     err = vkCreateDescriptorPool(device, &descriptorPool, NULL, &descPool);
@@ -2028,6 +2095,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     memset(&write, 0, sizeof(write));
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstSet = descSet;
+    write.dstBinding = 0;
     write.descriptorCount = DEMO_TEXTURE_COUNT;
 #if 0
     write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -2036,8 +2104,19 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     write.pBufferInfo = &uniformData.bufferInfo;
 #endif
     write.pImageInfo = texDescs;
-
     vkUpdateDescriptorSets(device, 1, &write, 0, NULL);
+
+    VkWriteDescriptorSet writeFragment;
+    memset(&writeFragment, 0, sizeof(writeFragment));
+    writeFragment.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeFragment.dstSet = descSet;
+    writeFragment.dstBinding = 1;
+    writeFragment.descriptorCount = DEMO_TEXTURE_COUNT;
+    writeFragment.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writeFragment.pBufferInfo = &uniformDataFragment.bufferInfo;
+    writeFragment.pImageInfo = texDescs;
+    //writeFragment.pTexelBufferView = texDescs;
+    vkUpdateDescriptorSets(device, 1, &writeFragment, 0, NULL);
 
     /* end prepare descriptor set */
 
