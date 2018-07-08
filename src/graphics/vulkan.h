@@ -1,6 +1,14 @@
 #ifndef __VULKAN__
 #define __VULKAN__
 
+#pragma warning(push)
+#pragma warning(disable : 4201)
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#pragma warning(pop)
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #define PlatformSurfaceCreateInfo VkWin32SurfaceCreateInfoKHR
@@ -32,7 +40,7 @@ struct VulkanVertices
 
     VkPipelineVertexInputStateCreateInfo vi;
     VkVertexInputBindingDescription viBindings[1];
-    VkVertexInputAttributeDescription viAttrs[2];
+    VkVertexInputAttributeDescription viAttrs[3];
 };
 
 struct VulkanContext
@@ -103,6 +111,13 @@ struct TextureObject
     VkDeviceMemory mem;
     VkImageView view;
     int32_t texWidth, texHeight;
+};
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
 };
 
 #endif

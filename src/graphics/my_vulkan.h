@@ -189,7 +189,7 @@ static VkShaderModule VulkanPrepareVertexShader(
     void *vertShaderCode;
     size_t size;
 
-    vertShaderCode = ReadSPV("./materials/programs/vulkan/tri-vert.spv", &size);
+    vertShaderCode = ReadSPV("./materials/programs/vulkan/test-vert.spv", &size);
     ASSERT(vertShaderCode != NULL);
 
     *vertShaderModule = VulkanPrepareShaderModule(device, vertShaderCode, size);
@@ -206,7 +206,7 @@ static VkShaderModule VulkanPrepareFragmentShader(
     void *fragShaderCode;
     size_t size;
 
-    fragShaderCode = ReadSPV("./materials/programs/vulkan/tri-frag.spv", &size);
+    fragShaderCode = ReadSPV("./materials/programs/vulkan/test-frag.spv", &size);
 
     *fragShaderModule = VulkanPrepareShaderModule(device, fragShaderCode, size);
 
@@ -402,8 +402,7 @@ static void VulkanPrepareTextureImage(
                 void *data;
                 int32_t x, y;
 
-                vkGetImageSubresourceLayout(*device, texObj->image, &subres,
-                        &layout);
+                vkGetImageSubresourceLayout(*device, texObj->image, &subres, &layout);
 
                 err = vkMapMemory(*device, texObj->mem, 0, memAlloc.allocationSize, 0, &data);
                 ASSERT(!err);
@@ -483,7 +482,7 @@ void VulkanDestroyTextureImage(
         vkFreeMemory(*device, texObj->mem, NULL);
 }
 
-static void demo_draw_build_cmd(struct VulkanContext *vc)
+static void VulkanBuildDrawCommand(struct VulkanContext *vc)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
@@ -702,41 +701,46 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	ASSERT(!err);
 
 	instanceValidationLayers = instance_validation_layers_alt1;
-	if (instanceLayerCount > 0) {
+	if (instanceLayerCount > 0)
+    {
 		VkLayerProperties *instance_layers =
 			(VkLayerProperties *)malloc(sizeof (VkLayerProperties) * instanceLayerCount);
-		err = vkEnumerateInstanceLayerProperties(&instanceLayerCount,
-				instance_layers);
+		err = vkEnumerateInstanceLayerProperties(&instanceLayerCount, instance_layers);
 		ASSERT(!err);
-
 
 		validationFound = VulkanCheckLayers(
 				ARRAY_SIZE(instance_validation_layers_alt1),
-				instanceValidationLayers, instanceLayerCount,
+				instanceValidationLayers,
+                instanceLayerCount,
 				instance_layers);
-		if (validationFound) {
+
+		if (validationFound)
+        {
 			enabledLayerCount = ARRAY_SIZE(instance_validation_layers_alt1);
 			deviceValidationLayers[0] = "VK_LAYER_LUNARG_standard_validation";
 			deviceValidationLayerCount = 1;
-		} else {
+		}
+        else
+        {
 			// use alternative set of validation layers
 			instanceValidationLayers = instance_validation_layers_alt2;
 			enabledLayerCount = ARRAY_SIZE(instance_validation_layers_alt2);
 			validationFound = VulkanCheckLayers(
 					ARRAY_SIZE(instance_validation_layers_alt2),
-					instanceValidationLayers, instanceLayerCount,
+					instanceValidationLayers,
+                    instanceLayerCount,
 					instance_layers);
-			deviceValidationLayerCount =
-				ARRAY_SIZE(instance_validation_layers_alt2);
-			for (uint32_t i = 0; i < deviceValidationLayerCount; i++) {
-				deviceValidationLayers[i] =
-					instanceValidationLayers[i];
+			deviceValidationLayerCount = ARRAY_SIZE(instance_validation_layers_alt2);
+			for (uint32_t i = 0; i < deviceValidationLayerCount; i++)
+            {
+				deviceValidationLayers[i] = instanceValidationLayers[i];
 			}
 		}
 		free(instance_layers);
 	}
 
-	if (!validationFound) {
+	if (!validationFound)
+    {
 		ERROR_PRINT("vkEnumerateInstanceLayerProperties failed to find"
 					"required validation layer.\n\n"
 					"Please look at the Getting Started guide for additional "
@@ -751,8 +755,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	VkBool32 platformSurfaceExtFound = 0;
 	memset(extensionNames, 0, sizeof(extensionNames));
 
-	err = vkEnumerateInstanceExtensionProperties(
-			NULL, &instanceExtensionCount, NULL);
+	err = vkEnumerateInstanceExtensionProperties(NULL, &instanceExtensionCount, NULL);
 	ASSERT(err == VK_SUCCESS);
 
 	if (instanceExtensionCount > 0)
@@ -925,25 +928,22 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	enabledExtensionCount = 0;
 	memset(extensionNames, 0, sizeof(extensionNames));
 
-	err = vkEnumerateDeviceExtensionProperties(gpu, NULL,
-			&deviceExtensionCount, NULL);
+	err = vkEnumerateDeviceExtensionProperties(gpu, NULL, &deviceExtensionCount, NULL);
 	ASSERT(err == VK_SUCCESS);
 
 	if (deviceExtensionCount > 0)
 	{
 		VkExtensionProperties *deviceExtensions =
 			(VkExtensionProperties *)malloc(sizeof(VkExtensionProperties) * deviceExtensionCount);
-		err = vkEnumerateDeviceExtensionProperties(
-				gpu, NULL, &deviceExtensionCount, deviceExtensions);
+		err = vkEnumerateDeviceExtensionProperties( gpu, NULL, &deviceExtensionCount, deviceExtensions);
 		ASSERT(err == VK_SUCCESS);
 
-		for (uint32_t i = 0; i < deviceExtensionCount; i++) {
-			if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-						deviceExtensions[i].extensionName))
+		for (uint32_t i = 0; i < deviceExtensionCount; i++)
+        {
+			if (!strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, deviceExtensions[i].extensionName))
 			{
 				swapchainExtFound = 1;
-				extensionNames[enabledExtensionCount++] =
-					VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+				extensionNames[enabledExtensionCount++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 			}
 
 			ASSERT(enabledExtensionCount < 64);
@@ -1068,7 +1068,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	PLATFORM_ASSIGN_SURFACEINFO;
 	err = PlatformCreateSurface(inst, &createInfo, NULL, &surface);
 
-
 	// Iterate over each queue to learn whether it supports presenting:
 	VkBool32 *supportsPresent = (VkBool32 *)malloc(queue_count * sizeof(VkBool32));
 	for (memory_index i = 0; i < queue_count; i++)
@@ -1099,7 +1098,9 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 			}
 		}
 	}
-	if (presentQueueNodeIndex == UINT32_MAX) {
+
+	if (presentQueueNodeIndex == UINT32_MAX)
+    {
 		// If didn't find a queue that supports both graphics and present, then
 		// find a separate present queue.
 		for (memory_index i = 0; i < queue_count; ++i)
@@ -1124,7 +1125,8 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	// NOTE: While it is possible for an application to use a separate graphics
 	//       and a present queues, this demo program assumes it is only using
 	//       one:
-	if (graphicsQueueNodeIndex != presentQueueNodeIndex) {
+	if (graphicsQueueNodeIndex != presentQueueNodeIndex)
+    {
 		PAUSE_HERE("Could not find a common graphics and a present queue\n"
 				"Swapchain Initialization Failure");
 	}
@@ -1256,12 +1258,14 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     /* XXX: This used to be VkSurfaceTransformFlagsKHR */
     VkSurfaceTransformFlagBitsKHR preTransform;
-    if (surfCapabilities.supportedTransforms &
-            VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+    if (surfCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+    {
         preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-    } else {
+    } else
+    {
         preTransform = surfCapabilities.currentTransform;
     }
+
     const VkSwapchainCreateInfoKHR swapchainInfo = {
         /*.sType =*/                 VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         /*.pNext =*/                 NULL,
@@ -1314,7 +1318,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
         vc->buffers[i].image = swapchainImages[i];
 
-        VkImageViewCreateInfo color_attachment_view = {
+        VkImageViewCreateInfo colorAttachmentView = {
             /*.sType =*/            VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             /*.pNext =*/            NULL,
             /*.flags =*/            0,
@@ -1349,8 +1353,8 @@ VulkanContext *VulkanSetup(SDL_Window **window)
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                 (VkAccessFlagBits)0);
 
-        color_attachment_view.image = vc->buffers[i].image;
-        err = vkCreateImageView(device, &color_attachment_view, NULL, &vc->buffers[i].view);
+        colorAttachmentView.image = vc->buffers[i].image;
+        err = vkCreateImageView(device, &colorAttachmentView, NULL, &vc->buffers[i].view);
         ASSERT(!err);
     }
 
@@ -1363,13 +1367,13 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* end prepare buffers */
 
     /* start prepare depth */
-    const VkFormat depth_format = VK_FORMAT_D16_UNORM;
+    const VkFormat depthFormat = VK_FORMAT_D16_UNORM;
     VkImageCreateInfo image = {};
     image.sType =                    VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image.pNext =                    NULL;
     image.flags =                    0;
     image.imageType =                VK_IMAGE_TYPE_2D;
-    image.format =                   depth_format;
+    image.format =                   depthFormat;
     image.extent =                   VkExtent3D{width, height, 1};
     image.mipLevels =                1;
     image.arrayLayers =              1;
@@ -1390,7 +1394,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         /*.flags =*/                0,
         /*.image =*/                VK_NULL_HANDLE,
         /*.viewType =*/             VK_IMAGE_VIEW_TYPE_2D,
-        /*.format =*/               depth_format,
+        /*.format =*/               depthFormat,
         /*.components = */          {},
         /*.subresourceRange =*/     { /*.aspectMask =*/     VK_IMAGE_ASPECT_DEPTH_BIT,
                                       /*.baseMipLevel =*/   0,
@@ -1399,15 +1403,15 @@ VulkanContext *VulkanSetup(SDL_Window **window)
                                       /*.layerCount =*/     1
                                     },
     };
-    VkMemoryRequirements memReqs;
 
-    depth.format = depth_format;
+    depth.format = depthFormat;
 
     /* create image */
     err = vkCreateImage(device, &image, NULL, &depth.image);
     ASSERT(err == VK_SUCCESS);
 
     /* get memory requirements for this object */
+    VkMemoryRequirements memReqs;
     vkGetImageMemoryRequirements(device, depth.image, &memReqs);
 
     /* select memory size and type */
@@ -1459,6 +1463,64 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     ASSERT(err == VK_SUCCESS);
 
     /* end prepare depth */
+
+    /* start prepare uniform buffer */
+    struct {
+        VkBuffer buf;
+        VkDeviceMemory mem;
+        VkBufferCreateInfo bufInfo;
+        VkDescriptorBufferInfo bufferInfo;
+    } uniformData;
+
+    {
+        VkBufferCreateInfo bufInfo = {};
+        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufInfo.pNext = NULL;
+        bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        bufInfo.size = sizeof(UniformBufferObject);
+        bufInfo.queueFamilyIndexCount = 0;
+        bufInfo.pQueueFamilyIndices = NULL;
+        bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        bufInfo.flags = 0;
+        err = vkCreateBuffer(device, &bufInfo, NULL, &uniformData.buf);
+        ASSERT(err == VK_SUCCESS);
+
+        uniformData.bufferInfo.buffer = uniformData.buf;
+        uniformData.bufferInfo.offset = 0;
+        uniformData.bufferInfo.range = sizeof(UniformBufferObject);
+
+        VkMemoryRequirements memReqs;
+        vkGetBufferMemoryRequirements(device, uniformData.buf, &memReqs);
+
+        VkMemoryAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.pNext = NULL;
+        allocInfo.memoryTypeIndex = 0;
+
+        allocInfo.allocationSize = memReqs.size;
+        pass = AvailableMemoryTypeFromProperties(
+                &memoryProperties,
+                memReqs.memoryTypeBits,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                &allocInfo.memoryTypeIndex);
+        ASSERT(pass);
+
+        err = vkAllocateMemory(device, &allocInfo, NULL, &uniformData.mem);
+        ASSERT(err == VK_SUCCESS);
+
+        UniformBufferObject ubo = {};
+        void *data;
+        err = vkMapMemory(device, uniformData.mem, 0, memReqs.size, 0, &data);
+        ASSERT(err == VK_SUCCESS);
+        memcpy(data, &ubo, sizeof(UniformBufferObject));
+
+        vkUnmapMemory(device, uniformData.mem);
+
+        err = vkBindBufferMemory(device, uniformData.buf, uniformData.mem, 0);
+        ASSERT(err == VK_SUCCESS);
+    }
+
+    /* end prepare uniform buffer */
 
     /* start prepare texture */
     const VkFormat tex_format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -1607,11 +1669,11 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* end prepare texture */
 
     /* start prepare vertices */
-    const float vb[3][5] = {
-        /*      position             texcoord */
-        { -1.0f, -1.0f,  0.25f,     0.0f, 0.0f },
-        {  1.0f, -1.0f,  0.25f,     1.0f, 0.0f },
-        {  0.0f,  1.0f,  1.0f,      0.5f, 1.0f },
+    const float vb[3][9] = {
+        /*      position                    color           texcoord */
+        { -1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f },
+        {  1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 0.0f,   1.0f, 0.0f },
+        {  0.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 0.0f,   0.5f, 1.0f },
     };
 
     VkBufferCreateInfo bufInfo = {};
@@ -1662,7 +1724,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vertices.vi.pNext = NULL;
     vertices.vi.vertexBindingDescriptionCount = 1;
     vertices.vi.pVertexBindingDescriptions = vertices.viBindings;
-    vertices.vi.vertexAttributeDescriptionCount = 2;
+    vertices.vi.vertexAttributeDescriptionCount = 3;
     vertices.vi.pVertexAttributeDescriptions = vertices.viAttrs;
 
     vertices.viBindings[0].binding = VERTEX_BUFFER_BIND_ID;
@@ -1676,26 +1738,40 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     vertices.viAttrs[1].binding = VERTEX_BUFFER_BIND_ID;
     vertices.viAttrs[1].location = 1;
-    vertices.viAttrs[1].format = VK_FORMAT_R32G32_SFLOAT;
+    vertices.viAttrs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
     vertices.viAttrs[1].offset = sizeof(float) * 3;
+
+    vertices.viAttrs[2].binding = VERTEX_BUFFER_BIND_ID;
+    vertices.viAttrs[2].location = 2;
+    vertices.viAttrs[2].format = VK_FORMAT_R32G32_SFLOAT;
+    vertices.viAttrs[2].offset = sizeof(float) * 7;
     /* end prepare vertices*/
 
 #if 1
     /* start prepare descriptor layout */
-    VkDescriptorSetLayoutBinding layout_binding = {};
-    layout_binding.binding = 0;
-    layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    layout_binding.descriptorCount = DEMO_TEXTURE_COUNT;
-    layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    layout_binding.pImmutableSamplers = NULL;
+    VkDescriptorSetLayoutBinding layoutBinding = {};
+    layoutBinding.binding = 0;
+    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layoutBinding.descriptorCount = DEMO_TEXTURE_COUNT;
+    layoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    layoutBinding.pImmutableSamplers = NULL;
 
-    VkDescriptorSetLayoutCreateInfo descriptor_layout = {};
-    descriptor_layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptor_layout.pNext = NULL;
-    descriptor_layout.bindingCount = 1;
-    descriptor_layout.pBindings = &layout_binding;
+    VkDescriptorSetLayoutBinding uboBinding = {};
+    uboBinding.binding = 0;
+    uboBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboBinding.descriptorCount = 1;
+    uboBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    uboBinding.pImmutableSamplers = NULL;
 
-    err = vkCreateDescriptorSetLayout(device, &descriptor_layout, NULL, &descLayout);
+    const VkDescriptorSetLayoutBinding myDescriptorSetLayoutBinding[] = {uboBinding};
+
+    VkDescriptorSetLayoutCreateInfo descriptorLayout = {};
+    descriptorLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorLayout.pNext = NULL;
+    descriptorLayout.bindingCount = 1;
+    descriptorLayout.pBindings = &myDescriptorSetLayoutBinding[0];
+
+    err = vkCreateDescriptorSetLayout(device, &descriptorLayout, NULL, &descLayout);
     ASSERT(!err);
 
     VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
@@ -1735,14 +1811,17 @@ VulkanContext *VulkanSetup(SDL_Window **window)
             /*.finalLayout =*/      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         },
     };
+
     const VkAttachmentReference colorReference = {
         /*.attachment =*/   0,
         /*.layout =*/       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
+
     const VkAttachmentReference depthReference = {
         /*.attachment =*/   1,
         /*.layout =*/       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
+
     const VkSubpassDescription subpass = {
         /*.flags =*/                    0,
         /*.pipelineBindPoint =*/        VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -1770,7 +1849,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     err = vkCreateRenderPass(device, &rpInfo, NULL, &renderPass);
     ASSERT(!err);
-
     /*end prepare render pass*/
 #endif
 
@@ -1887,7 +1965,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     err = vkCreatePipelineCache(device, &pipelineCacheInfo, NULL, &pipelineCache);
     ASSERT(!err);
 
-    /* XXX: errors showing up here */
     err = vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, NULL, &pipeline);
     ASSERT(!err);
 
@@ -1900,10 +1977,18 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 #endif
 
     /* start prepare descriptor pool */
+#if 0
     const VkDescriptorPoolSize typeCount = {
         /*.type =*/             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
     };
+#else
+    const VkDescriptorPoolSize typeCount = {
+        /*.type =*/             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
+    };
+#endif
+
     const VkDescriptorPoolCreateInfo descriptorPool = {
         /*.sType =*/            VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         /*.pNext =*/            NULL,
@@ -1920,30 +2005,36 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     /* start prepare descriptor set */
     VkDescriptorImageInfo texDescs[DEMO_TEXTURE_COUNT];
-    VkWriteDescriptorSet write;
 
-    VkDescriptorSetAllocateInfo alloc_info = {
+    VkDescriptorSetAllocateInfo allocInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         /*.pNext =*/                NULL,
         /*.descriptorPool =*/       descPool,
         /*.descriptorSetCount =*/   1,
         /*.pSetLayouts =*/          &descLayout
     };
-    err = vkAllocateDescriptorSets(device, &alloc_info, &descSet);
+    err = vkAllocateDescriptorSets(device, &allocInfo, &descSet);
     ASSERT(!err);
 
     memset(&texDescs, 0, sizeof(texDescs));
-    for (i = 0; i < DEMO_TEXTURE_COUNT; i++) {
+    for (i = 0; i < DEMO_TEXTURE_COUNT; i++)
+    {
         texDescs[i].sampler = textures[i].sampler;
         texDescs[i].imageView = textures[i].view;
         texDescs[i].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
+    VkWriteDescriptorSet write;
     memset(&write, 0, sizeof(write));
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstSet = descSet;
     write.descriptorCount = DEMO_TEXTURE_COUNT;
+#if 0
     write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+#else
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.pBufferInfo = &uniformData.bufferInfo;
+#endif
     write.pImageInfo = texDescs;
 
     vkUpdateDescriptorSets(device, 1, &write, 0, NULL);
@@ -2000,9 +2091,8 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     vc->vertices = vertices;
 
-    /* XXX:FIX ME */
-    vc->width = 300;
-    vc->height = 300;
+    vc->width = width;
+    vc->height = height;
     vc->depthStencil = 1.0;
     vc->depthIncrement = -0.01f;
 
@@ -2035,7 +2125,8 @@ void VulkanRender(VulkanContext *vc)
                                     (VkFence)0, // TODO: Show use of fence
                                     &vc->currentBuffer);
 
-    if (err == VK_ERROR_OUT_OF_DATE_KHR) {
+    if (err == VK_ERROR_OUT_OF_DATE_KHR)
+    {
         // demo->swapchain is out of date (e.g. the window was resized) and
         // must be recreated:
         /* XXX: TODO
@@ -2080,7 +2171,7 @@ void VulkanRender(VulkanContext *vc)
     // okay to render to the image.
 
     // FIXME/TODO: DEAL WITH VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-    demo_draw_build_cmd(vc);
+    VulkanBuildDrawCommand(vc);
 
     VkFence nullFence = VK_NULL_HANDLE;
     VkPipelineStageFlags pipeStageFlags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
