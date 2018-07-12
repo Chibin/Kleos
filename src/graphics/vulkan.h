@@ -111,6 +111,9 @@ struct TextureObject
     VkDeviceMemory mem;
     VkImageView view;
     int32_t texWidth, texHeight;
+
+    void *data;
+    memory_index dataSize;
 };
 
 struct UniformBufferObject
@@ -118,6 +121,13 @@ struct UniformBufferObject
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projection;
+};
+
+struct UniformObject {
+    VkBuffer buf;
+    VkDeviceMemory mem;
+    VkBufferCreateInfo bufInfo;
+    VkDescriptorBufferInfo bufferInfo;
 };
 
 #endif

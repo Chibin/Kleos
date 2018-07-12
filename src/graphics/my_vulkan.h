@@ -112,7 +112,7 @@ static VkBool32 VulkanCheckLayers(
 static bool AvailableMemoryTypeFromProperties(
         VkPhysicalDeviceMemoryProperties *memoryProperties,
         uint32_t typeBits,
-        VkFlags requirements_mask,
+        VkFlags requirementsMask,
         uint32_t *typeIndex)
 {
     for (uint32_t i = 0; i < 32; i++)
@@ -120,7 +120,7 @@ static bool AvailableMemoryTypeFromProperties(
         if ((typeBits & 1) == 1)
         {
             // Type is available, does it match user properties?
-            if ((memoryProperties->memoryTypes[i].propertyFlags & requirements_mask) == requirements_mask)
+            if ((memoryProperties->memoryTypes[i].propertyFlags & requirementsMask) == requirementsMask)
             {
                 *typeIndex = i;
                 return true;
@@ -328,6 +328,67 @@ void VulkanSetImageLayout(
         vkCmdPipelineBarrier(*setupCmd, srcStages, destStages, 0, 0, NULL, 0, NULL, 1, pmemoryBarrier);
 }
 
+void VulkanCreateImage(
+        VkDevice *device,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        u32 width,
+        u32 height,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage *image,
+        VkDeviceMemory *imageMemory,
+        VkImageLayout initialLayout
+        )
+{
+    VkResult err = {};
+    VkImageCreateInfo imageInfo = {};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.pNext = NULL;
+    imageInfo.flags = 0;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = format;
+    imageInfo.extent = {width, height, 1};
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = tiling;
+    imageInfo.usage = usage;
+    if (initialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+    {
+        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    }
+    imageInfo.initialLayout = initialLayout;;
+    //imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    err = vkCreateImage(*device, &imageInfo, nullptr, image);
+    ASSERT(err == VK_SUCCESS);
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(*device, *image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.pNext = NULL;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = 0;
+
+    b32 pass = AvailableMemoryTypeFromProperties(
+            memoryProperties,
+            memRequirements.memoryTypeBits,
+            properties,
+            &allocInfo.memoryTypeIndex);
+    ASSERT(pass);
+
+    vkAllocateMemory(*device, &allocInfo, nullptr, imageMemory);
+    ASSERT(err == VK_SUCCESS);
+
+    /* bind memory */
+    err = vkBindImageMemory(*device, *image, *imageMemory, 0);
+    ASSERT(!err);
+}
+
 static void VulkanPrepareTextureImage(
         VkDevice *device,
         VkCommandBuffer *setupCmd,
@@ -339,59 +400,24 @@ static void VulkanPrepareTextureImage(
         VkImageUsageFlags usage,
         VkFlags requiredProps)
 {
-            const VkFormat tex_format = VK_FORMAT_B8G8R8A8_UNORM;
-            const int32_t texWidth = 2;
-            const int32_t texHeight = 2;
+            const VkFormat texFormat = VK_FORMAT_B8G8R8A8_UNORM;
             VkResult err;
-            bool pass;
 
-            texObj->texWidth = texWidth;
-            texObj->texHeight = texHeight;
+            VulkanCreateImage(
+                    device,
+                    memoryProperties,
+                    texObj->texWidth,
+                    texObj->texHeight,
+                    texFormat,
+                    tiling,
+                    usage,
+                    requiredProps,
+                    &texObj->image,
+                    &texObj->mem,
+                    VK_IMAGE_LAYOUT_PREINITIALIZED);
 
-            VkImageCreateInfo image_create_info = {};
-            image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-            image_create_info.pNext = NULL;
-            image_create_info.imageType = VK_IMAGE_TYPE_2D;
-            image_create_info.format = tex_format;
-            image_create_info.extent = {texWidth, texHeight, 1};
-            image_create_info.mipLevels = 1;
-            image_create_info.arrayLayers = 1;
-            image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-            image_create_info.tiling = tiling;
-            image_create_info.usage = usage;
-            image_create_info.flags = 0;
-            image_create_info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-
-            VkMemoryAllocateInfo memAlloc = {};
-            memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            memAlloc.pNext = NULL;
-            memAlloc.allocationSize = 0;
-            memAlloc.memoryTypeIndex = 0;
-
-            VkMemoryRequirements memReqs;
-
-            err = vkCreateImage(*device, &image_create_info, NULL, &texObj->image);
-            ASSERT(!err);
-
-            vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
-
-            memAlloc.allocationSize = memReqs.size;
-
-            pass = AvailableMemoryTypeFromProperties(memoryProperties,
-                                                     memReqs.memoryTypeBits,
-                                                     requiredProps,
-                                                     &memAlloc.memoryTypeIndex);
-            ASSERT(pass);
-
-            /* allocate memory */
-            err = vkAllocateMemory(*device, &memAlloc, NULL, &texObj->mem);
-            ASSERT(!err);
-
-            /* bind memory */
-            err = vkBindImageMemory(*device, texObj->image, texObj->mem, 0);
-            ASSERT(!err);
-
-            if (requiredProps & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+            if (requiredProps & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+            {
                 const VkImageSubresource subres = {
                     /*.aspectMask =*/   VK_IMAGE_ASPECT_COLOR_BIT,
                     /*.mipLevel =*/     0,
@@ -404,24 +430,30 @@ static void VulkanPrepareTextureImage(
 
                 vkGetImageSubresourceLayout(*device, texObj->image, &subres, &layout);
 
-                err = vkMapMemory(*device, texObj->mem, 0, memAlloc.allocationSize, 0, &data);
+                VkMemoryRequirements memReqs;
+                vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
+                err = vkMapMemory(*device, texObj->mem, 0, memReqs.size, 0, &data);
                 ASSERT(!err);
 
-                for (y = 0; y < texHeight; y++)
-                {
-                    uint32_t *row = (uint32_t *)((char *)data + layout.rowPitch * y);
-                    for (x = 0; x < texWidth; x++)
-                    {
-                        row[x] = texColors[(x & 1) ^ (y & 1)];
-                    }
-                }
+#if 1
+                ASSERT(memReqs.size == texObj->dataSize);
+                memcpy(data, texObj->data, memReqs.size);
+#else
+                //for (y = 0; y < texObj->texHeight; y++)
+                //{
+                //    uint32_t *row = (uint32_t *)((char *)data + layout.rowPitch * y);
+                //    for (x = 0; x < texObj->texWidth; x++)
+                //    {
+                //        row[x] = texColors[(x & 1) ^ (y & 1)];
+                //    }
+                //}
+#endif
 
                 vkUnmapMemory(*device, texObj->mem);
             }
 
             texObj->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-            // XXX: tweaked the masks compatability
             VulkanSetImageLayout(
                     device,
                     setupCmd,
@@ -482,6 +514,92 @@ void VulkanDestroyTextureImage(
         vkFreeMemory(*device, texObj->mem, NULL);
 }
 
+void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
+        VkDevice *device,
+        VkCommandBuffer *setupCmd,
+        VkCommandPool *cmdPool,
+        VkQueue *queue,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        const u32 *texColor,
+        TextureObject *texture
+        )
+{
+    struct TextureObject stagingTexture;
+
+    memset(&stagingTexture, 0, sizeof(stagingTexture));
+    VulkanPrepareTextureImage(
+            device,
+            setupCmd,
+            cmdPool,
+            memoryProperties,
+            texColor,
+            &stagingTexture,
+            VK_IMAGE_TILING_LINEAR,
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+    VulkanPrepareTextureImage(
+            device,
+            setupCmd,
+            cmdPool,
+            memoryProperties,
+            texColor,
+            texture,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    VulkanSetImageLayout(
+            device,
+            setupCmd,
+            cmdPool,
+            stagingTexture.image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            stagingTexture.imageLayout,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            (VkAccessFlagBits)0);
+
+    VulkanSetImageLayout(
+            device,
+            setupCmd,
+            cmdPool,
+            texture->image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            texture->imageLayout,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            (VkAccessFlagBits)0);
+
+    VkImageCopy copyRegion = {};
+    copyRegion.srcSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.srcOffset =         {0, 0, 0};
+    copyRegion.dstSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.dstOffset =         {0, 0, 0};
+
+    /* TODO: use safe casting */
+    copyRegion.extent =            {uint32(stagingTexture.texWidth),
+                                    uint32(stagingTexture.texHeight),
+                                    1};
+
+    vkCmdCopyImage(
+            *setupCmd, stagingTexture.image,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    VulkanSetImageLayout(
+            device,
+            setupCmd,
+            cmdPool,
+            texture->image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            texture->imageLayout,
+            (VkAccessFlagBits)0);
+
+    VulkanFlushInit(device, setupCmd, cmdPool, queue);
+    VulkanDestroyTextureImage(device, &stagingTexture);
+}
+
+
 static void VulkanBuildDrawCommand(struct VulkanContext *vc)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
@@ -502,7 +620,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
         /*.pInheritanceInfo =*/ &cmdBufHInfo,
     };
 
-    const VkClearValue clear_values[2] = {
+    const VkClearValue clearValues[2] = {
         {/*.color.float32 =*/ {0.2f, 0.2f, 0.2f, 0.2f}},
         {/*.depthStencil =*/ {vc->depthStencil, 0}},
     };
@@ -513,14 +631,14 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     vkrect.extent.width = vc->width;
     vkrect.extent.height = vc->height;
 
-    const VkRenderPassBeginInfo rp_begin = {
+    const VkRenderPassBeginInfo rpBegin = {
         /*.sType =*/ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         /*.pNext =*/ NULL,
         /*.renderPass =*/ vc->renderPass,
         /*.framebuffer =*/ vc->framebuffers[vc->currentBuffer],
         /*.renderArea =*/ vkrect,
         /*.clearValueCount =*/ 2,
-        /*.pClearValues =*/ clear_values,
+        /*.pClearValues =*/ clearValues,
     };
 
     VkResult err;
@@ -528,7 +646,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     err = vkBeginCommandBuffer(vc->drawCmd, &cmdBufInfo);
     ASSERT(!err);
 
-    vkCmdBeginRenderPass(vc->drawCmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(vc->drawCmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline);
     vkCmdBindDescriptorSets(
             vc->drawCmd,
@@ -592,6 +710,183 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     ASSERT(!err);
 }
 
+/* Return the required amount of memory */
+VkDeviceSize VulkanCreateBuffer(
+        VkDevice *device,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkBuffer *buffer,
+        VkDeviceMemory *bufferMemory)
+{
+    VkResult err;
+
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.pNext = NULL;
+    bufferInfo.flags = 0;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.queueFamilyIndexCount = 0;
+    bufferInfo.pQueueFamilyIndices = NULL;
+
+    err = vkCreateBuffer(*device, &bufferInfo, nullptr, buffer);
+    ASSERT(err == VK_SUCCESS);
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(*device, *buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.pNext = NULL;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = 0; /*findMemoryType(memRequirements.memoryTypeBits, properties);*/
+
+    b32 pass = AvailableMemoryTypeFromProperties(memoryProperties,
+                                                 memRequirements.memoryTypeBits,
+                                                 properties,
+                                                 &allocInfo.memoryTypeIndex);
+    ASSERT(pass);
+
+    err = vkAllocateMemory(*device, &allocInfo, NULL, bufferMemory);
+    ASSERT(err == VK_SUCCESS);
+
+    err = vkBindBufferMemory(*device, *buffer, *bufferMemory, 0);
+    ASSERT(err == VK_SUCCESS);
+
+    return allocInfo.allocationSize;
+}
+
+void VulkanCreateImageSampler(
+        VkDevice *device,
+        VkFormat texFormat,
+        TextureObject *texture
+        )
+{
+    VkResult err = {};
+    VkSamplerCreateInfo samplerInfo = {};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.pNext = NULL;
+    samplerInfo.magFilter = VK_FILTER_NEAREST;
+    samplerInfo.minFilter = VK_FILTER_NEAREST;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.anisotropyEnable = VK_FALSE;
+    samplerInfo.maxAnisotropy = 1;
+    samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+    VkImageViewCreateInfo viewInfo = {};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.pNext = NULL;
+    viewInfo.image = texture->image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = texFormat;
+    viewInfo.components = { VK_COMPONENT_SWIZZLE_R,
+                            VK_COMPONENT_SWIZZLE_G,
+                            VK_COMPONENT_SWIZZLE_B,
+                            VK_COMPONENT_SWIZZLE_A,};
+    viewInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    viewInfo.flags = 0;
+
+    err = vkCreateSampler(*device, &samplerInfo, NULL, &texture->sampler);
+    ASSERT(err == VK_SUCCESS);
+
+    err = vkCreateImageView(*device, &viewInfo, NULL, &texture->view);
+    ASSERT(err == VK_SUCCESS);
+}
+
+
+void VulkanCreateTextureImage(
+        VkDevice *device,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        const char* imagePath)
+{
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
+    int texWidth, texHeight, texChannels;
+    stbi_uc* pixels = stbi_load(imagePath, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+    ASSERT(!pixels);
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    VulkanCreateBuffer(
+            device,
+            memoryProperties,
+            imageSize,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &stagingBuffer,
+            &stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(*device, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, (size_t)imageSize);
+    vkUnmapMemory(*device, stagingBufferMemory);
+
+    stbi_image_free(pixels);
+
+    VulkanCreateImage(
+            device,
+            memoryProperties,
+            texWidth,
+            texHeight,
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            &textureImage,
+            &textureImageMemory,
+            VK_IMAGE_LAYOUT_UNDEFINED);
+}
+
+void VulkanCreateUniformBuffer(
+        VkDevice *device,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        UniformObject *uniformData
+        )
+{
+    VkResult err;
+
+    VulkanCreateBuffer(
+            device,
+            memoryProperties,
+            sizeof(UniformBufferObject),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &uniformData->buf,
+            &uniformData->mem);
+
+    uniformData->bufferInfo.buffer = uniformData->buf;
+    uniformData->bufferInfo.offset = 0;
+    uniformData->bufferInfo.range = sizeof(UniformBufferObject);
+
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(*device, uniformData->buf, &memReqs);
+
+    UniformBufferObject ubo = {};
+    void *data;
+    err = vkMapMemory(*device, uniformData->mem, 0, memReqs.size, 0, &data);
+    ASSERT(err == VK_SUCCESS);
+    memcpy(data, &ubo, sizeof(UniformBufferObject));
+
+    vkUnmapMemory(*device, uniformData->mem);
+
+    /* XXX: I think you can bind before or after the memory mapping */
+    //err = vkBindBufferMemory(*device, uniformData->buf, uniformData->mem, 0);
+    //ASSERT(err == VK_SUCCESS);
+
+}
 
 VulkanContext *VulkanSetup(SDL_Window **window)
 {
@@ -678,7 +973,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     struct {
         VkFormat format;
-
         VkImage image;
         VkDeviceMemory mem;
         VkImageView view;
@@ -875,7 +1169,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 		/* For tri demo we just grab the first physical device */
 		gpu = pysicalDevices[0];
 		free(pysicalDevices);
-	} 
+	}
     else
     {
 		PAUSE_HERE("vkEnumeratePhysicalDevices reported zero accessible devices."
@@ -1416,27 +1710,12 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     /* select memory size and type */
     memAlloc.allocationSize = memReqs.size;
-    uint32_t typeBits = memReqs.memoryTypeBits;
-    VkFlags requirements_mask = 0; /*no requirements */
-    uint32_t *typeIndex = &memAlloc.memoryTypeIndex;
 
-    bool pass = false;
-    // Search memtypes to find first index with those properties
-    for (uint32_t i = 0; i < 32; i++)
-    {
-        if ((typeBits & 1) == 1)
-        {
-            // Type is available, does it match user properties?
-            if ((memoryProperties.memoryTypes[i].propertyFlags & requirements_mask) == requirements_mask)
-            {
-                *typeIndex = i;
-                pass = true;
-                break;
-            }
-        }
-        typeBits >>= 1;
-    }
-    // false = No memory types matched
+    b32 pass = AvailableMemoryTypeFromProperties(
+            &memoryProperties,
+            memReqs.memoryTypeBits,
+            0 /*no requirements*/,
+            &memAlloc.memoryTypeIndex);
     ASSERT(pass);
 
     /* allocate memory */
@@ -1465,129 +1744,40 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* end prepare depth */
 
     /* start prepare uniform buffer */
-    struct {
-        VkBuffer buf;
-        VkDeviceMemory mem;
-        VkBufferCreateInfo bufInfo;
-        VkDescriptorBufferInfo bufferInfo;
-    } uniformData;
+    UniformObject uniformData;
+    VulkanCreateUniformBuffer(
+        &device,
+        &memoryProperties,
+        &uniformData);
 
-    {
-        VkBufferCreateInfo bufInfo = {};
-        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufInfo.pNext = NULL;
-        bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        bufInfo.size = sizeof(UniformBufferObject);
-        bufInfo.queueFamilyIndexCount = 0;
-        bufInfo.pQueueFamilyIndices = NULL;
-        bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        bufInfo.flags = 0;
-        err = vkCreateBuffer(device, &bufInfo, NULL, &uniformData.buf);
-        ASSERT(err == VK_SUCCESS);
-
-        uniformData.bufferInfo.buffer = uniformData.buf;
-        uniformData.bufferInfo.offset = 0;
-        uniformData.bufferInfo.range = sizeof(UniformBufferObject);
-
-        VkMemoryRequirements memReqs;
-        vkGetBufferMemoryRequirements(device, uniformData.buf, &memReqs);
-
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.pNext = NULL;
-        allocInfo.memoryTypeIndex = 0;
-
-        allocInfo.allocationSize = memReqs.size;
-        pass = AvailableMemoryTypeFromProperties(
-                &memoryProperties,
-                memReqs.memoryTypeBits,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &allocInfo.memoryTypeIndex);
-        ASSERT(pass);
-
-        err = vkAllocateMemory(device, &allocInfo, NULL, &uniformData.mem);
-        ASSERT(err == VK_SUCCESS);
-
-        UniformBufferObject ubo = {};
-        void *data;
-        err = vkMapMemory(device, uniformData.mem, 0, memReqs.size, 0, &data);
-        ASSERT(err == VK_SUCCESS);
-        memcpy(data, &ubo, sizeof(UniformBufferObject));
-
-        vkUnmapMemory(device, uniformData.mem);
-
-        err = vkBindBufferMemory(device, uniformData.buf, uniformData.mem, 0);
-        ASSERT(err == VK_SUCCESS);
-    }
-
-    struct {
-        VkBuffer buf;
-        VkDeviceMemory mem;
-        VkBufferCreateInfo bufInfo;
-        VkDescriptorBufferInfo bufferInfo;
-    } uniformDataFragment;
-
-    {
-        VkBufferCreateInfo bufInfo = {};
-        bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufInfo.pNext = NULL;
-        bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        bufInfo.size = sizeof(UniformBufferObject);
-        bufInfo.queueFamilyIndexCount = 0;
-        bufInfo.pQueueFamilyIndices = NULL;
-        bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        bufInfo.flags = 0;
-        err = vkCreateBuffer(device, &bufInfo, NULL, &uniformDataFragment.buf);
-        ASSERT(err == VK_SUCCESS);
-
-        uniformDataFragment.bufferInfo.buffer = uniformDataFragment.buf;
-        uniformDataFragment.bufferInfo.offset = 0;
-        uniformDataFragment.bufferInfo.range = sizeof(UniformBufferObject);
-
-        VkMemoryRequirements memReqs;
-        vkGetBufferMemoryRequirements(device, uniformDataFragment.buf, &memReqs);
-
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.pNext = NULL;
-        allocInfo.memoryTypeIndex = 0;
-
-        allocInfo.allocationSize = memReqs.size;
-        pass = AvailableMemoryTypeFromProperties(
-                &memoryProperties,
-                memReqs.memoryTypeBits,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &allocInfo.memoryTypeIndex);
-        ASSERT(pass);
-
-        err = vkAllocateMemory(device, &allocInfo, NULL, &uniformDataFragment.mem);
-        ASSERT(err == VK_SUCCESS);
-
-        UniformBufferObject ubo = {};
-        void *data;
-        err = vkMapMemory(device, uniformDataFragment.mem, 0, memReqs.size, 0, &data);
-        ASSERT(err == VK_SUCCESS);
-        memcpy(data, &ubo, sizeof(UniformBufferObject));
-
-        vkUnmapMemory(device, uniformDataFragment.mem);
-
-        err = vkBindBufferMemory(device, uniformDataFragment.buf, uniformDataFragment.mem, 0);
-        ASSERT(err == VK_SUCCESS);
-    }
+    UniformObject uniformDataFragment;
+    VulkanCreateUniformBuffer(
+        &device,
+        &memoryProperties,
+        &uniformDataFragment);
     /* end prepare uniform buffer */
 
     /* start prepare texture */
-    const VkFormat tex_format = VK_FORMAT_B8G8R8A8_UNORM;
+    const VkFormat texFormat = VK_FORMAT_B8G8R8A8_UNORM;
     VkFormatProperties props = {};
-    const uint32_t texColors[DEMO_TEXTURE_COUNT][2] = { {0xffff0000, 0xff00ff00}, };
+    const uint32_t texColors[DEMO_TEXTURE_COUNT][2] = { {0x00ffff00, 0x00ff0000}, };
 
-    vkGetPhysicalDeviceFormatProperties(gpu, tex_format, &props);
+    vkGetPhysicalDeviceFormatProperties(gpu, texFormat, &props);
 
     for (i = 0; i < DEMO_TEXTURE_COUNT; i++)
     {
         if ((props.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) && !useStagingBuffer)
         {
             /* Device can texture using linear textures */
+            s32 texWidth = 0;
+            s32 texHeight = 0;
+            s32 texChannels = 0;
+            stbi_uc* pixels = stbi_load("./materials/textures/awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            textures[i].texWidth = texWidth;
+            textures[i].texHeight = texHeight;
+            textures[i].dataSize = texWidth * texHeight * 4;
+            textures[i].data = pixels;
+
             VulkanPrepareTextureImage(
                     &device,
                     &setupCmd,
@@ -1598,83 +1788,22 @@ VulkanContext *VulkanSetup(SDL_Window **window)
                     VK_IMAGE_TILING_LINEAR,
                     VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+            stbi_image_free(pixels);
         }
         else if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)
         {
-            /* Must use staging buffer to copy linear texture to optimized */
-            struct TextureObject stagingTexture;
 
-            memset(&stagingTexture, 0, sizeof(stagingTexture));
-            VulkanPrepareTextureImage(
+            VulkanUseStagingBufferToCopyLinearTextureToOptimized(
                     &device,
                     &setupCmd,
                     &cmdPool,
+                    &queue,
                     &memoryProperties,
                     texColors[i],
-                    &stagingTexture,
-                    VK_IMAGE_TILING_LINEAR,
-                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+                    &textures[i]
+                    );
 
-            VulkanPrepareTextureImage(
-                    &device,
-                    &setupCmd,
-                    &cmdPool,
-                    &memoryProperties,
-                    texColors[i],
-                    &textures[i],
-                    VK_IMAGE_TILING_OPTIMAL,
-                    (VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT),
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-            VulkanSetImageLayout(
-                    &device,
-                    &setupCmd,
-                    &cmdPool,
-                    stagingTexture.image,
-                    VK_IMAGE_ASPECT_COLOR_BIT,
-                    stagingTexture.imageLayout,
-                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    (VkAccessFlagBits)0);
-
-            VulkanSetImageLayout(
-                    &device,
-                    &setupCmd,
-                    &cmdPool,
-                    textures[i].image,
-                    VK_IMAGE_ASPECT_COLOR_BIT,
-                    textures[i].imageLayout,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    (VkAccessFlagBits)0);
-
-            VkImageCopy copyRegion = {};
-            copyRegion.srcSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-            copyRegion.srcOffset =         {0, 0, 0};
-            copyRegion.dstSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-            copyRegion.dstOffset =         {0, 0, 0};
-
-            /* TODO: use safe casting */
-            copyRegion.extent =            {uint32(stagingTexture.texWidth),
-                                            uint32(stagingTexture.texHeight),
-                                            1};
-
-            vkCmdCopyImage(
-                    setupCmd, stagingTexture.image,
-                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, textures[i].image,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-            VulkanSetImageLayout(
-                    &device,
-                    &setupCmd,
-                    &cmdPool,
-                    textures[i].image,
-                    VK_IMAGE_ASPECT_COLOR_BIT,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    textures[i].imageLayout,
-                    (VkAccessFlagBits)0);
-
-            VulkanFlushInit(&device, &setupCmd, &cmdPool, &queue);
-            VulkanDestroyTextureImage(&device, &stagingTexture);
         }
         else
         {
@@ -1682,97 +1811,38 @@ VulkanContext *VulkanSetup(SDL_Window **window)
             ASSERT(!"No support for B8G8R8A8_UNORM as texture image format");
         }
 
-        VkSamplerCreateInfo sampler = {};
-        sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        sampler.pNext = NULL;
-        sampler.magFilter = VK_FILTER_NEAREST;
-        sampler.minFilter = VK_FILTER_NEAREST;
-        sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-        sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        sampler.mipLodBias = 0.0f;
-        sampler.anisotropyEnable = VK_FALSE;
-        sampler.maxAnisotropy = 1;
-        sampler.compareOp = VK_COMPARE_OP_NEVER;
-        sampler.minLod = 0.0f;
-        sampler.maxLod = 0.0f;
-        sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-        sampler.unnormalizedCoordinates = VK_FALSE;
-
-        VkImageViewCreateInfo view = {};
-        view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        view.pNext = NULL;
-        view.image = VK_NULL_HANDLE; /* XXX: must be a valid handle instead of VK_NULL_HANDLE ? */
-        view.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        view.format = tex_format;
-        view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
-                            VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A,};
-        view.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-        view.flags = 0;
-
-        /* create sampler */
-        err = vkCreateSampler(device, &sampler, NULL, &textures[i].sampler);
-        ASSERT(err == VK_SUCCESS);
-
-        /* create image view */
-        view.image = textures[i].image;
-        err = vkCreateImageView(device, &view, NULL, &textures[i].view);
-        ASSERT(err == VK_SUCCESS);
+        VulkanCreateImageSampler(
+                &device,
+                texFormat,
+                &textures[i]);
     }
     /* end prepare texture */
 
     /* start prepare vertices */
     const float vb[3][9] = {
         /*      position                    color           texcoord */
-        { -1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f },
-        {  1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 0.0f,   1.0f, 0.0f },
-        {  0.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 0.0f,   0.5f, 1.0f },
+        { -1.0f, -1.0f,  0.25f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f },
+        {  1.0f, -1.0f,  0.25f,   0.0f, 0.0f, 0.0f, 0.0f,   1.0f, 0.0f },
+        {  0.0f,  1.0f,  1.0f,    0.0f, 0.0f, 0.0f, 0.0f,   0.5f, 1.0f },
     };
 
-    VkBufferCreateInfo bufInfo = {};
-    bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufInfo.pNext = NULL;
-    bufInfo.size = sizeof(vb);
-    bufInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    bufInfo.flags = 0;
-
-    memAlloc = {};
-    memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memAlloc.pNext = NULL;
-    memAlloc.allocationSize = 0;
-    memAlloc.memoryTypeIndex = 0;
-
+    memset(&vertices, 0, sizeof(vertices));
     memReqs = {};
     void *data;
 
-    memset(&vertices, 0, sizeof(vertices));
+    VkDeviceSize memSize = VulkanCreateBuffer(
+            &device,
+            &memoryProperties,
+            (VkDeviceSize)sizeof(vb),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            &vertices.buf,
+            &vertices.mem);
 
-    err = vkCreateBuffer(device, &bufInfo, NULL, &vertices.buf);
+    err = vkMapMemory(device, vertices.mem, 0, memSize, 0, &data);
     ASSERT(!err);
-
-    vkGetBufferMemoryRequirements(device, vertices.buf, &memReqs);
-    ASSERT(!err);
-
-    memAlloc.allocationSize = memReqs.size;
-    pass = AvailableMemoryTypeFromProperties(&memoryProperties,
-                                             memReqs.memoryTypeBits,
-                                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                                             &memAlloc.memoryTypeIndex);
-    ASSERT(pass);
-
-    err = vkAllocateMemory(device, &memAlloc, NULL, &vertices.mem);
-    ASSERT(!err);
-
-    err = vkMapMemory(device, vertices.mem, 0, memAlloc.allocationSize, 0, &data);
-    ASSERT(!err);
-
     memcpy(data, vb, sizeof(vb));
-
     vkUnmapMemory(device, vertices.mem);
-
-    err = vkBindBufferMemory(device, vertices.buf, vertices.mem, 0);
-    ASSERT(!err);
 
     vertices.vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertices.vi.pNext = NULL;
@@ -2115,7 +2185,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     writeFragment.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     writeFragment.pBufferInfo = &uniformDataFragment.bufferInfo;
     writeFragment.pImageInfo = texDescs;
-    //writeFragment.pTexelBufferView = texDescs;
     vkUpdateDescriptorSets(device, 1, &writeFragment, 0, NULL);
 
     /* end prepare descriptor set */
@@ -2147,7 +2216,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     }
 
     /* end prepare frame buffers */
-	//PAUSE_HERE("Prepare complete!!!\n");
 
     vc->device = device;
     vc->fpAcquireNextImageKHR = fpAcquireNextImageKHR;
