@@ -20,7 +20,7 @@ layout (location = 1) out vec4 vColor;
 void main()
 {
     TexCoord = vTexCoord;
-    vColor = vec4(vTexCoord.x, vTexCoord.y, 0, 1);
+    vColor = vTestColor;
 
     gl_Position = ubo.projection * ubo.view * vec4(vPositionModelSpace, 1.0);
     //gl_Position =  vec4(vPositionModelSpace, 1.0);

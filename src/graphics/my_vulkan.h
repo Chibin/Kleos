@@ -400,7 +400,7 @@ static void VulkanPrepareTextureImage(
         VkImageUsageFlags usage,
         VkFlags requiredProps)
 {
-            const VkFormat texFormat = VK_FORMAT_B8G8R8A8_UNORM;
+            const VkFormat texFormat = VK_FORMAT_R8G8B8A8_UNORM;
             VkResult err;
 
             VulkanCreateImage(
@@ -1468,7 +1468,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     // supported format will be returned.
     if (formatCount == 1 && surfFormats[0].format == VK_FORMAT_UNDEFINED)
 	{
-        format = VK_FORMAT_B8G8R8A8_UNORM;
+        format = VK_FORMAT_R8G8B8A8_UNORM;
     }
 	else
 	{
@@ -1758,7 +1758,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* end prepare uniform buffer */
 
     /* start prepare texture */
-    const VkFormat texFormat = VK_FORMAT_B8G8R8A8_UNORM;
+    const VkFormat texFormat = VK_FORMAT_R8G8B8A8_UNORM;
     VkFormatProperties props = {};
     const uint32_t texColors[DEMO_TEXTURE_COUNT][2] = { {0x00ffff00, 0x00ff0000}, };
 
@@ -1807,7 +1807,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         }
         else
         {
-            /* Can't support VK_FORMAT_B8G8R8A8_UNORM !? */
+            /* Can't support VK_FORMAT_R8G8B8A8_UNORM !? */
             ASSERT(!"No support for B8G8R8A8_UNORM as texture image format");
         }
 
@@ -1821,9 +1821,9 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* start prepare vertices */
     const float vb[3][9] = {
         /*      position                    color           texcoord */
-        { -1.0f, -1.0f,  0.25f,   0.0f, 0.0f, 0.0f, 0.0f,   0.0f, 0.0f },
-        {  1.0f, -1.0f,  0.25f,   0.0f, 0.0f, 0.0f, 0.0f,   1.0f, 0.0f },
-        {  0.0f,  1.0f,  1.0f,    0.0f, 0.0f, 0.0f, 0.0f,   0.5f, 1.0f },
+        { -1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f },
+        {  1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f },
+        {  0.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 1.0f,   0.5f, 1.0f },
     };
 
     memset(&vertices, 0, sizeof(vertices));
