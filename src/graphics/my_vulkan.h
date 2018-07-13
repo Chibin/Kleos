@@ -426,7 +426,6 @@ static void VulkanPrepareTextureImage(
 
                 VkSubresourceLayout layout;
                 void *data;
-                int32_t x, y;
 
                 vkGetImageSubresourceLayout(*device, texObj->image, &subres, &layout);
 
@@ -439,6 +438,7 @@ static void VulkanPrepareTextureImage(
                 ASSERT(memReqs.size == texObj->dataSize);
                 memcpy(data, texObj->data, memReqs.size);
 #else
+                int32_t x, y;
                 //for (y = 0; y < texObj->texHeight; y++)
                 //{
                 //    uint32_t *row = (uint32_t *)((char *)data + layout.rowPitch * y);
@@ -512,6 +512,114 @@ void VulkanDestroyTextureImage(
         /* clean up staging resources */
         vkDestroyImage(*device, texObj->image, NULL);
         vkFreeMemory(*device, texObj->mem, NULL);
+}
+
+/* Return the required amount of memory */
+VkDeviceSize VulkanCreateBuffer(
+        VkDevice *device,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkBuffer *buffer,
+        VkDeviceMemory *bufferMemory)
+{
+    VkResult err;
+
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.pNext = NULL;
+    bufferInfo.flags = 0;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.queueFamilyIndexCount = 0;
+    bufferInfo.pQueueFamilyIndices = NULL;
+
+    err = vkCreateBuffer(*device, &bufferInfo, nullptr, buffer);
+    ASSERT(err == VK_SUCCESS);
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(*device, *buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.pNext = NULL;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = 0; /*findMemoryType(memRequirements.memoryTypeBits, properties);*/
+
+    b32 pass = AvailableMemoryTypeFromProperties(memoryProperties,
+                                                 memRequirements.memoryTypeBits,
+                                                 properties,
+                                                 &allocInfo.memoryTypeIndex);
+    ASSERT(pass);
+
+    err = vkAllocateMemory(*device, &allocInfo, NULL, bufferMemory);
+    ASSERT(err == VK_SUCCESS);
+
+    err = vkBindBufferMemory(*device, *buffer, *bufferMemory, 0);
+    ASSERT(err == VK_SUCCESS);
+
+    return allocInfo.allocationSize;
+}
+
+void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize, u32 stride)
+{
+
+    VkResult err = {};
+    VkPhysicalDeviceMemoryProperties memoryProperties = {};
+	vkGetPhysicalDeviceMemoryProperties(vc->gpu, &memoryProperties);
+
+    VulkanVertices *vertices = &vc->vertices;
+    if (vertices->buf != VK_NULL_HANDLE)
+    {
+        vkDestroyBuffer(vc->device, vertices->buf, nullptr);
+        memset(vertices, 0, sizeof(*vertices));
+    }
+
+    VkMemoryRequirements memReqs = {};
+    void *data;
+
+    VkDeviceSize memSize = VulkanCreateBuffer(
+            &vc->device,
+            &memoryProperties,
+            verticesSize,
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            &vertices->buf,
+            &vertices->mem);
+
+    err = vkMapMemory(vc->device, vertices->mem, 0, memSize, 0, &data);
+    ASSERT(!err);
+    memcpy(data, verticesData, verticesSize);
+    vkUnmapMemory(vc->device, vertices->mem);
+
+    vertices->vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertices->vi.pNext = NULL;
+    vertices->vi.vertexBindingDescriptionCount = 1;
+    vertices->vi.pVertexBindingDescriptions = vertices->viBindings;
+    vertices->vi.vertexAttributeDescriptionCount = 3;
+    vertices->vi.pVertexAttributeDescriptions = vertices->viAttrs;
+
+    vertices->viBindings[0].binding = VERTEX_BUFFER_BIND_ID;
+    vertices->viBindings[0].stride = stride;
+    vertices->viBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    vertices->viAttrs[0].binding = VERTEX_BUFFER_BIND_ID;
+    vertices->viAttrs[0].location = 0;
+    vertices->viAttrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    vertices->viAttrs[0].offset = 0;
+
+    vertices->viAttrs[1].binding = VERTEX_BUFFER_BIND_ID;
+    vertices->viAttrs[1].location = 1;
+    vertices->viAttrs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    vertices->viAttrs[1].offset = sizeof(float) * 3;
+
+    vertices->viAttrs[2].binding = VERTEX_BUFFER_BIND_ID;
+    vertices->viAttrs[2].location = 2;
+    vertices->viAttrs[2].format = VK_FORMAT_R32G32_SFLOAT;
+    vertices->viAttrs[2].offset = sizeof(float) * 7;
+
 }
 
 void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
@@ -599,7 +707,6 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
     VulkanDestroyTextureImage(device, &stagingTexture);
 }
 
-
 static void VulkanBuildDrawCommand(struct VulkanContext *vc)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
@@ -677,7 +784,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     VkDeviceSize offsets[1] = {0};
     vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
 
-    vkCmdDraw(vc->drawCmd, 3, 1, 0, 0);
+    vkCmdDraw(vc->drawCmd, 6, 100, 0, 0);
     vkCmdEndRenderPass(vc->drawCmd);
 
     VkImageMemoryBarrier prePresentBarrier = {
@@ -710,54 +817,6 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     ASSERT(!err);
 }
 
-/* Return the required amount of memory */
-VkDeviceSize VulkanCreateBuffer(
-        VkDevice *device,
-        VkPhysicalDeviceMemoryProperties *memoryProperties,
-        VkDeviceSize size,
-        VkBufferUsageFlags usage,
-        VkMemoryPropertyFlags properties,
-        VkBuffer *buffer,
-        VkDeviceMemory *bufferMemory)
-{
-    VkResult err;
-
-    VkBufferCreateInfo bufferInfo = {};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = NULL;
-    bufferInfo.flags = 0;
-    bufferInfo.size = size;
-    bufferInfo.usage = usage;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    bufferInfo.queueFamilyIndexCount = 0;
-    bufferInfo.pQueueFamilyIndices = NULL;
-
-    err = vkCreateBuffer(*device, &bufferInfo, nullptr, buffer);
-    ASSERT(err == VK_SUCCESS);
-
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(*device, *buffer, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.pNext = NULL;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = 0; /*findMemoryType(memRequirements.memoryTypeBits, properties);*/
-
-    b32 pass = AvailableMemoryTypeFromProperties(memoryProperties,
-                                                 memRequirements.memoryTypeBits,
-                                                 properties,
-                                                 &allocInfo.memoryTypeIndex);
-    ASSERT(pass);
-
-    err = vkAllocateMemory(*device, &allocInfo, NULL, bufferMemory);
-    ASSERT(err == VK_SUCCESS);
-
-    err = vkBindBufferMemory(*device, *buffer, *bufferMemory, 0);
-    ASSERT(err == VK_SUCCESS);
-
-    return allocInfo.allocationSize;
-}
 
 void VulkanCreateImageSampler(
         VkDevice *device,
@@ -853,7 +912,8 @@ void VulkanCreateTextureImage(
 void VulkanCreateUniformBuffer(
         VkDevice *device,
         VkPhysicalDeviceMemoryProperties *memoryProperties,
-        UniformObject *uniformData
+        UniformObject *uniformData,
+        UniformBufferObject *ubo
         )
 {
     VkResult err;
@@ -874,11 +934,10 @@ void VulkanCreateUniformBuffer(
     VkMemoryRequirements memReqs;
     vkGetBufferMemoryRequirements(*device, uniformData->buf, &memReqs);
 
-    UniformBufferObject ubo = {};
     void *data;
     err = vkMapMemory(*device, uniformData->mem, 0, memReqs.size, 0, &data);
     ASSERT(err == VK_SUCCESS);
-    memcpy(data, &ubo, sizeof(UniformBufferObject));
+    memcpy(data, ubo, sizeof(UniformBufferObject));
 
     vkUnmapMemory(*device, uniformData->mem);
 
@@ -888,12 +947,26 @@ void VulkanCreateUniformBuffer(
 
 }
 
+void VulkanUpdateUniformBuffer(VulkanContext *vc, UniformBufferObject *ubo)
+{
+    UniformObject *uniformData = &vc->uniformData;
+    VkResult err = {};
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(vc->device, uniformData->buf, &memReqs);
+
+    void *data;
+    err = vkMapMemory(vc->device, uniformData->mem, 0, memReqs.size, 0, &data);
+    ASSERT(err == VK_SUCCESS);
+    memcpy(data, ubo, sizeof(UniformBufferObject));
+
+    vkUnmapMemory(vc->device, uniformData->mem);
+
+}
+
 VulkanContext *VulkanSetup(SDL_Window **window)
 {
     VulkanContext *vc = (VulkanContext *)malloc(sizeof(VulkanContext));;
     memset(vc, 0, sizeof(VulkanContext));
-
-    VulkanVertices vertices;
 
     VkSurfaceKHR surface;
     //bool prepared;
@@ -951,19 +1024,11 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     VkCommandBuffer setupCmd = {}; // Command Buffer for initialization commands
     VkCommandBuffer drawCmd = {};  // Command Buffer for drawing commands
-    VkPipelineLayout pipelineLayout = {};
-    VkDescriptorSetLayout descLayout = {};
-    VkPipelineCache pipelineCache = {};
     VkRenderPass renderPass = {};
     VkPipeline pipeline = {};
 
-    VkShaderModule vertShaderModule = {};
-    VkShaderModule fragShaderModule = {};
-
-    VkDescriptorPool descPool = {};
     VkDescriptorSet descSet = {};
 
-    VkFramebuffer *framebuffers;
     VkPhysicalDeviceMemoryProperties memoryProperties = {};
 
     int32_t curFrame;
@@ -971,14 +1036,9 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     uint32_t width = 0;
     uint32_t height = 0;
 
-    struct {
-        VkFormat format;
-        VkImage image;
-        VkDeviceMemory mem;
-        VkImageView view;
-    } depth;
+    Depth depth;
 
-    struct TextureObject textures[DEMO_TEXTURE_COUNT];
+    TextureObject *textures = vc->textures;
 
     char *instance_validation_layers_alt1[] = {
         "VK_LAYER_LUNARG_standard_validation"
@@ -1744,17 +1804,22 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* end prepare depth */
 
     /* start prepare uniform buffer */
-    UniformObject uniformData;
+    vc->uniformData = {};
+    UniformObject *uniformData = &vc->uniformData;
+    UniformBufferObject ubo = {};
     VulkanCreateUniformBuffer(
         &device,
         &memoryProperties,
-        &uniformData);
+        uniformData,
+        &ubo);
 
-    UniformObject uniformDataFragment;
+    UniformObject *uniformDataFragment = &vc->uniformDataFragment;
+    UniformBufferObject uboFrag = {};
     VulkanCreateUniformBuffer(
         &device,
         &memoryProperties,
-        &uniformDataFragment);
+        uniformDataFragment,
+        &uboFrag);
     /* end prepare uniform buffer */
 
     /* start prepare texture */
@@ -1818,60 +1883,45 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     }
     /* end prepare texture */
 
-    /* start prepare vertices */
-    const float vb[3][9] = {
-        /*      position                    color           texcoord */
-        { -1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f },
-        {  1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f },
-        {  0.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 1.0f,   0.5f, 1.0f },
-    };
 
-    memset(&vertices, 0, sizeof(vertices));
-    memReqs = {};
-    void *data;
+    vc->device = device;
+    vc->gpu = gpu;
+    vc->fpAcquireNextImageKHR = fpAcquireNextImageKHR;
+    vc->fpQueuePresentKHR = fpQueuePresentKHR;
+    vc->swapchain = swapchain;
+    vc->currentBuffer = currentBuffer;
+    vc->curFrame = curFrame;
+    vc->frameCount = frameCount;
 
-    VkDeviceSize memSize = VulkanCreateBuffer(
-            &device,
-            &memoryProperties,
-            (VkDeviceSize)sizeof(vb),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-            &vertices.buf,
-            &vertices.mem);
+    vc->cmdPool = cmdPool;
+    vc->setupCmd = setupCmd;
+    vc->drawCmd = drawCmd;
+    vc->queue = queue;
 
-    err = vkMapMemory(device, vertices.mem, 0, memSize, 0, &data);
-    ASSERT(!err);
-    memcpy(data, vb, sizeof(vb));
-    vkUnmapMemory(device, vertices.mem);
+    vc->renderPass = renderPass;
 
-    vertices.vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertices.vi.pNext = NULL;
-    vertices.vi.vertexBindingDescriptionCount = 1;
-    vertices.vi.pVertexBindingDescriptions = vertices.viBindings;
-    vertices.vi.vertexAttributeDescriptionCount = 3;
-    vertices.vi.pVertexAttributeDescriptions = vertices.viAttrs;
+    vc->pipeline = pipeline;
 
-    vertices.viBindings[0].binding = VERTEX_BUFFER_BIND_ID;
-    vertices.viBindings[0].stride = sizeof(vb[0]);
-    vertices.viBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    vc->width = width;
+    vc->height = height;
+    vc->depthStencil = 1.0;
+    vc->depthIncrement = -0.01f;
 
-    vertices.viAttrs[0].binding = VERTEX_BUFFER_BIND_ID;
-    vertices.viAttrs[0].location = 0;
-    vertices.viAttrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    vertices.viAttrs[0].offset = 0;
+    vc->descSet = descSet;
 
-    vertices.viAttrs[1].binding = VERTEX_BUFFER_BIND_ID;
-    vertices.viAttrs[1].location = 1;
-    vertices.viAttrs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertices.viAttrs[1].offset = sizeof(float) * 3;
+    vc->quit = false;
+    vc->format = format;
+    vc->depth = depth;
+    vc->swapchainImageCount = swapchainImageCount;
+    return vc;
 
-    vertices.viAttrs[2].binding = VERTEX_BUFFER_BIND_ID;
-    vertices.viAttrs[2].location = 2;
-    vertices.viAttrs[2].format = VK_FORMAT_R32G32_SFLOAT;
-    vertices.viAttrs[2].offset = sizeof(float) * 7;
-    /* end prepare vertices*/
+}
 
-#if 1
+void VulkanPrepareDescriptorLayout(VulkanContext *vc)
+{
+    VkResult err;
+
+    VkDevice *device = &vc->device;
     /* start prepare descriptor layout */
     VkDescriptorSetLayoutBinding layoutBinding = {};
     layoutBinding.binding = 0;
@@ -1902,26 +1952,29 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     descriptorLayout.bindingCount = 2;
     descriptorLayout.pBindings = &myDescriptorSetLayoutBinding[0];
 
-    err = vkCreateDescriptorSetLayout(device, &descriptorLayout, NULL, &descLayout);
+    err = vkCreateDescriptorSetLayout(*device, &descriptorLayout, NULL, &vc->descLayout);
     ASSERT(!err);
 
     VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
     pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pPipelineLayoutCreateInfo.pNext = NULL;
     pPipelineLayoutCreateInfo.setLayoutCount = 1;
-    pPipelineLayoutCreateInfo.pSetLayouts = &descLayout;
+    pPipelineLayoutCreateInfo.pSetLayouts = &vc->descLayout;
 
-    err = vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, NULL, &pipelineLayout);
+    err = vkCreatePipelineLayout(*device, &pPipelineLayoutCreateInfo, NULL, &vc->pipelineLayout);
     ASSERT(!err);
     /* end prepare descriptor layout */
-#endif
 
-#if 1
+}
+
+void VulkanPrepareRenderPass(VulkanContext *vc)
+{
+    VkResult err;
     /* start prepare render pass */
     const VkAttachmentDescription attachments[2] = {
         {
             /*.flags =*/            0,
-            /*.format =*/           format,
+            /*.format =*/           vc->format,
             /*.samples =*/          VK_SAMPLE_COUNT_1_BIT,
             /*.loadOp =*/           VK_ATTACHMENT_LOAD_OP_CLEAR,
             /*.storeOp =*/          VK_ATTACHMENT_STORE_OP_STORE,
@@ -1932,7 +1985,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         },
         {
             /*.flags =*/            0,
-            /*.format =*/           depth.format,
+            /*.format =*/           vc->depth.format,
             /*.samples =*/          VK_SAMPLE_COUNT_1_BIT,
             /*.loadOp =*/           VK_ATTACHMENT_LOAD_OP_CLEAR,
             /*.storeOp =*/          VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -1978,12 +2031,18 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         /*.pDependencies =*/    NULL,
     };
 
-    err = vkCreateRenderPass(device, &rpInfo, NULL, &renderPass);
+    err = vkCreateRenderPass(vc->device, &rpInfo, NULL, &vc->renderPass);
     ASSERT(!err);
     /*end prepare render pass*/
-#endif
+}
 
-#if 1
+void VulkanPreparePipeline(VulkanContext *vc)
+{
+    VkResult err;
+    VkShaderModule vertShaderModule = {};
+    VkShaderModule fragShaderModule = {};
+    VkPipelineCache pipelineCache = {};
+
     /* start prepare pipeline */
     VkGraphicsPipelineCreateInfo pipelineCreateInfo;
     VkPipelineCacheCreateInfo pipelineCacheInfo;
@@ -2005,9 +2064,9 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     memset(&pipelineCreateInfo, 0, sizeof(pipelineCreateInfo));
     pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineCreateInfo.layout = pipelineLayout;
+    pipelineCreateInfo.layout = vc->pipelineLayout;
 
-    vi = vertices.vi;
+    vi = vc->vertices.vi;
 
     memset(&ia, 0, sizeof(ia));
     ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -2070,12 +2129,12 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStages[0].module = VulkanPrepareVertexShader(&device, &vertShaderModule);
+    shaderStages[0].module = VulkanPrepareVertexShader(&vc->device, &vertShaderModule);
     shaderStages[0].pName = "main";
 
     shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shaderStages[1].module = VulkanPrepareFragmentShader(&device, &fragShaderModule);
+    shaderStages[1].module = VulkanPrepareFragmentShader(&vc->device, &fragShaderModule);
     shaderStages[1].pName = "main";
 
     pipelineCreateInfo.stageCount = 2;
@@ -2088,25 +2147,28 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     pipelineCreateInfo.pMultisampleState = &ms;
     pipelineCreateInfo.pViewportState = &vp;
     pipelineCreateInfo.pDepthStencilState = &ds;
-    pipelineCreateInfo.renderPass = renderPass;
+    pipelineCreateInfo.renderPass = vc->renderPass;
     pipelineCreateInfo.pDynamicState = &dynamicState;
 
     memset(&pipelineCacheInfo, 0, sizeof(pipelineCacheInfo));
     pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-    err = vkCreatePipelineCache(device, &pipelineCacheInfo, NULL, &pipelineCache);
+    err = vkCreatePipelineCache(vc->device, &pipelineCacheInfo, NULL, &pipelineCache);
     ASSERT(!err);
 
-    err = vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCreateInfo, NULL, &pipeline);
+    err = vkCreateGraphicsPipelines(vc->device, pipelineCache, 1, &pipelineCreateInfo, NULL, &vc->pipeline);
     ASSERT(!err);
 
-    vkDestroyPipelineCache(device, pipelineCache, NULL);
+    vkDestroyPipelineCache(vc->device, pipelineCache, NULL);
 
-    vkDestroyShaderModule(device, fragShaderModule, NULL);
-    vkDestroyShaderModule(device, vertShaderModule, NULL);
+    vkDestroyShaderModule(vc->device, fragShaderModule, NULL);
+    vkDestroyShaderModule(vc->device, vertShaderModule, NULL);
 
     /* end prepare pipeline */
-#endif
+}
 
+void VulkanPrepareDescriptorPool(VulkanContext *vc)
+{
+    VkResult err;
     /* start prepare descriptor pool */
 #if 0
     const VkDescriptorPoolSize typeCount = {
@@ -2135,10 +2197,42 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         /*.pPoolSizes =*/       &typeCount[0],
     };
 
-    err = vkCreateDescriptorPool(device, &descriptorPool, NULL, &descPool);
+    err = vkCreateDescriptorPool(vc->device, &descriptorPool, NULL, &vc->descPool);
     ASSERT(!err);
     /* end prepare descriptor pool */
+}
 
+void VulkanSetupPart2(VulkanContext *vc)
+{
+    VkPipelineLayout pipelineLayout = {};
+    VkResult err;
+    int i;
+    u32 width = vc->width;
+    u32 height = vc->height;
+
+    vc->pipelineLayout = pipelineLayout;
+
+    /* start prepare vertices */
+    /* Load vertices data */
+    const float vb[3][9] = {
+        /*      position                    color           texcoord */
+        { -1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f },
+        {  1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f },
+        {  0.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 1.0f,   0.5f, 1.0f },
+    };
+
+    memset(&vc->vertices, 0, sizeof(vc->vertices));
+    VkMemoryRequirements memReqs = {};
+    VkDevice *device = &vc->device;
+    VkPhysicalDevice *gpu = &vc->gpu;
+    VkQueue *queue = &vc->queue;
+    VulkanPrepareVertices(vc, (void *)vb, sizeof(vb), sizeof(vb[0]));
+    /* end prepare vertices*/
+
+    VulkanPrepareDescriptorLayout(vc);
+    VulkanPrepareRenderPass(vc);
+    VulkanPreparePipeline(vc);
+    VulkanPrepareDescriptorPool(vc);
 
     /* start prepare descriptor set */
     VkDescriptorImageInfo texDescs[DEMO_TEXTURE_COUNT];
@@ -2146,13 +2240,14 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     VkDescriptorSetAllocateInfo allocInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         /*.pNext =*/                NULL,
-        /*.descriptorPool =*/       descPool,
+        /*.descriptorPool =*/       vc->descPool,
         /*.descriptorSetCount =*/   1,
-        /*.pSetLayouts =*/          &descLayout
+        /*.pSetLayouts =*/          &vc->descLayout
     };
-    err = vkAllocateDescriptorSets(device, &allocInfo, &descSet);
+    err = vkAllocateDescriptorSets(*device, &allocInfo, &vc->descSet);
     ASSERT(!err);
 
+    TextureObject *textures = vc->textures;
     memset(&texDescs, 0, sizeof(texDescs));
     for (i = 0; i < DEMO_TEXTURE_COUNT; i++)
     {
@@ -2161,92 +2256,64 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         texDescs[i].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
+    UniformObject *uniformData = &vc->uniformData;
+    UniformObject *uniformDataFragment = &vc->uniformDataFragment;
+
     VkWriteDescriptorSet write;
     memset(&write, 0, sizeof(write));
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = descSet;
+    write.dstSet = vc->descSet;
     write.dstBinding = 0;
     write.descriptorCount = DEMO_TEXTURE_COUNT;
 #if 0
     write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 #else
     write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    write.pBufferInfo = &uniformData.bufferInfo;
+    write.pBufferInfo = &uniformData->bufferInfo;
 #endif
     write.pImageInfo = texDescs;
-    vkUpdateDescriptorSets(device, 1, &write, 0, NULL);
+    vkUpdateDescriptorSets(*device, 1, &write, 0, NULL);
 
     VkWriteDescriptorSet writeFragment;
     memset(&writeFragment, 0, sizeof(writeFragment));
     writeFragment.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeFragment.dstSet = descSet;
+    writeFragment.dstSet = vc->descSet;
     writeFragment.dstBinding = 1;
     writeFragment.descriptorCount = DEMO_TEXTURE_COUNT;
     writeFragment.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writeFragment.pBufferInfo = &uniformDataFragment.bufferInfo;
+    writeFragment.pBufferInfo = &uniformDataFragment->bufferInfo;
     writeFragment.pImageInfo = texDescs;
-    vkUpdateDescriptorSets(device, 1, &writeFragment, 0, NULL);
+    vkUpdateDescriptorSets(*device, 1, &writeFragment, 0, NULL);
 
     /* end prepare descriptor set */
 
     /* start prepare frame buffers */
     VkImageView attachmentsFrameBuffer[2];
-    attachmentsFrameBuffer[1] = depth.view;
+    attachmentsFrameBuffer[1] = vc->depth.view;
 
     const VkFramebufferCreateInfo fbInfo = {
         /*.sType =*/            VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         /*.pNext =*/            NULL,
         /*.flags =*/            0,
-        /*.renderPass =*/       renderPass,
+        /*.renderPass =*/       vc->renderPass,
         /*.attachmentCount =*/  2,
         /*.pAttachments =*/     attachmentsFrameBuffer,
-        /*.width =*/            width,
-        /*.height =*/           height,
+        /*.width =*/            vc->width,
+        /*.height =*/           vc->height,
         /*.layers =*/           1,
     };
 
-    framebuffers = (VkFramebuffer *)malloc(swapchainImageCount * sizeof(VkFramebuffer));
-    ASSERT(framebuffers);
+    vc->framebuffers = (VkFramebuffer *)malloc(vc->swapchainImageCount * sizeof(VkFramebuffer));
+    ASSERT(vc->framebuffers);
 
-    for (i = 0; i < swapchainImageCount; i++)
+    for (memory_index i = 0; i < vc->swapchainImageCount; i++)
     {
         attachmentsFrameBuffer[0] = vc->buffers[i].view;
-        err = vkCreateFramebuffer(device, &fbInfo, NULL, &framebuffers[i]);
+        err = vkCreateFramebuffer(*device, &fbInfo, NULL, &vc->framebuffers[i]);
         ASSERT(!err);
     }
 
     /* end prepare frame buffers */
-
-    vc->device = device;
-    vc->fpAcquireNextImageKHR = fpAcquireNextImageKHR;
-    vc->fpQueuePresentKHR = fpQueuePresentKHR;
-    vc->swapchain = swapchain;
-    vc->currentBuffer = currentBuffer;
-    vc->curFrame = curFrame;
-    vc->frameCount = frameCount;
-
-    vc->cmdPool = cmdPool;
-    vc->setupCmd = setupCmd;
-    vc->drawCmd = drawCmd;
-    vc->queue = queue;
-
-    vc->renderPass = renderPass;
-    vc->framebuffers = framebuffers;
-
-    vc->pipeline = pipeline;
-    vc->pipelineLayout = pipelineLayout;
-
-    vc->vertices = vertices;
-
-    vc->width = width;
-    vc->height = height;
-    vc->depthStencil = 1.0;
-    vc->depthIncrement = -0.01f;
-
-    vc->descSet = descSet;
-
-    vc->quit = false;
-    return vc;
 
 }
 
@@ -2260,8 +2327,10 @@ void VulkanRender(VulkanContext *vc)
         /*.flags =*/ 0,
     };
 
-    err = vkCreateSemaphore(vc->device, &presentCompleteSemaphoreCreateInfo,
-            NULL, &presentCompleteSemaphore);
+    err = vkCreateSemaphore(vc->device,
+                            &presentCompleteSemaphoreCreateInfo,
+                            NULL,
+                            &presentCompleteSemaphore);
     ASSERT(!err);
 
     // Get the index of the next available swapchain image:

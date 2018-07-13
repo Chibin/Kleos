@@ -43,6 +43,45 @@ struct VulkanVertices
     VkVertexInputAttributeDescription viAttrs[3];
 };
 
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
+struct UniformObject
+{
+    VkBuffer buf;
+    VkDeviceMemory mem;
+    VkBufferCreateInfo bufInfo;
+    VkDescriptorBufferInfo bufferInfo;
+};
+
+struct Depth
+{
+    VkFormat format;
+    VkImage image;
+    VkDeviceMemory mem;
+    VkImageView view;
+};
+
+struct TextureObject
+{
+    VkSampler sampler;
+
+    VkImage image;
+    VkImageLayout imageLayout;
+
+    VkDeviceMemory mem;
+    VkImageView view;
+    int32_t texWidth, texHeight;
+
+    void *data;
+    memory_index dataSize;
+};
+
+
 struct VulkanContext
 {
     VkDevice device;
@@ -63,6 +102,8 @@ struct VulkanContext
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
 
+    VkFormat format;
+
     VulkanVertices vertices;
 
     VkShaderModule vertShaderModule;
@@ -70,6 +111,7 @@ struct VulkanContext
 
     VkDescriptorPool descPool;
     VkDescriptorSet descSet;
+    VkDescriptorSetLayout descLayout;
 
     PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback;
     PFN_vkDestroyDebugReportCallbackEXT DestroyDebugReportCallback;
@@ -99,35 +141,13 @@ struct VulkanContext
     float depthIncrement;
 
     b32 quit;
-};
 
-struct TextureObject
-{
-    VkSampler sampler;
+    UniformObject uniformData;
+    UniformObject uniformDataFragment;
+    Depth depth;
+    TextureObject textures[DEMO_TEXTURE_COUNT];
 
-    VkImage image;
-    VkImageLayout imageLayout;
-
-    VkDeviceMemory mem;
-    VkImageView view;
-    int32_t texWidth, texHeight;
-
-    void *data;
-    memory_index dataSize;
-};
-
-struct UniformBufferObject
-{
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
-};
-
-struct UniformObject {
-    VkBuffer buf;
-    VkDeviceMemory mem;
-    VkBufferCreateInfo bufInfo;
-    VkDescriptorBufferInfo bufferInfo;
+    uint32_t swapchainImageCount;
 };
 
 #endif

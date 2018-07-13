@@ -23,6 +23,5 @@ void main()
     vColor = vTestColor;
 
     gl_Position = ubo.projection * ubo.view * vec4(vPositionModelSpace, 1.0);
-    //gl_Position =  vec4(vPositionModelSpace, 1.0);
 }
 
