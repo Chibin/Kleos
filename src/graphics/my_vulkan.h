@@ -2,6 +2,7 @@
 #define __MY_VULKAN__
 
 #include "./vulkan.h"
+#include "stddef.h"
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
 #define GET_INSTANCE_PROC_ADDR(inst, entrypoint)                               \
@@ -433,21 +434,8 @@ static void VulkanPrepareTextureImage(
                 vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
                 err = vkMapMemory(*device, texObj->mem, 0, memReqs.size, 0, &data);
                 ASSERT(!err);
-
-#if 1
                 ASSERT(memReqs.size == texObj->dataSize);
                 memcpy(data, texObj->data, memReqs.size);
-#else
-                int32_t x, y;
-                //for (y = 0; y < texObj->texHeight; y++)
-                //{
-                //    uint32_t *row = (uint32_t *)((char *)data + layout.rowPitch * y);
-                //    for (x = 0; x < texObj->texWidth; x++)
-                //    {
-                //        row[x] = texColors[(x & 1) ^ (y & 1)];
-                //    }
-                //}
-#endif
 
                 vkUnmapMemory(*device, texObj->mem);
             }
@@ -563,7 +551,7 @@ VkDeviceSize VulkanCreateBuffer(
     return allocInfo.allocationSize;
 }
 
-void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize, u32 stride)
+void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize)
 {
 
     VkResult err = {};
@@ -591,34 +579,8 @@ void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize v
 
     err = vkMapMemory(vc->device, vertices->mem, 0, memSize, 0, &data);
     ASSERT(!err);
-    memcpy(data, verticesData, verticesSize);
+    memcpy(data, verticesData, memSize);
     vkUnmapMemory(vc->device, vertices->mem);
-
-    vertices->vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertices->vi.pNext = NULL;
-    vertices->vi.vertexBindingDescriptionCount = 1;
-    vertices->vi.pVertexBindingDescriptions = vertices->viBindings;
-    vertices->vi.vertexAttributeDescriptionCount = 3;
-    vertices->vi.pVertexAttributeDescriptions = vertices->viAttrs;
-
-    vertices->viBindings[0].binding = VERTEX_BUFFER_BIND_ID;
-    vertices->viBindings[0].stride = stride;
-    vertices->viBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    vertices->viAttrs[0].binding = VERTEX_BUFFER_BIND_ID;
-    vertices->viAttrs[0].location = 0;
-    vertices->viAttrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    vertices->viAttrs[0].offset = 0;
-
-    vertices->viAttrs[1].binding = VERTEX_BUFFER_BIND_ID;
-    vertices->viAttrs[1].location = 1;
-    vertices->viAttrs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertices->viAttrs[1].offset = sizeof(float) * 3;
-
-    vertices->viAttrs[2].binding = VERTEX_BUFFER_BIND_ID;
-    vertices->viAttrs[2].location = 2;
-    vertices->viAttrs[2].format = VK_FORMAT_R32G32_SFLOAT;
-    vertices->viAttrs[2].offset = sizeof(float) * 7;
 
 }
 
@@ -784,7 +746,8 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     VkDeviceSize offsets[1] = {0};
     vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
 
-    vkCmdDraw(vc->drawCmd, 6, 100, 0, 0);
+    vkCmdDraw(vc->drawCmd, 3, 1, 0, 0);
+    vkCmdDraw(vc->drawCmd, 6, 1, 0, 0);
     vkCmdEndRenderPass(vc->drawCmd);
 
     VkImageMemoryBarrier prePresentBarrier = {
@@ -2036,7 +1999,7 @@ void VulkanPrepareRenderPass(VulkanContext *vc)
     /*end prepare render pass*/
 }
 
-void VulkanPreparePipeline(VulkanContext *vc)
+void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
 {
     VkResult err;
     VkShaderModule vertShaderModule = {};
@@ -2046,6 +2009,32 @@ void VulkanPreparePipeline(VulkanContext *vc)
     /* start prepare pipeline */
     VkGraphicsPipelineCreateInfo pipelineCreateInfo;
     VkPipelineCacheCreateInfo pipelineCacheInfo;
+
+    vc->vertices.viBindings[0].binding = VERTEX_BUFFER_BIND_ID;
+    vc->vertices.viBindings[0].stride = stride;
+    vc->vertices.viBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    vc->vertices.viAttrs[0].binding = VERTEX_BUFFER_BIND_ID;
+    vc->vertices.viAttrs[0].location = 0;
+    vc->vertices.viAttrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    vc->vertices.viAttrs[0].offset = offsetof(Vertex, position);
+
+    vc->vertices.viAttrs[1].binding = VERTEX_BUFFER_BIND_ID;
+    vc->vertices.viAttrs[1].location = 1;
+    vc->vertices.viAttrs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    vc->vertices.viAttrs[1].offset = offsetof(Vertex, color);
+
+    vc->vertices.viAttrs[2].binding = VERTEX_BUFFER_BIND_ID;
+    vc->vertices.viAttrs[2].location = 2;
+    vc->vertices.viAttrs[2].format = VK_FORMAT_R32G32_SFLOAT;
+    vc->vertices.viAttrs[2].offset = offsetof(Vertex, uv);
+
+    vc->vertices.vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vc->vertices.vi.pNext = NULL;
+    vc->vertices.vi.vertexBindingDescriptionCount = 1;
+    vc->vertices.vi.pVertexBindingDescriptions = vc->vertices.viBindings;
+    vc->vertices.vi.vertexAttributeDescriptionCount = 3;
+    vc->vertices.vi.pVertexAttributeDescriptions = vc->vertices.viAttrs;
 
     VkPipelineVertexInputStateCreateInfo vi;
     VkPipelineInputAssemblyStateCreateInfo ia;
@@ -2078,7 +2067,7 @@ void VulkanPreparePipeline(VulkanContext *vc)
     rs.rasterizerDiscardEnable = VK_FALSE;
     rs.polygonMode = VK_POLYGON_MODE_FILL;
     rs.cullMode = VK_CULL_MODE_BACK_BIT;
-    rs.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rs.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rs.depthBiasEnable = VK_FALSE;
 
     /* If the wide lines feature is not enabled, and no element of the
@@ -2202,39 +2191,12 @@ void VulkanPrepareDescriptorPool(VulkanContext *vc)
     /* end prepare descriptor pool */
 }
 
-void VulkanSetupPart2(VulkanContext *vc)
+void VulkanPrepareDescriptorSet(VulkanContext *vc)
 {
-    VkPipelineLayout pipelineLayout = {};
     VkResult err;
-    int i;
-    u32 width = vc->width;
-    u32 height = vc->height;
-
-    vc->pipelineLayout = pipelineLayout;
-
-    /* start prepare vertices */
-    /* Load vertices data */
-    const float vb[3][9] = {
-        /*      position                    color           texcoord */
-        { -1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   0.0f, 0.0f },
-        {  1.0f, -1.0f,  0.25f,   1.0f, 0.0f, 0.0f, 1.0f,   1.0f, 0.0f },
-        {  0.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 1.0f,   0.5f, 1.0f },
-    };
-
-    memset(&vc->vertices, 0, sizeof(vc->vertices));
-    VkMemoryRequirements memReqs = {};
     VkDevice *device = &vc->device;
-    VkPhysicalDevice *gpu = &vc->gpu;
-    VkQueue *queue = &vc->queue;
-    VulkanPrepareVertices(vc, (void *)vb, sizeof(vb), sizeof(vb[0]));
-    /* end prepare vertices*/
+    memory_index i;
 
-    VulkanPrepareDescriptorLayout(vc);
-    VulkanPrepareRenderPass(vc);
-    VulkanPreparePipeline(vc);
-    VulkanPrepareDescriptorPool(vc);
-
-    /* start prepare descriptor set */
     VkDescriptorImageInfo texDescs[DEMO_TEXTURE_COUNT];
 
     VkDescriptorSetAllocateInfo allocInfo = {
@@ -2285,7 +2247,14 @@ void VulkanSetupPart2(VulkanContext *vc)
     writeFragment.pImageInfo = texDescs;
     vkUpdateDescriptorSets(*device, 1, &writeFragment, 0, NULL);
 
-    /* end prepare descriptor set */
+}
+
+void VulkanSetupPart2(VulkanContext *vc)
+{
+    VkResult err;
+    u32 width = vc->width;
+    u32 height = vc->height;
+    VkDevice *device = &vc->device;
 
     /* start prepare frame buffers */
     VkImageView attachmentsFrameBuffer[2];
@@ -2312,7 +2281,6 @@ void VulkanSetupPart2(VulkanContext *vc)
         err = vkCreateFramebuffer(*device, &fbInfo, NULL, &vc->framebuffers[i]);
         ASSERT(!err);
     }
-
     /* end prepare frame buffers */
 
 }

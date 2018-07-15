@@ -18,7 +18,7 @@ struct Vertex
         {
             union v3 vPosition;
         };
-        GLfloat position[3];
+        float position[3];
     };
 
     union {
@@ -26,7 +26,7 @@ struct Vertex
         {
             union v4 vColor;
         };
-        GLfloat color[4];
+        float color[4];
     };
 
     union {
@@ -34,7 +34,7 @@ struct Vertex
         {
             union v3 vNormal;
         };
-        GLfloat normal[3];
+        float normal[3];
     };
 
     union {
@@ -42,7 +42,7 @@ struct Vertex
         {
             union v2 vUv;
         };
-        GLfloat uv[2];
+        float uv[2];
     };
 };
 #pragma warning(pop)

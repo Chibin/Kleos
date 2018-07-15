@@ -126,8 +126,22 @@ static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
 static Animation2D *g_spriteAnimation = nullptr;
 
+Vertex vb[3] = {};
+
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
+    vb[0].vPosition =   {-1.0f, -1.0f,  0.55f};
+    vb[0].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
+    vb[0].vNormal =     {0.0f, 0.0f, 0.0f};
+    vb[0].vUv =         {0.0f, 0.0f};
+    vb[1].vPosition =   {1.0f, -1.0f,  0.55f};
+    vb[1].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
+    vb[1].vNormal =     {0.0f, 0.0f, 0.0f};
+    vb[1].vUv =         {1.0f, 0.0f};
+    vb[2].vPosition =   {0.0f,  1.0f,  0.55f};
+    vb[2].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
+    vb[2].vNormal =     {0.0f, 0.0f, 0.0f};
+    vb[2].vUv =         {0.5f, 1.0f};
 
     SDL_Event event;
     bool continueRunning = true;
@@ -139,18 +153,17 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     v2 screenResolution = gameMetadata->screenResolution;
 
     VulkanContext *vc = gameMetadata->vulkanContext;
-    VulkanSetupPart2(vc);
 
-    if (vc->depthStencil > 0.99f)
-    {
-        vc->depthIncrement = -0.001f;
-    }
-    if (vc->depthStencil < 0.8f)
-    {
-        vc->depthIncrement = 0.001f;
-    }
+    //if (vc->depthStencil > 0.99f)
+    //{
+    //    vc->depthIncrement = -0.001f;
+    //}
+    //if (vc->depthStencil < 0.8f)
+    //{
+    //    vc->depthIncrement = 0.001f;
+    //}
 
-    vc->depthStencil += vc->depthIncrement;
+    //vc->depthStencil += vc->depthIncrement;
 
     //Wait for work to finish before updating MVP.
     vkDeviceWaitIdle(vc->device);
@@ -163,7 +176,18 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
 
+        vc->pipelineLayout = {};
+        VulkanPrepareDescriptorLayout(vc);
+        VulkanPrepareRenderPass(vc);
+        memset(&vc->vertices, 0, sizeof(vc->vertices));
+        VulkanPreparePipeline(vc, sizeof(Vertex));
+
+        VulkanPrepareDescriptorPool(vc);
+        VulkanPrepareDescriptorSet(vc);
+        VulkanSetupPart2(vc);
+
         START_DEBUG_TIMING();
+
 
         ASSERT(!*gameTimestep);
         ASSERT(!g_camera);
@@ -609,9 +633,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     UniformBufferObject ubo = {};
-    ubo.view = g_camera->view;
-    ubo.projection = *g_projection;
-    ubo.model = glm::mat4();
 
     OpenGLCheckErrors();
 
@@ -680,50 +701,61 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         TextureParam textureParam = bitmap->textureParam;
 
-        if ((bitmap != prevBitmap) ||
-            (textureParam != prevTextureParam ||
-            (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)))
-        {
-            glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
-                         perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
-            DrawRawRectangle(perFrameRenderGroup->rectCount);
-
-            ClearUsedVertexRenderGroup(perFrameRenderGroup);
-
-            if (rect->isScreenCoordinateSpace)
-            {
-                SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
-
-                ubo = {};
-                ubo.view = glm::mat4();
-                ubo.projection = glm::mat4();
-                ubo.model = glm::mat4();
-            }
-            else
-            {
-                glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-                glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
-                ubo = {};
-                ubo.view = g_camera->view;
-                ubo.projection = *g_projection;
-                ubo.model = glm::mat4();
-            }
-
-            OpenGLUpdateTextureParameter(&textureParam);
-
-            if (bitmap != prevBitmap)
-            {
-                OpenGLLoadBitmap(bitmap, textureID);
-            }
-            prevBitmap = bitmap;
-
-            isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
-        }
+//        if ((bitmap != prevBitmap) ||
+//            (textureParam != prevTextureParam ||
+//            (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)))
+//        {
+//            glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
+//                         perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
+//            DrawRawRectangle(perFrameRenderGroup->rectCount);
+//
+//            ClearUsedVertexRenderGroup(perFrameRenderGroup);
+//
+//            if (rect->isScreenCoordinateSpace)
+//            {
+//                SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
+//
+//            }
+//            else
+//            {
+//                glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+//                glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+//
+//            }
+//
+//            OpenGLUpdateTextureParameter(&textureParam);
+//
+//            if (bitmap != prevBitmap)
+//            {
+//                OpenGLLoadBitmap(bitmap, textureID);
+//            }
+//            prevBitmap = bitmap;
+//
+//            isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
+//        }
 
         PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         prevTextureParam = textureParam;
     }
+
+    ubo = {};
+    ubo.view = g_camera->view;
+    ubo.projection = *g_projection;
+    ubo.model = glm::mat4();
+    
+    VulkanUpdateUniformBuffer(vc, &ubo);
+
+#if 0
+    ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
+    memset(&vc->vertices, 0, sizeof(vc->vertices));
+    VulkanPrepareVertices(
+            vc,
+            (void *)perFrameRenderGroup->vertexMemory.base,
+            perFrameRenderGroup->vertexMemory.used);
+#else
+    memset(&vc->vertices, 0, sizeof(vc->vertices));
+    VulkanPrepareVertices(vc, (void *)vb, sizeof(vb));
+#endif
 
     glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
                  perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
@@ -747,65 +779,60 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     VulkanPrepareVertices(
             vc, 
             (void *)perFrameRenderGroup->vertexMemory.base,
-            perFrameRenderGroup->vertexMemory.used,
-            sizeof(Vertex));
+            perFrameRenderGroup->vertexMemory.used);
 #endif
 
-    ClearUsedVertexRenderGroup(perFrameRenderGroup);
-    ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
+    //ClearUsedVertexRenderGroup(perFrameRenderGroup);
+    //ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
 
     OpenGLEndUseProgram();
 
-    g_debugMode = true;
-    if (g_debugMode)
-    {
-        perFrameRenderGroup->rectCount = 0;
-        ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
+    //g_debugMode = true;
+    //if (g_debugMode)
+    //{
+    //    perFrameRenderGroup->rectCount = 0;
+    //    ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
 
-        /* Draw collissions, hurtboxes and hitboxes */
-        OpenGLBeginUseProgram(debugProgram, textureID);
+    //    /* Draw collissions, hurtboxes and hitboxes */
+    //    OpenGLBeginUseProgram(debugProgram, textureID);
 
-        modelLoc = glGetUniformLocation(debugProgram, "model");
-        viewLoc = glGetUniformLocation(program, "view");
-        projectionLoc = glGetUniformLocation(program, "projection");
+    //    modelLoc = glGetUniformLocation(debugProgram, "model");
+    //    viewLoc = glGetUniformLocation(program, "view");
+    //    projectionLoc = glGetUniformLocation(program, "projection");
 
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE,
-                           glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
-                           glm::value_ptr(*g_projection));
+    //    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
+    //    glUniformMatrix4fv(viewLoc, 1, GL_FALSE,
+    //                       glm::value_ptr(g_camera->view));
+    //    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE,
+    //                       glm::value_ptr(*g_projection));
 
-        for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
-        {
-            Rect *rect = g_rectManager->NonTraversable.rects[i];
-            PushRenderGroupRectVertex(perFrameRenderGroup, rect);
-        }
+    //    for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
+    //    {
+    //        Rect *rect = g_rectManager->NonTraversable.rects[i];
+    //        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
+    //    }
 
-        for (memory_index i = 0; i < hitBoxes->size; i++)
-        {
-            Rect *rect = hitBoxes->rects[i];
-            PushRenderGroupRectVertex(perFrameRenderGroup, rect);
-        }
+    //    for (memory_index i = 0; i < hitBoxes->size; i++)
+    //    {
+    //        Rect *rect = hitBoxes->rects[i];
+    //        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
+    //    }
 
-        for (memory_index i = 0; i < hurtBoxes->size; i++)
-        {
-            Rect *rect = hurtBoxes->rects[i];
-            PushRenderGroupRectVertex(perFrameRenderGroup, rect);
-        }
+    //    for (memory_index i = 0; i < hurtBoxes->size; i++)
+    //    {
+    //        Rect *rect = hurtBoxes->rects[i];
+    //        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
+    //    }
 
-        ubo = {};
-        ubo.view = glm::mat4();
-        ubo.projection = glm::mat4();
-        ubo.model = glm::mat4();
 
-        glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
-                     perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
+    //    glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
+    //                 perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
 
-        DrawRawPointRectangle(perFrameRenderGroup->rectCount);
-        DrawRawRectangle(perFrameRenderGroup->rectCount);
+    //    DrawRawPointRectangle(perFrameRenderGroup->rectCount);
+    //    DrawRawRectangle(perFrameRenderGroup->rectCount);
 
-        OpenGLEndUseProgram();
-    }
+    //    OpenGLEndUseProgram();
+    //}
 
 
     glBindVertexArray(0);
@@ -824,7 +851,7 @@ void LoadStuff(GameMetadata *gameMetadata)
     {
         for (int y = 0; y < 100; y++)
         {
-            v3 startingPosition = { (real32)i, (real32)y, 0 };
+            v3 startingPosition = { (real32)i, -1 * (real32)y, 0 };
             /* TODO: extract out creating new entity from the manager */
             Entity *rectEntity =
                 AddNewEntity(reservedMemory, g_entityManager, startingPosition);
@@ -844,7 +871,7 @@ void LoadStuff(GameMetadata *gameMetadata)
     /* Let's add some non-traversable entity */
     for (int i = 0; i < 5; i++)
     {
-        v3 startingPosition = { -3 + 4 * (real32)i, -10, 0 };
+        v3 startingPosition = { -1 + 4 * (real32)i, 0, 0 };
 
         Entity *collisionEntity =
             AddNewEntity(reservedMemory, g_entityManager, startingPosition);
