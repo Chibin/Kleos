@@ -9,10 +9,17 @@ inline void SetRectPoints(Rect *rect, v3 basePosition, f32 width, f32 height)
     rect->basePosition = basePosition;
     rect->width = width;
     rect->height = height;
+#if 0
     rect->topRight = v3{ max.x, max.y, 0 };
     rect->bottomRight = v3{ max.x, min.y, 0 };
     rect->bottomLeft = v3{ min.x, min.y, 0 };
     rect->topLeft = v3{ min.x, max.y, 0 };
+#else
+    rect->bottomRight = v3{ max.x, max.y, 0 };
+    rect->topRight = v3{ max.x, min.y, 0 };
+    rect->topLeft = v3{ min.x, min.y, 0 };
+    rect->bottomLeft = v3{ min.x, max.y, 0 };
+#endif
 
     rect->minX = min.x;
     rect->minY = min.y;

@@ -669,7 +669,7 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
     VulkanDestroyTextureImage(device, &stagingTexture);
 }
 
-static void VulkanBuildDrawCommand(struct VulkanContext *vc)
+static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
@@ -689,7 +689,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
         /*.pInheritanceInfo =*/ &cmdBufHInfo,
     };
 
-    const VkClearValue clearValues[2] = {
+    VkClearValue clearValues[2] = {
         {/*.color.float32 =*/ {0.2f, 0.2f, 0.2f, 0.2f}},
         {/*.depthStencil =*/ {vc->depthStencil, 0}},
     };
@@ -707,7 +707,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
         /*.framebuffer =*/ vc->framebuffers[vc->currentBuffer],
         /*.renderArea =*/ vkrect,
         /*.clearValueCount =*/ 2,
-        /*.pClearValues =*/ clearValues,
+        /*.pClearValues =*/ clearValues
     };
 
     VkResult err;
@@ -746,8 +746,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc)
     VkDeviceSize offsets[1] = {0};
     vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
 
-    vkCmdDraw(vc->drawCmd, 3, 1, 0, 0);
-    vkCmdDraw(vc->drawCmd, 6, 1, 0, 0);
+    vkCmdDraw(vc->drawCmd, numOfVertices, 1, 0, 0);
     vkCmdEndRenderPass(vc->drawCmd);
 
     VkImageMemoryBarrier prePresentBarrier = {
@@ -2285,7 +2284,7 @@ void VulkanSetupPart2(VulkanContext *vc)
 
 }
 
-void VulkanRender(VulkanContext *vc)
+void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
 {
     VkResult err;
     VkSemaphore presentCompleteSemaphore;
@@ -2317,7 +2316,7 @@ void VulkanRender(VulkanContext *vc)
          * vulkan_resize(vc);
          */
         PAUSE_HERE("pausing\n");
-        VulkanRender(vc);
+        VulkanRender(vc, numOfVertices, shouldClear);
         vkDestroySemaphore(vc->device, presentCompleteSemaphore, NULL);
         return;
     }
@@ -2355,7 +2354,7 @@ void VulkanRender(VulkanContext *vc)
     // okay to render to the image.
 
     // FIXME/TODO: DEAL WITH VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-    VulkanBuildDrawCommand(vc);
+    VulkanBuildDrawCommand(vc, numOfVertices, shouldClear);
 
     VkFence nullFence = VK_NULL_HANDLE;
     VkPipelineStageFlags pipeStageFlags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
