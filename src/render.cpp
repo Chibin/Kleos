@@ -192,6 +192,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         vc->pipelineLayout = {};
         VulkanPrepareDescriptorLayout(vc);
         VulkanPrepareRenderPass(vc);
+        VulkanPrepareRenderPassWithNoClear(vc);
         memset(&vc->vertices, 0, sizeof(vc->vertices));
         VulkanPreparePipeline(vc, sizeof(Vertex));
 
@@ -568,6 +569,10 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
             RenderGroup *perFrameRenderGroup, VulkanContext *vc)
 {
+
+    VulkanPrepareRender(vc);
+    VulkanPrepareDrawBufferCommands(vc);
+
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[150];
@@ -721,7 +726,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                         vc,
                         (void *)perFrameRenderGroup->vertexMemory.base,
                         perFrameRenderGroup->vertexMemory.used);
-                VulkanRender(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6), true);
+                VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
             }
 
             glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
@@ -770,7 +775,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         prevTextureParam = textureParam;
     }
 
-#if 1
     ubo = {};
     ubo.view = g_camera->view;
     ubo.projection = *g_projection;
@@ -779,12 +783,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
     memset(&vc->vertices, 0, sizeof(vc->vertices));
+
     VulkanPrepareVertices(
             vc,
             (void *)perFrameRenderGroup->vertexMemory.base,
             perFrameRenderGroup->vertexMemory.used);
-    VulkanRender(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6), true);
-#endif
+
+    VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -825,8 +830,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
 
-#if 1
-        /* This works */
         ubo = {};
         ubo.view = g_camera->view;
         ubo.projection = *g_projection;
@@ -839,8 +842,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 vc,
                 (void *)perFrameRenderGroup->vertexMemory.base,
                 perFrameRenderGroup->vertexMemory.used);
-        VulkanRender(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6), false);
-#endif
+
+        VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+        VulkanEndBufferCommands(vc);
+        VulkanEndRender(vc);
+        vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
+        vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
         modelLoc = glGetUniformLocation(debugProgram, "model");
         viewLoc = glGetUniformLocation(program, "view");
@@ -872,9 +879,9 @@ void LoadStuff(GameMetadata *gameMetadata)
 
     v4 color = { 0.1f, 0.1f, 0.1f, 1.0f };
     /* load random data */
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 100; i++)
     {
-        for (int y = 0; y < 5; y++)
+        for (int y = 0; y < 100; y++)
         {
             v3 startingPosition = { -1 + (real32)i, 1 * (real32)y, 0 };
             /* TODO: extract out creating new entity from the manager */

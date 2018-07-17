@@ -99,8 +99,10 @@ struct VulkanContext
     VkCommandPool cmdPool;
 
     VkRenderPass renderPass;
+    VkRenderPass renderPassWithNoClear;
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
+    VkSemaphore presentCompleteSemaphore;
 
     VkFormat format;
 

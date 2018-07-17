@@ -669,6 +669,123 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
     VulkanDestroyTextureImage(device, &stagingTexture);
 }
 
+void VulkanPrepareDrawBufferCommands(VulkanContext *vc)
+{
+    const VkCommandBufferInheritanceInfo cmdBufHInfo = {
+        /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
+        /*.pNext =*/ NULL,
+        /*.renderPass =*/ VK_NULL_HANDLE,
+        /*.subpass =*/ 0,
+        /*.framebuffer =*/ VK_NULL_HANDLE,
+        /*.occlusionQueryEnable =*/ VK_FALSE,
+        /*.queryFlags =*/ 0,
+        /*.pipelineStatistics =*/ 0,
+    };
+
+    const VkCommandBufferBeginInfo cmdBufInfo = {
+        /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        /*.pNext =*/ NULL,
+        /*.flags =*/ 0,
+        /*.pInheritanceInfo =*/ &cmdBufHInfo,
+    };
+
+    VkClearValue clearValues[2] = {
+        {/*.color.float32 =*/ {0.2f, 0.2f, 0.2f, 0.2f}},
+        {/*.depthStencil =*/ {vc->depthStencil, 0}},
+    };
+
+    VkRect2D vkrect = {};
+    vkrect.offset.x = 0;
+    vkrect.offset.y = 0;
+    vkrect.extent.width = vc->width;
+    vkrect.extent.height = vc->height;
+
+    const VkRenderPassBeginInfo rpBegin = {
+        /*.sType =*/ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        /*.pNext =*/ NULL,
+        /*.renderPass =*/  vc->renderPass,
+        /*.framebuffer =*/ vc->framebuffers[vc->currentBuffer],
+        /*.renderArea =*/ vkrect,
+        /*.clearValueCount =*/ 2,
+        /*.pClearValues =*/ clearValues,
+    };
+
+    VkResult err;
+
+    err = vkBeginCommandBuffer(vc->drawCmd, &cmdBufInfo);
+    ASSERT(!err);
+
+    vkCmdBeginRenderPass(vc->drawCmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline);
+    vkCmdBindDescriptorSets(
+            vc->drawCmd,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vc->pipelineLayout,
+            0,
+            1,
+            &vc->descSet,
+            0,
+            NULL);
+
+    VkViewport viewport;
+    memset(&viewport, 0, sizeof(viewport));
+    viewport.height = (float)vc->height;
+    viewport.width = (float)vc->width;
+    viewport.minDepth = (float)0.0f;
+    viewport.maxDepth = (float)1.0f;
+    vkCmdSetViewport(vc->drawCmd, 0, 1, &viewport);
+
+    VkRect2D scissor;
+    memset(&scissor, 0, sizeof(scissor));
+    scissor.extent.width = vc->width;
+    scissor.extent.height = vc->height;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    vkCmdSetScissor(vc->drawCmd, 0, 1, &scissor);
+}
+
+void VulkanAddDrawCmd(VulkanContext *vc, u32 numOfVertices)
+{
+    VkDeviceSize offsets[1] = {0};
+    vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
+
+    vkCmdDraw(vc->drawCmd, numOfVertices, 1, 0, 0);
+}
+
+void VulkanEndBufferCommands(VulkanContext *vc)
+{
+    vkCmdEndRenderPass(vc->drawCmd);
+
+    VkImageMemoryBarrier prePresentBarrier = {
+        /*.sType =*/                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        /*.pNext =*/                NULL,
+        /*.srcAccessMask =*/        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        /*.dstAccessMask =*/        VK_ACCESS_MEMORY_READ_BIT,
+        /*.oldLayout =*/            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        /*.newLayout =*/            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        /*.srcQueueFamilyIndex =*/  VK_QUEUE_FAMILY_IGNORED,
+        /*.dstQueueFamilyIndex =*/  VK_QUEUE_FAMILY_IGNORED,
+        /*.image =*/                vc->buffers[vc->currentBuffer].image,
+        /*.subresourceRange =*/     {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}
+    };
+
+    VkImageMemoryBarrier *pmemoryBarrier = &prePresentBarrier;
+    vkCmdPipelineBarrier(
+            vc->drawCmd,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            0,
+            0,
+            NULL,
+            0,
+            NULL,
+            1,
+            pmemoryBarrier);
+
+
+    ASSERT(vkEndCommandBuffer(vc->drawCmd) == VK_SUCCESS);
+}
+
 static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
@@ -703,11 +820,11 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
     const VkRenderPassBeginInfo rpBegin = {
         /*.sType =*/ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         /*.pNext =*/ NULL,
-        /*.renderPass =*/ vc->renderPass,
+        /*.renderPass =*/  vc->renderPass,
         /*.framebuffer =*/ vc->framebuffers[vc->currentBuffer],
         /*.renderArea =*/ vkrect,
         /*.clearValueCount =*/ 2,
-        /*.pClearValues =*/ clearValues
+        /*.pClearValues =*/ clearValues,
     };
 
     VkResult err;
@@ -747,6 +864,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
     vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
 
     vkCmdDraw(vc->drawCmd, numOfVertices, 1, 0, 0);
+
     vkCmdEndRenderPass(vc->drawCmd);
 
     VkImageMemoryBarrier prePresentBarrier = {
@@ -986,7 +1104,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     VkCommandBuffer setupCmd = {}; // Command Buffer for initialization commands
     VkCommandBuffer drawCmd = {};  // Command Buffer for drawing commands
-    VkRenderPass renderPass = {};
     VkPipeline pipeline = {};
 
     VkDescriptorSet descSet = {};
@@ -1860,8 +1977,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->drawCmd = drawCmd;
     vc->queue = queue;
 
-    vc->renderPass = renderPass;
-
     vc->pipeline = pipeline;
 
     vc->width = width;
@@ -1926,6 +2041,75 @@ void VulkanPrepareDescriptorLayout(VulkanContext *vc)
     err = vkCreatePipelineLayout(*device, &pPipelineLayoutCreateInfo, NULL, &vc->pipelineLayout);
     ASSERT(!err);
     /* end prepare descriptor layout */
+
+}
+
+void VulkanPrepareRenderPassWithNoClear(VulkanContext *vc)
+{
+    VkResult err;
+    const VkAttachmentDescription attachments[2] = {
+        {
+            /*.flags =*/            0,
+            /*.format =*/           vc->format,
+            /*.samples =*/          VK_SAMPLE_COUNT_1_BIT,
+            /*.loadOp =*/           VK_ATTACHMENT_LOAD_OP_LOAD,
+            /*.storeOp =*/          VK_ATTACHMENT_STORE_OP_STORE,
+            /*.stencilLoadOp =*/    VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            /*.stencilStoreOp =*/   VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            /*.initialLayout =*/    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            /*.finalLayout =*/      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        },
+        {
+            /*.flags =*/            0,
+            /*.format =*/           vc->depth.format,
+            /*.samples =*/          VK_SAMPLE_COUNT_1_BIT,
+            /*.loadOp =*/           VK_ATTACHMENT_LOAD_OP_LOAD,
+            /*.storeOp =*/          VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            /*.stencilLoadOp =*/    VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            /*.stencilStoreOp =*/   VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            /*.initialLayout =*/    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            /*.finalLayout =*/      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        },
+    };
+
+    const VkAttachmentReference colorReference = {
+        /*.attachment =*/   0,
+        /*.layout =*/       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    const VkAttachmentReference depthReference = {
+        /*.attachment =*/   1,
+        /*.layout =*/       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+
+    const VkSubpassDescription subpass = {
+        /*.flags =*/                    0,
+        /*.pipelineBindPoint =*/        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        /*.inputAttachmentCount =*/     0,
+        /*.pInputAttachments =*/        NULL,
+        /*.colorAttachmentCount =*/     1,
+        /*.pColorAttachments =*/        &colorReference,
+        /*.pResolveAttachments =*/      NULL,
+        /*.pDepthStencilAttachment =*/  &depthReference,
+        /*.preserveAttachmentCount =*/  0,
+        /*.pPreserveAttachments =*/     NULL,
+    };
+
+    const VkRenderPassCreateInfo rpInfo = {
+        /*.sType =*/            VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        /*.pNext =*/            NULL,
+        /*.flags =*/            0,
+        /*.attachmentCount =*/  2,
+        /*.pAttachments =*/     attachments,
+        /*.subpassCount =*/     1,
+        /*.pSubpasses =*/       &subpass,
+        /*.dependencyCount =*/  0,
+        /*.pDependencies =*/    NULL,
+    };
+
+    err = vkCreateRenderPass(vc->device, &rpInfo, NULL, &vc->renderPassWithNoClear);
+    ASSERT(!err);
+    /*end prepare render pass*/
 
 }
 
@@ -2271,6 +2455,18 @@ void VulkanSetupPart2(VulkanContext *vc)
         /*.layers =*/           1,
     };
 
+    const VkFramebufferCreateInfo fbInfoNoClear = {
+        /*.sType =*/            VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        /*.pNext =*/            NULL,
+        /*.flags =*/            0,
+        /*.renderPass =*/       vc->renderPassWithNoClear,
+        /*.attachmentCount =*/  2,
+        /*.pAttachments =*/     attachmentsFrameBuffer,
+        /*.width =*/            vc->width,
+        /*.height =*/           vc->height,
+        /*.layers =*/           1,
+    };
+
     vc->framebuffers = (VkFramebuffer *)malloc(vc->swapchainImageCount * sizeof(VkFramebuffer));
     ASSERT(vc->framebuffers);
 
@@ -2279,90 +2475,23 @@ void VulkanSetupPart2(VulkanContext *vc)
         attachmentsFrameBuffer[0] = vc->buffers[i].view;
         err = vkCreateFramebuffer(*device, &fbInfo, NULL, &vc->framebuffers[i]);
         ASSERT(!err);
+        err = vkCreateFramebuffer(*device, &fbInfoNoClear, NULL, &vc->framebuffers[i]);
+        ASSERT(!err);
     }
     /* end prepare frame buffers */
 
 }
 
-void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
+void VulkanEndRender(VulkanContext *vc)
 {
-    VkResult err;
-    VkSemaphore presentCompleteSemaphore;
-    VkSemaphoreCreateInfo presentCompleteSemaphoreCreateInfo = {
-        /*.sType =*/ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        /*.pNext =*/ NULL,
-        /*.flags =*/ 0,
-    };
-
-    err = vkCreateSemaphore(vc->device,
-                            &presentCompleteSemaphoreCreateInfo,
-                            NULL,
-                            &presentCompleteSemaphore);
-    ASSERT(!err);
-
-    // Get the index of the next available swapchain image:
-    err = vc->fpAcquireNextImageKHR(vc->device,
-                                    vc->swapchain,
-                                    UINT64_MAX,
-                                    presentCompleteSemaphore,
-                                    (VkFence)0, // TODO: Show use of fence
-                                    &vc->currentBuffer);
-
-    if (err == VK_ERROR_OUT_OF_DATE_KHR)
-    {
-        // demo->swapchain is out of date (e.g. the window was resized) and
-        // must be recreated:
-        /* XXX: TODO
-         * vulkan_resize(vc);
-         */
-        PAUSE_HERE("pausing\n");
-        VulkanRender(vc, numOfVertices, shouldClear);
-        vkDestroySemaphore(vc->device, presentCompleteSemaphore, NULL);
-        return;
-    }
-    else if (err == VK_SUBOPTIMAL_KHR)
-    {
-        // demo->swapchain is not as optimal as it could be, but the platform's
-        // presentation engine will still present the image correctly.
-    }
-    else
-    {
-        ASSERT(!err);
-    }
-
-    // Assume the command buffer has been run on currentBuffer before so
-    // we need to set the image layout back to COLOR_ATTACHMENT_OPTIMAL
-    VulkanSetImageLayout(
-            &vc->device,
-            &vc->setupCmd,
-            &vc->cmdPool,
-            vc->buffers[vc->currentBuffer].image,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            (VkAccessFlagBits)0);
-
-    VulkanFlushInit(
-            &vc->device,
-            &vc->setupCmd,
-            &vc->cmdPool,
-            &vc->queue);
-
-    // Wait for the present complete semaphore to be signaled to ensure
-    // that the image won't be rendered to until the presentation
-    // engine has fully released ownership to the application, and it is
-    // okay to render to the image.
-
-    // FIXME/TODO: DEAL WITH VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-    VulkanBuildDrawCommand(vc, numOfVertices, shouldClear);
-
+    VkResult err = {};
     VkFence nullFence = VK_NULL_HANDLE;
     VkPipelineStageFlags pipeStageFlags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     VkSubmitInfo submitInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_SUBMIT_INFO,
         /*.pNext =*/                NULL,
         /*.waitSemaphoreCount =*/   1,
-        /*.pWaitSemaphores =*/      &presentCompleteSemaphore,
+        /*.pWaitSemaphores =*/      &vc->presentCompleteSemaphore,
         /*.pWaitDstStageMask =*/    &pipeStageFlags,
         /*.commandBufferCount =*/   1,
         /*.pCommandBuffers =*/      &vc->drawCmd,
@@ -2407,7 +2536,205 @@ void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
     err = vkQueueWaitIdle(vc->queue);
     ASSERT(err == VK_SUCCESS);
 
-    vkDestroySemaphore(vc->device, presentCompleteSemaphore, NULL);
+    vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, NULL);
+
+}
+
+
+void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
+{
+    VkResult err;
+    VkSemaphoreCreateInfo presentCompleteSemaphoreCreateInfo = {
+        /*.sType =*/ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        /*.pNext =*/ NULL,
+        /*.flags =*/ 0,
+    };
+
+    err = vkCreateSemaphore(vc->device,
+                            &presentCompleteSemaphoreCreateInfo,
+                            NULL,
+                            &vc->presentCompleteSemaphore);
+    ASSERT(!err);
+
+    // Get the index of the next available swapchain image:
+    err = vc->fpAcquireNextImageKHR(vc->device,
+                                    vc->swapchain,
+                                    UINT64_MAX,
+                                    vc->presentCompleteSemaphore,
+                                    (VkFence)0, // TODO: Show use of fence
+                                    &vc->currentBuffer);
+
+    if (err == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        // demo->swapchain is out of date (e.g. the window was resized) and
+        // must be recreated:
+        /* XXX: TODO
+         * vulkan_resize(vc);
+         */
+        PAUSE_HERE("pausing\n");
+        VulkanRender(vc, numOfVertices, shouldClear);
+        vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, NULL);
+        return;
+    }
+    else if (err == VK_SUBOPTIMAL_KHR)
+    {
+        // demo->swapchain is not as optimal as it could be, but the platform's
+        // presentation engine will still present the image correctly.
+    }
+    else
+    {
+        ASSERT(!err);
+    }
+
+    // Assume the command buffer has been run on currentBuffer before so
+    // we need to set the image layout back to COLOR_ATTACHMENT_OPTIMAL
+    VulkanSetImageLayout(
+            &vc->device,
+            &vc->setupCmd,
+            &vc->cmdPool,
+            vc->buffers[vc->currentBuffer].image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            (VkAccessFlagBits)0);
+
+    VulkanFlushInit(
+            &vc->device,
+            &vc->setupCmd,
+            &vc->cmdPool,
+            &vc->queue);
+
+    // Wait for the present complete semaphore to be signaled to ensure
+    // that the image won't be rendered to until the presentation
+    // engine has fully released ownership to the application, and it is
+    // okay to render to the image.
+
+    // FIXME/TODO: DEAL WITH VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    VulkanBuildDrawCommand(vc, numOfVertices, shouldClear);
+
+    /* End render */
+    VkFence nullFence = VK_NULL_HANDLE;
+    VkPipelineStageFlags pipeStageFlags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    VkSubmitInfo submitInfo = {
+        /*.sType =*/                VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        /*.pNext =*/                NULL,
+        /*.waitSemaphoreCount =*/   1,
+        /*.pWaitSemaphores =*/      &vc->presentCompleteSemaphore,
+        /*.pWaitDstStageMask =*/    &pipeStageFlags,
+        /*.commandBufferCount =*/   1,
+        /*.pCommandBuffers =*/      &vc->drawCmd,
+        /*.signalSemaphoreCount =*/ 0,
+        /*.pSignalSemaphores =*/    NULL
+    };
+
+    err = vkQueueSubmit(vc->queue, 1, &submitInfo, nullFence);
+    ASSERT(err == VK_SUCCESS);
+
+    VkPresentInfoKHR present = {
+        /*.sType =*/                VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        /*.pNext =*/                NULL,
+        /*.waitSemaphoreCount =*/   0,
+        /*.pWaitSemaphores =*/      nullptr,
+        /*.swapchainCount =*/       1,
+        /*.pSwapchains =*/          &vc->swapchain,
+        /*.pImageIndices =*/        &vc->currentBuffer,
+        /*.pResults =*/             nullptr
+    };
+
+    // TBD/TODO: SHOULD THE "present" PARAMETER BE "const" IN THE HEADER?
+    err = vc->fpQueuePresentKHR(vc->queue, &present);
+
+    if (err == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        // vc->swapchain is out of date (e.g. the window was resized) and
+        // must be recreated:
+        ASSERT(!"pausing\n");
+        //vulkan_resize(vc);
+    }
+    else if (err == VK_SUBOPTIMAL_KHR)
+    {
+        // vc->swapchain is not as optimal as it could be, but the platform's
+        // presentation engine will still present the image correctly.
+    }
+    else
+    {
+        ASSERT(!err);
+    }
+
+    err = vkQueueWaitIdle(vc->queue);
+    ASSERT(err == VK_SUCCESS);
+
+    vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, NULL);
+}
+
+
+void VulkanPrepareRender(VulkanContext *vc)
+{
+    VkResult err;
+    VkSemaphoreCreateInfo presentCompleteSemaphoreCreateInfo = {
+        /*.sType =*/ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        /*.pNext =*/ NULL,
+        /*.flags =*/ 0,
+    };
+
+    err = vkCreateSemaphore(vc->device,
+                            &presentCompleteSemaphoreCreateInfo,
+                            NULL,
+                            &vc->presentCompleteSemaphore);
+    ASSERT(!err);
+
+    // Get the index of the next available swapchain image:
+    err = vc->fpAcquireNextImageKHR(vc->device,
+                                    vc->swapchain,
+                                    UINT64_MAX,
+                                    vc->presentCompleteSemaphore,
+                                    (VkFence)0, // TODO: Show use of fence
+                                    &vc->currentBuffer);
+
+    if (err == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        // demo->swapchain is out of date (e.g. the window was resized) and
+        // must be recreated:
+        /* XXX: TODO
+         * vulkan_resize(vc);
+         */
+        PAUSE_HERE("pausing\n");
+        VulkanRender(vc, 0, true);
+        vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, NULL);
+        return;
+    }
+    else if (err == VK_SUBOPTIMAL_KHR)
+    {
+        // demo->swapchain is not as optimal as it could be, but the platform's
+        // presentation engine will still present the image correctly.
+    }
+    else
+    {
+        ASSERT(!err);
+    }
+
+    // Assume the command buffer has been run on currentBuffer before so
+    // we need to set the image layout back to COLOR_ATTACHMENT_OPTIMAL
+    VulkanSetImageLayout(
+            &vc->device,
+            &vc->setupCmd,
+            &vc->cmdPool,
+            vc->buffers[vc->currentBuffer].image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            (VkAccessFlagBits)0);
+
+    VulkanFlushInit(
+            &vc->device,
+            &vc->setupCmd,
+            &vc->cmdPool,
+            &vc->queue);
+
+    // Wait for the present complete semaphore to be signaled to ensure
+    // that the image won't be rendered to until the presentation
+    // engine has fully released ownership to the application, and it is
+    // okay to render to the image.
 
 }
 #endif
