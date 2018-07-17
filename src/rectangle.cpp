@@ -133,10 +133,17 @@ inline void UpdatePosition(Rect *r, v3 newPosition)
     v2 min = { newPosition.x, newPosition.y };
     v2 max = { newPosition.x + r->width, newPosition.y + r->height };
 
+#if 0
     v3 topRight = v3{ max.x, max.y, 0 };
     v3 bottomRight = v3{ max.x, min.y, 0 };
     v3 bottomLeft = v3{ min.x, min.y, 0 };
     v3 topLeft = v3{ min.x, max.y, 0 };
+#else
+    v3 bottomRight = v3{ max.x, max.y, 0 };
+    v3 topRight = v3{ max.x, min.y, 0 };
+    v3 topLeft = v3{ min.x, min.y, 0 };
+    v3 bottomLeft = v3{ min.x, max.y, 0 };
+#endif
 
     r->vertices[0].vPosition = topRight;
     r->vertices[1].vPosition = bottomRight;

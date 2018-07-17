@@ -293,7 +293,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                         gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
 
         //ParticleSystem *ps = &gameMetadata->particleSystem;
-        f32 base = 0.01f;
+        f32 base = -1.01f;
         f32 width = 0.05f;
         f32 height = 0.05f;
         Bitmap *bitmap = FindBitmap(&gameMetadata->sentinelNode, 0);
@@ -308,9 +308,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ZeroSize(particle, sizeof(Particle));
             particle->TTL = particle->maxTTL = 60000;
 
-            v3 basePosition = { base, base, 0 };
+            v3 basePosition = { base, base, 0.5f };
             base += 0.15f;
-            v4 color = { 1, 1, 1, 1 };
+            v4 color = { 0.1f, 0.1f, 0.1f, 1 };
             particle->rect.color = color;
             particle->rect.isScreenCoordinateSpace = false;
             particle->rect.bitmapID = 0;
@@ -531,6 +531,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         v3 newPosition = v3{ e->position.x,
                              e->position.y,
                              e->position.z};
+
         CreateVertices(&particle->rect);
         particle->acc.y = gravity * 2;
         particle->vel.x = 0;
@@ -570,6 +571,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[150];
+    UniformBufferObject ubo = {};
 
     Bitmap perFrameSentinelNode = {};
     perFrameSentinelNode.next = &perFrameSentinelNode;
@@ -644,7 +646,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-    UniformBufferObject ubo = {};
+    ubo = {};
 
     OpenGLCheckErrors();
 
@@ -688,10 +690,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
-
-    glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
-                 perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
-    DrawRawRectangle(perFrameRenderGroup->rectCount);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
@@ -772,6 +770,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         prevTextureParam = textureParam;
     }
 
+#if 1
+    ubo = {};
+    ubo.view = g_camera->view;
+    ubo.projection = *g_projection;
+    ubo.model = glm::mat4();
+    VulkanUpdateUniformBuffer(vc, &ubo);
+
     ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
     memset(&vc->vertices, 0, sizeof(vc->vertices));
     VulkanPrepareVertices(
@@ -779,6 +784,10 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             (void *)perFrameRenderGroup->vertexMemory.base,
             perFrameRenderGroup->vertexMemory.used);
     VulkanRender(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6), true);
+#endif
+
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
                  perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
@@ -851,7 +860,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         OpenGLEndUseProgram();
     }
 
-
     glBindVertexArray(0);
 
     OpenGLCheckErrors();
@@ -864,9 +872,9 @@ void LoadStuff(GameMetadata *gameMetadata)
 
     v4 color = { 0.1f, 0.1f, 0.1f, 1.0f };
     /* load random data */
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 5; i++)
     {
-        for (int y = 0; y < 100; y++)
+        for (int y = 0; y < 5; y++)
         {
             v3 startingPosition = { -1 + (real32)i, 1 * (real32)y, 0 };
             /* TODO: extract out creating new entity from the manager */
@@ -886,7 +894,7 @@ void LoadStuff(GameMetadata *gameMetadata)
     }
 
     /* Let's add some non-traversable entity */
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 10; i++)
     {
         v3 startingPosition = { -1 + 4 * (real32)i, 0, 0 };
 

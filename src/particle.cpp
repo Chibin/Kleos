@@ -35,13 +35,13 @@ inline void UpdateAndGenerateParticleRectInfo(RenderGroup *renderGroup, Particle
             continue;
         }
 
-    f32 alpha = (f32)(particle->TTL / (f32)particle->maxTTL); // NOLINT
-    UpdateColors(&particle->rect,
-                 v4{ particle->rect.color.r,
-                     particle->rect.color.g,
-                     particle->rect.color.b,
-                     alpha});
-    PushRenderGroupRectInfo(renderGroup, &particle->rect);
+        f32 alpha = (f32)(particle->TTL / (f32)particle->maxTTL); // NOLINT
+        UpdateColors(&particle->rect,
+                v4{ particle->rect.color.r,
+                particle->rect.color.g,
+                particle->rect.color.b,
+                alpha});
+        PushRenderGroupRectInfo(renderGroup, &particle->rect);
     }
 }
 #endif
