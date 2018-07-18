@@ -551,7 +551,20 @@ VkDeviceSize VulkanCreateBuffer(
     return allocInfo.allocationSize;
 }
 
-void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize)
+void VulkanUpdateVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize)
+{
+
+    vkCmdUpdateBuffer(
+            vc->drawCmd,
+            vc->vertices.buf,
+            0,
+            verticesSize,
+            verticesData);
+}
+
+void VulkanPrepareVertices(
+        VulkanContext *vc, VkBuffer *buffer, VkDeviceMemory *mem,
+        void *verticesData, VkDeviceSize verticesSize)
 {
 
     VkResult err = {};
@@ -559,12 +572,6 @@ void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize v
 	vkGetPhysicalDeviceMemoryProperties(vc->gpu, &memoryProperties);
 
     VulkanVertices *vertices = &vc->vertices;
-    if (vertices->buf != VK_NULL_HANDLE)
-    {
-        vkDestroyBuffer(vc->device, vertices->buf, nullptr);
-        memset(vertices, 0, sizeof(*vertices));
-    }
-
     VkMemoryRequirements memReqs = {};
     void *data;
 
@@ -574,13 +581,13 @@ void VulkanPrepareVertices(VulkanContext *vc, void *verticesData, VkDeviceSize v
             verticesSize,
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-            &vertices->buf,
-            &vertices->mem);
+            buffer,
+            mem);
 
-    err = vkMapMemory(vc->device, vertices->mem, 0, memSize, 0, &data);
+    err = vkMapMemory(vc->device, *mem, 0, memSize, 0, &data);
     ASSERT(!err);
     memcpy(data, verticesData, memSize);
-    vkUnmapMemory(vc->device, vertices->mem);
+    vkUnmapMemory(vc->device, *mem);
 
 }
 
@@ -744,10 +751,10 @@ void VulkanPrepareDrawBufferCommands(VulkanContext *vc)
     vkCmdSetScissor(vc->drawCmd, 0, 1, &scissor);
 }
 
-void VulkanAddDrawCmd(VulkanContext *vc, u32 numOfVertices)
+void VulkanAddDrawCmd(VulkanContext *vc, VkBuffer *buf, u32 numOfVertices)
 {
     VkDeviceSize offsets[1] = {0};
-    vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
+    vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, buf, offsets);
 
     vkCmdDraw(vc->drawCmd, numOfVertices, 1, 0, 0);
 }

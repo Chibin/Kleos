@@ -33,6 +33,14 @@ typedef struct _SwapchainBuffers
     VkImageView view;
 } SwapchainBuffers;
 
+struct VulkanBuffers
+{
+    VkBuffer bufs[100];
+    VkDeviceMemory mems[100];
+    memory_index maxNum;
+    memory_index count;
+};
+
 struct VulkanVertices
 {
     VkBuffer buf;

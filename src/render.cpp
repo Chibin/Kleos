@@ -126,6 +126,7 @@ static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
 static Animation2D *g_spriteAnimation = nullptr;
 static GLuint g_permanentTextureID;
+static VulkanBuffers g_vkBuffers;
 
 Vertex vb[6] = {};
 
@@ -189,6 +190,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
+        g_vkBuffers.count = 0;
+        g_vkBuffers.maxNum = 100;
 
         vc->pipelineLayout = {};
         VulkanPrepareDescriptorLayout(vc);
@@ -571,8 +574,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             RenderGroup *perFrameRenderGroup, VulkanContext *vc)
 {
 
-    //VulkanPrepareRender(vc);
-    //VulkanPrepareDrawBufferCommands(vc);
+    VulkanPrepareRender(vc);
+    VulkanPrepareDrawBufferCommands(vc);
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
@@ -723,11 +726,16 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             {
                 ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
                 memset(&vc->vertices, 0, sizeof(vc->vertices));
-                //VulkanPrepareVertices(
-                //        vc,
-                //        (void *)perFrameRenderGroup->vertexMemory.base,
-                //        perFrameRenderGroup->vertexMemory.used);
-                //VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+                VulkanPrepareVertices(
+                        vc,
+                        &g_vkBuffers.bufs[g_vkBuffers.count],
+                        &g_vkBuffers.mems[g_vkBuffers.count],
+                        (void *)perFrameRenderGroup->vertexMemory.base,
+                        perFrameRenderGroup->vertexMemory.used);
+                VulkanAddDrawCmd(
+                        vc,
+                        &g_vkBuffers.bufs[g_vkBuffers.count++],
+                        SafeCastToU32(perFrameRenderGroup->rectCount * 6));
             }
 
             glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
@@ -742,7 +750,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 ubo.view = glm::mat4();
                 ubo.projection = glm::mat4();
                 ubo.model = glm::mat4();
-                //VulkanUpdateUniformBuffer(vc, &ubo);
+                VulkanUpdateUniformBuffer(vc, &ubo);
 
                 SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
 
@@ -754,7 +762,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 ubo.view = g_camera->view;
                 ubo.projection = *g_projection;
                 ubo.model = glm::mat4();
-                //VulkanUpdateUniformBuffer(vc, &ubo);
+                VulkanUpdateUniformBuffer(vc, &ubo);
 
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
                 glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -780,16 +788,19 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     ubo.view = g_camera->view;
     ubo.projection = *g_projection;
     ubo.model = glm::mat4();
-    //VulkanUpdateUniformBuffer(vc, &ubo);
+    VulkanUpdateUniformBuffer(vc, &ubo);
 
     ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
-    memset(&vc->vertices, 0, sizeof(vc->vertices));
-
-    //VulkanPrepareVertices(
-    //        vc,
-    //        (void *)perFrameRenderGroup->vertexMemory.base,
-    //        perFrameRenderGroup->vertexMemory.used);
-    //VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+    VulkanPrepareVertices(
+            vc,
+            &g_vkBuffers.bufs[g_vkBuffers.count],
+            &g_vkBuffers.mems[g_vkBuffers.count],
+            (void *)perFrameRenderGroup->vertexMemory.base,
+            perFrameRenderGroup->vertexMemory.used);
+    VulkanAddDrawCmd(
+            vc,
+            &g_vkBuffers.bufs[g_vkBuffers.count++],
+            SafeCastToU32(perFrameRenderGroup->rectCount * 6));
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -834,20 +845,23 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         ubo.view = g_camera->view;
         ubo.projection = *g_projection;
         ubo.model = glm::mat4();
-        //VulkanUpdateUniformBuffer(vc, &ubo);
+        VulkanUpdateUniformBuffer(vc, &ubo);
 
         ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
-        memset(&vc->vertices, 0, sizeof(vc->vertices));
-        //VulkanPrepareVertices(
-        //        vc,
-        //        (void *)perFrameRenderGroup->vertexMemory.base,
-        //        perFrameRenderGroup->vertexMemory.used);
-
-        //VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
-        //VulkanEndBufferCommands(vc);
-        //VulkanEndRender(vc);
-        //vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
-        //vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
+        VulkanPrepareVertices(
+                vc,
+                &g_vkBuffers.bufs[g_vkBuffers.count],
+                &g_vkBuffers.mems[g_vkBuffers.count],
+                (void *)perFrameRenderGroup->vertexMemory.base,
+                perFrameRenderGroup->vertexMemory.used);
+        VulkanAddDrawCmd(
+                vc,
+                &g_vkBuffers.bufs[g_vkBuffers.count++],
+                SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+        VulkanEndBufferCommands(vc);
+        VulkanEndRender(vc);
+        vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
+        vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
         modelLoc = glGetUniformLocation(debugProgram, "model");
         viewLoc = glGetUniformLocation(program, "view");
@@ -869,6 +883,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     glBindVertexArray(0);
     OpenGLCheckErrors();
+    for (memory_index i = 0; i < g_vkBuffers.count; i++)
+    {
+        vkDestroyBuffer(vc->device, g_vkBuffers.bufs[i], nullptr);
+        vkFreeMemory(vc->device, g_vkBuffers.mems[i], nullptr);
+    }
+    g_vkBuffers.count = 0;
 }
 
 void LoadStuff(GameMetadata *gameMetadata)
