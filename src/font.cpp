@@ -110,33 +110,6 @@ inline void FlipImage(u32 *pixels, u32 width, u32 height)
     }
 }
 
-GLuint StringToTexture(TTF_Font *font, const char *msg)
-{
-    /* FIXME: Is this right? we might not be able to assume that we can just
-     * pick the first glenum texture
-     */
-    GLuint textureID;
-
-    SDL_Surface *surface = StringToSDLSurface(font, msg);
-    assert(surface != nullptr);
-
-    GLenum format = GL_RGB;
-    if (surface->format->BytesPerPixel == 4)
-    {
-        format = GL_RGBA;
-    }
-    u32 width = surface->w;
-    u32 height = surface->h;
-
-    FlipImage((u32 *)surface->pixels, width, height);
-    textureID = OpenGLAllocateTexture(format, surface->w, surface->h,
-                                      surface->pixels);
-
-    // Clean up the surface and font
-    SDL_FreeSurface(surface);
-    return textureID;
-}
-
 inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitmap *bitmap)
 {
     u32 width = surface->w;
@@ -155,6 +128,31 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
     bitmap->width = width;
     bitmap->height = height;
 };
+
+void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
+{
+    /* FIXME: Is this right? we might not be able to assume that we can just
+     * pick the first glenum texture
+     */
+    SDL_Surface *surface = StringToSDLSurface(font, msg);
+    assert(surface != nullptr);
+
+    GLenum format = GL_RGB;
+    if (surface->format->BytesPerPixel == 4)
+    {
+        format = GL_RGBA;
+    }
+    u32 width = surface->w;
+    u32 height = surface->h;
+
+    FlipImage((u32 *)surface->pixels, width, height);
+    OpenGLBindImageToTexture(format, surface->w, surface->h,
+                             surface->pixels, textureID);
+
+    // Clean up the surface and font
+    SDL_FreeSurface(surface);
+}
+
 
 void StringToBitmap(GameMemory *gm, Bitmap *bitmap, TTF_Font *font, const char *msg)
 {

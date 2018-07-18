@@ -85,4 +85,5 @@ GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
 void _defined_openGLCheckErrors(const char *file, int line);
 
 void OpenGLBindTexture(GLuint textureID);
+void OpenGLBindImageToTexture(int textureFormat, int width, int height, void *data, GLuint &textureID);
 #endif

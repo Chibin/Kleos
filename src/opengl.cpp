@@ -89,16 +89,9 @@ void OpenGLCreateVAO(GLuint &vao, GLuint &vbo, uint32 vboSize,
     glBindVertexArray(0);
 }
 
-GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
-                             void *data)
+void OpenGLBindImageToTexture(int textureFormat, int width, int height,
+                              void *data, GLuint &textureID)
 {
-    /* returns a texture ID "handle" to
-     * access it later in OpenGL.
-     */
-
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -131,6 +124,19 @@ GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+GLuint OpenGLAllocateTexture(int textureFormat, int width, int height,
+                             void *data)
+{
+    /* returns a texture ID "handle" to
+     * access it later in OpenGL.
+     */
+
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+
+    OpenGLBindImageToTexture(textureFormat, width, height, data, textureID);
 
     return textureID;
 }

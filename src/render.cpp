@@ -125,6 +125,7 @@ EntityDynamicArray *g_eda = nullptr;
 static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
 static Animation2D *g_spriteAnimation = nullptr;
+static GLuint g_permanentTextureID;
 
 Vertex vb[6] = {};
 
@@ -202,7 +203,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         START_DEBUG_TIMING();
 
-
         ASSERT(!*gameTimestep);
         ASSERT(!g_camera);
         ASSERT(!g_eda);
@@ -210,6 +210,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ASSERT(!g_rectManager);
         ASSERT(!g_entityManager);
         ASSERT(!g_reservedMemory);
+
+        glGenTextures(1, &g_permanentTextureID);
 
         TTF_Font *font = OpenFont();
         ASSERT(font != nullptr);
@@ -396,7 +398,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
 void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup, bool isPlayer = false)
 {
-    //GameMemory *reservedMemory = &gameMetadata->reservedMemory;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
     /* 
@@ -570,8 +571,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             RenderGroup *perFrameRenderGroup, VulkanContext *vc)
 {
 
-    VulkanPrepareRender(vc);
-    VulkanPrepareDrawBufferCommands(vc);
+    //VulkanPrepareRender(vc);
+    //VulkanPrepareDrawBufferCommands(vc);
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
@@ -637,8 +638,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     /* Draw text at the corner */
 
-    GLuint temp = StringToTexture(gameMetadata->font, "testing this");
-    OpenGLBindTexture(temp);
+    StringToTexture(gameMetadata->font, "testing this", g_permanentTextureID);
+    OpenGLBindTexture(g_permanentTextureID);
     /* End draw text at corner */
 
     OpenGLBeginUseProgram(program, textureID);
@@ -722,11 +723,11 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             {
                 ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
                 memset(&vc->vertices, 0, sizeof(vc->vertices));
-                VulkanPrepareVertices(
-                        vc,
-                        (void *)perFrameRenderGroup->vertexMemory.base,
-                        perFrameRenderGroup->vertexMemory.used);
-                VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+                //VulkanPrepareVertices(
+                //        vc,
+                //        (void *)perFrameRenderGroup->vertexMemory.base,
+                //        perFrameRenderGroup->vertexMemory.used);
+                //VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
             }
 
             glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
@@ -741,7 +742,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 ubo.view = glm::mat4();
                 ubo.projection = glm::mat4();
                 ubo.model = glm::mat4();
-                VulkanUpdateUniformBuffer(vc, &ubo);
+                //VulkanUpdateUniformBuffer(vc, &ubo);
 
                 SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
 
@@ -753,7 +754,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 ubo.view = g_camera->view;
                 ubo.projection = *g_projection;
                 ubo.model = glm::mat4();
-                VulkanUpdateUniformBuffer(vc, &ubo);
+                //VulkanUpdateUniformBuffer(vc, &ubo);
 
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
                 glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -779,17 +780,16 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     ubo.view = g_camera->view;
     ubo.projection = *g_projection;
     ubo.model = glm::mat4();
-    VulkanUpdateUniformBuffer(vc, &ubo);
+    //VulkanUpdateUniformBuffer(vc, &ubo);
 
     ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
     memset(&vc->vertices, 0, sizeof(vc->vertices));
 
-    VulkanPrepareVertices(
-            vc,
-            (void *)perFrameRenderGroup->vertexMemory.base,
-            perFrameRenderGroup->vertexMemory.used);
-
-    VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+    //VulkanPrepareVertices(
+    //        vc,
+    //        (void *)perFrameRenderGroup->vertexMemory.base,
+    //        perFrameRenderGroup->vertexMemory.used);
+    //VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -834,20 +834,20 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         ubo.view = g_camera->view;
         ubo.projection = *g_projection;
         ubo.model = glm::mat4();
-        VulkanUpdateUniformBuffer(vc, &ubo);
+        //VulkanUpdateUniformBuffer(vc, &ubo);
 
         ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
         memset(&vc->vertices, 0, sizeof(vc->vertices));
-        VulkanPrepareVertices(
-                vc,
-                (void *)perFrameRenderGroup->vertexMemory.base,
-                perFrameRenderGroup->vertexMemory.used);
+        //VulkanPrepareVertices(
+        //        vc,
+        //        (void *)perFrameRenderGroup->vertexMemory.base,
+        //        perFrameRenderGroup->vertexMemory.used);
 
-        VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
-        VulkanEndBufferCommands(vc);
-        VulkanEndRender(vc);
-        vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
-        vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
+        //VulkanAddDrawCmd(vc, SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+        //VulkanEndBufferCommands(vc);
+        //VulkanEndRender(vc);
+        //vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
+        //vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
         modelLoc = glGetUniformLocation(debugProgram, "model");
         viewLoc = glGetUniformLocation(program, "view");
@@ -868,9 +868,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     }
 
     glBindVertexArray(0);
-
     OpenGLCheckErrors();
-
 }
 
 void LoadStuff(GameMetadata *gameMetadata)
