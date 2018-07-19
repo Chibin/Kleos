@@ -99,9 +99,13 @@ inline void FlipImage(u32 *pixels, u32 width, u32 height)
 
         for (uint32 counter = 0; counter < width; counter++)
         {
-            u32 temp = *(firstPixel + counter);
-            *(firstPixel + counter) = *(secondPixel + counter);
-            *(secondPixel + counter) = temp;
+
+            *(firstPixel + counter) ^= *(secondPixel + counter)
+                ^= *(firstPixel + counter) ^= *(secondPixel + counter);
+
+            //u32 temp = *(firstPixel + counter);
+            //*(firstPixel + counter) = *(secondPixel + counter);
+            //*(secondPixel + counter) = temp;
             //u32 temp = *(firstPixel + counter);
             //SWAP_POINTER_VALUES(firstPixel, secondPixel, u32);
             //firstPixel++;
