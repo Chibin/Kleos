@@ -20,6 +20,13 @@ Just things that helps me with the work flow.
 
 `https://github.com/jesse23/with`
 
+# Troubleshooting
+
+## Vulkan
+The new steam chat update broke GetSwapchainImagesKHR.
+You'll get a crash `Exception thrown at 0x* (SteamOverlayVulkanLayer64.dll)`
+You can prevent the crash by disabling the layer.
+Add 'DISABLE_VK_LAYER_VALVE_steam_overlay_1=1' as an environment variable.
 
 # Misc Links
 https://www.mkyong.com/linux/grep-for-windows-findstr-example/
