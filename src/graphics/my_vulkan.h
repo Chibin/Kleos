@@ -1969,7 +1969,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     }
     /* end prepare texture */
 
-
     vc->device = device;
     vc->gpu = gpu;
     vc->fpAcquireNextImageKHR = fpAcquireNextImageKHR;
@@ -2039,11 +2038,20 @@ void VulkanPrepareDescriptorLayout(VulkanContext *vc)
     err = vkCreateDescriptorSetLayout(*device, &descriptorLayout, NULL, &vc->descLayout);
     ASSERT(!err);
 
+    VkPushConstantRange pushConstantRange;
+    memset(&pushConstantRange, 0, sizeof(VkPushConstantRange));
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    pushConstantRange.offset = 0;
+    /* view and projection matrices */
+    pushConstantRange.size = sizeof(glm::mat4) * 2;
+
     VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
     pPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pPipelineLayoutCreateInfo.pNext = NULL;
     pPipelineLayoutCreateInfo.setLayoutCount = 1;
     pPipelineLayoutCreateInfo.pSetLayouts = &vc->descLayout;
+    pPipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+    pPipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
     err = vkCreatePipelineLayout(*device, &pPipelineLayoutCreateInfo, NULL, &vc->pipelineLayout);
     ASSERT(!err);

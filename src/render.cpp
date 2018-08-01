@@ -15,6 +15,8 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4201)
+#define GLM_SWIZZLE
+#define GLM_SWIZZLE_XYZW
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -574,6 +576,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             RenderGroup *perFrameRenderGroup, VulkanContext *vc)
 {
 
+    struct PushConstantMatrix
+    {
+        glm::mat4 view;
+        glm::mat4 proj;
+    } pushConstants;
+    pushConstants = {};
+
     VulkanPrepareRender(vc);
     VulkanPrepareDrawBufferCommands(vc);
 
@@ -665,6 +674,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     SetOpenGLDrawToScreenCoordinate(projectionLoc, viewLoc);
 
+    ubo = {};
+    ubo.view = glm::mat4();
+    ubo.projection = glm::mat4();
+    ubo.model = glm::mat4();
+    VulkanUpdateUniformBuffer(vc, &ubo);
+
     Bitmap stringBitmap = {};
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
@@ -676,6 +691,9 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     /* This is in raw OpenGL coordinates */
     v3 startingPosition = v3{ -1, 1 - rectHeight + padding, 0 };
+    glm::vec4 test =   glm::inverse(g_camera->view) * glm::inverse(*g_projection) * glm::vec4(-1, 1, 0, 1);
+    glm::vec4 test2 = *g_projection * g_camera->view * glm::vec4(test.x, test.y, test.z, 1);
+
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
 
@@ -685,6 +703,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
     statsRect->bitmap = &gameMetadata->whiteBitmap;
+
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
     gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
@@ -752,6 +771,16 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 ubo.model = glm::mat4();
                 VulkanUpdateUniformBuffer(vc, &ubo);
 
+                pushConstants.proj = glm::mat4();
+                pushConstants.view = glm::mat4();
+                vkCmdPushConstants(
+                        vc->drawCmd,
+                        vc->pipelineLayout,
+                        VK_SHADER_STAGE_VERTEX_BIT,
+                        0,
+                        sizeof(PushConstantMatrix),
+                        &pushConstants);
+
                 SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
 
             }
@@ -763,6 +792,16 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 ubo.projection = *g_projection;
                 ubo.model = glm::mat4();
                 VulkanUpdateUniformBuffer(vc, &ubo);
+
+                pushConstants.proj = *g_projection;
+                pushConstants.view = g_camera->view;
+                vkCmdPushConstants(
+                        vc->drawCmd,
+                        vc->pipelineLayout,
+                        VK_SHADER_STAGE_VERTEX_BIT,
+                        0,
+                        sizeof(PushConstantMatrix),
+                        &pushConstants);
 
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
                 glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
@@ -858,10 +897,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 vc,
                 &g_vkBuffers.bufs[g_vkBuffers.count++],
                 SafeCastToU32(perFrameRenderGroup->rectCount * 6));
-        VulkanEndBufferCommands(vc);
-        VulkanEndRender(vc);
-        vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
-        vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
         modelLoc = glGetUniformLocation(debugProgram, "model");
         viewLoc = glGetUniformLocation(program, "view");
@@ -880,6 +915,11 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         OpenGLEndUseProgram();
     }
+
+    VulkanEndBufferCommands(vc);
+    VulkanEndRender(vc);
+    vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
+    vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
     glBindVertexArray(0);
     OpenGLCheckErrors();
