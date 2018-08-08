@@ -195,16 +195,20 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_vkBuffers.count = 0;
         g_vkBuffers.maxNum = 100;
 
+        /* Creating pipeline layout, descriptor pool, and render pass can be done
+         * indenpendently
+         */
+        VulkanPrepareDescriptorPool(vc);
+
         vc->pipelineLayout = {};
-        VulkanPrepareDescriptorLayout(vc);
-        VulkanPrepareRenderPass(vc);
-        VulkanPrepareRenderPassWithNoClear(vc);
+        VulkanInitPipelineLayout(vc);
+        VulkanPrepareDescriptorSet(vc);
+
+        VulkanInitRenderPass(vc);
+        VulkanInitFrameBuffers(vc);
+
         memset(&vc->vertices, 0, sizeof(vc->vertices));
         VulkanPreparePipeline(vc, sizeof(Vertex));
-
-        VulkanPrepareDescriptorPool(vc);
-        VulkanPrepareDescriptorSet(vc);
-        VulkanSetupPart2(vc);
 
         START_DEBUG_TIMING();
 
@@ -765,12 +769,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
             if (rect->isScreenCoordinateSpace)
             {
-                ubo = {};
-                ubo.view = glm::mat4();
-                ubo.projection = glm::mat4();
-                ubo.model = glm::mat4();
-                VulkanUpdateUniformBuffer(vc, &ubo);
-
                 pushConstants.proj = glm::mat4();
                 pushConstants.view = glm::mat4();
                 vkCmdPushConstants(
@@ -786,13 +784,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             }
             else
             {
-
-                ubo = {};
-                ubo.view = g_camera->view;
-                ubo.projection = *g_projection;
-                ubo.model = glm::mat4();
-                VulkanUpdateUniformBuffer(vc, &ubo);
-
                 pushConstants.proj = *g_projection;
                 pushConstants.view = g_camera->view;
                 vkCmdPushConstants(
@@ -823,11 +814,15 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         prevTextureParam = textureParam;
     }
 
-    ubo = {};
-    ubo.view = g_camera->view;
-    ubo.projection = *g_projection;
-    ubo.model = glm::mat4();
-    VulkanUpdateUniformBuffer(vc, &ubo);
+    pushConstants.proj = *g_projection;
+    pushConstants.view = g_camera->view;
+    vkCmdPushConstants(
+            vc->drawCmd,
+            vc->pipelineLayout,
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(PushConstantMatrix),
+            &pushConstants);
 
     ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
     VulkanPrepareVertices(
@@ -880,12 +875,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
 
-        ubo = {};
-        ubo.view = g_camera->view;
-        ubo.projection = *g_projection;
-        ubo.model = glm::mat4();
-        VulkanUpdateUniformBuffer(vc, &ubo);
-
         ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
         VulkanPrepareVertices(
                 vc,
@@ -905,7 +894,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
 
         glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
                      perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);

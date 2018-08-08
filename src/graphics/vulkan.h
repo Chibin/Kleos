@@ -13,9 +13,6 @@
 #define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #define PlatformSurfaceCreateInfo VkWin32SurfaceCreateInfoKHR
 #define PLATFORM_SURFACE_CREATE_INFO VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-#define PLATFORM_ASSIGN_SURFACEINFO \
-    createInfo.hinstance = GetModuleHandle(NULL); \
-    createInfo.hwnd = info.info.win.window
 #define PlatformCreateSurface vkCreateWin32SurfaceKHR
 #define DEMO_TEXTURE_COUNT 1
 #define VERTEX_BUFFER_BIND_ID 0
@@ -158,6 +155,8 @@ struct VulkanContext
     TextureObject textures[DEMO_TEXTURE_COUNT];
 
     uint32_t swapchainImageCount;
+
+    VkPhysicalDeviceMemoryProperties memoryProperties;
 };
 
 #endif
