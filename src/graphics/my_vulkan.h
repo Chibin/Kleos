@@ -65,13 +65,16 @@ void VulkanFlushInit(
     VkResult err;
 
     if (*setupCmd == VK_NULL_HANDLE)
+    {
         return;
+    }
 
     err = vkEndCommandBuffer(*setupCmd);
-    ASSERT(!err);
+    ASSERT(err == VK_SUCCESS);
 
-    const VkCommandBuffer cmdBufs[] = {*setupCmd};
     VkFence nullFence = {VK_NULL_HANDLE};
+    const VkCommandBuffer cmdBufs[] = {*setupCmd};
+
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.pNext = NULL;
@@ -257,17 +260,16 @@ void VulkanPrepareDrawBufferCommands(VulkanContext *vc)
     vkrect.extent.height = vc->height;
 
     const VkRenderPassBeginInfo rpBegin = {
-        /*.sType =*/ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        /*.pNext =*/ NULL,
-        /*.renderPass =*/  vc->renderPass,
-        /*.framebuffer =*/ vc->framebuffers[vc->currentBuffer],
-        /*.renderArea =*/ vkrect,
-        /*.clearValueCount =*/ 2,
-        /*.pClearValues =*/ clearValues,
+        /*.sType =*/            VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        /*.pNext =*/            NULL,
+        /*.renderPass =*/       vc->renderPass,
+        /*.framebuffer =*/      vc->framebuffers[vc->currentBufferIndex],
+        /*.renderArea =*/       vkrect,
+        /*.clearValueCount =*/  2,
+        /*.pClearValues =*/     clearValues,
     };
 
     VkResult err;
-
     err = vkBeginCommandBuffer(vc->drawCmd, &cmdBufInfo);
     ASSERT(!err);
 
@@ -283,16 +285,14 @@ void VulkanPrepareDrawBufferCommands(VulkanContext *vc)
             0,
             NULL);
 
-    VkViewport viewport;
-    memset(&viewport, 0, sizeof(viewport));
+    VkViewport viewport = {};
     viewport.height = (float)vc->height;
     viewport.width = (float)vc->width;
     viewport.minDepth = (float)0.0f;
     viewport.maxDepth = (float)1.0f;
     vkCmdSetViewport(vc->drawCmd, 0, 1, &viewport);
 
-    VkRect2D scissor;
-    memset(&scissor, 0, sizeof(scissor));
+    VkRect2D scissor = {};
     scissor.extent.width = vc->width;
     scissor.extent.height = vc->height;
     scissor.offset.x = 0;
@@ -321,7 +321,7 @@ void VulkanEndBufferCommands(VulkanContext *vc)
         /*.newLayout =*/            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         /*.srcQueueFamilyIndex =*/  VK_QUEUE_FAMILY_IGNORED,
         /*.dstQueueFamilyIndex =*/  VK_QUEUE_FAMILY_IGNORED,
-        /*.image =*/                vc->buffers[vc->currentBuffer].image,
+        /*.image =*/                vc->buffers[vc->currentBufferIndex].image,
         /*.subresourceRange =*/     {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}
     };
 
@@ -377,14 +377,13 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
         /*.sType =*/ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         /*.pNext =*/ NULL,
         /*.renderPass =*/  vc->renderPass,
-        /*.framebuffer =*/ vc->framebuffers[vc->currentBuffer],
+        /*.framebuffer =*/ vc->framebuffers[vc->currentBufferIndex],
         /*.renderArea =*/ vkrect,
         /*.clearValueCount =*/ 2,
         /*.pClearValues =*/ clearValues,
     };
 
     VkResult err;
-
     err = vkBeginCommandBuffer(vc->drawCmd, &cmdBufInfo);
     ASSERT(!err);
 
@@ -432,7 +431,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
         /*.newLayout =*/            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         /*.srcQueueFamilyIndex =*/  VK_QUEUE_FAMILY_IGNORED,
         /*.dstQueueFamilyIndex =*/  VK_QUEUE_FAMILY_IGNORED,
-        /*.image =*/                vc->buffers[vc->currentBuffer].image,
+        /*.image =*/                vc->buffers[vc->currentBufferIndex].image,
         /*.subresourceRange =*/     {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}
     };
 
@@ -552,15 +551,13 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	VkBool32 validationFound = 0;
 	bool useBreak = false;
 
-    uint32_t currentBuffer;
+    uint32_t currentBufferIndex;
 
 	VkColorSpaceKHR colorSpace;
 
     VkCommandBuffer setupCmd = {}; // Command Buffer for initialization commands
     VkCommandBuffer drawCmd = {};  // Command Buffer for drawing commands
     VkPipeline pipeline = {};
-
-    VkDescriptorSet descSet = {};
 
     VkPhysicalDeviceMemoryProperties memoryProperties = {};
 
@@ -781,7 +778,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         &device,
         colorSpace,
         &vc->swapchainImageCount,
-        &currentBuffer);
+        &currentBufferIndex);
 
     VulkanInitDepthBuffer(vc, width, height, &vc->depth, &device, &setupCmd, &cmdPool);
 
@@ -824,7 +821,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->fpAcquireNextImageKHR = fpAcquireNextImageKHR;
     vc->fpQueuePresentKHR = fpQueuePresentKHR;
     vc->swapchain = swapchain;
-    vc->currentBuffer = currentBuffer;
+    vc->currentBufferIndex = currentBufferIndex;
     vc->curFrame = 0;
     vc->frameCount = 0;
 
@@ -840,7 +837,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->depthStencil = 1.0;
     vc->depthIncrement = -0.01f;
 
-    vc->descSet = descSet;
+    vc->descSet = {};
 
     vc->quit = false;
     return vc;
@@ -942,7 +939,7 @@ void VulkanEndRender(VulkanContext *vc)
         /*.pWaitSemaphores =*/      nullptr,
         /*.swapchainCount =*/       1,
         /*.pSwapchains =*/          &vc->swapchain,
-        /*.pImageIndices =*/        &vc->currentBuffer,
+        /*.pImageIndices =*/        &vc->currentBufferIndex,
         /*.pResults =*/             nullptr
     };
 
@@ -987,18 +984,20 @@ void VulkanPrepareRender(VulkanContext *vc)
                             &vc->presentCompleteSemaphore);
     ASSERT(!err);
 
-    // Get the index of the next available swapchain image:
+    /* Get the index of the next available swapchain image */
     err = vc->fpAcquireNextImageKHR(vc->device,
                                     vc->swapchain,
                                     UINT64_MAX,
                                     vc->presentCompleteSemaphore,
-                                    (VkFence)0, // TODO: Show use of fence
-                                    &vc->currentBuffer);
+                                    (VkFence)0, /* may be explore fences? */
+                                    &vc->currentBufferIndex);
 
     if (err == VK_ERROR_OUT_OF_DATE_KHR)
     {
-        // demo->swapchain is out of date (e.g. the window was resized) and
-        // must be recreated:
+        /* swapchain is out of date (e.g. the window was resized) and
+         * must be recreated
+         */
+
         /* XXX: TODO
          * vulkan_resize(vc);
          */
@@ -1009,21 +1008,22 @@ void VulkanPrepareRender(VulkanContext *vc)
     }
     else if (err == VK_SUBOPTIMAL_KHR)
     {
-        // demo->swapchain is not as optimal as it could be, but the platform's
-        // presentation engine will still present the image correctly.
+        /* swapchain is not as optimal as it could be, but the platform's
+         * presentation engine will still present the image correctly.
+         */
     }
     else
     {
         ASSERT(!err);
     }
 
-    // Assume the command buffer has been run on currentBuffer before so
+    // Assume the command buffer has been run on currentBufferIndex before so
     // we need to set the image layout back to COLOR_ATTACHMENT_OPTIMAL
     VulkanAddPipelineBarrier(
             &vc->device,
             &vc->setupCmd,
             &vc->cmdPool,
-            vc->buffers[vc->currentBuffer].image,
+            vc->buffers[vc->currentBufferIndex].image,
             VK_IMAGE_ASPECT_COLOR_BIT,
             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,

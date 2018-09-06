@@ -1,8 +1,4 @@
-/* set and create descriptor layouts
- * define push constant header
- * create pipeline layout
- */
-void VulkanInitPipelineLayout(VulkanContext *vc)
+void VulkanInitDescriptorSetLayout(VulkanContext *vc)
 {
     VkResult err;
     VkDevice *device = &vc->device;
@@ -31,6 +27,19 @@ void VulkanInitPipelineLayout(VulkanContext *vc)
 
     err = vkCreateDescriptorSetLayout(*device, &descriptorLayout, NULL, &vc->descLayout);
     ASSERT(!err);
+
+}
+
+/* set and create descriptor layouts
+ * define push constant header
+ * create pipeline layout
+ */
+void VulkanInitPipelineLayout(VulkanContext *vc)
+{
+    VkResult err;
+    VkDevice *device = &vc->device;
+
+    VulkanInitDescriptorSetLayout(vc);
 
     VkPushConstantRange pushConstantRange;
     memset(&pushConstantRange, 0, sizeof(VkPushConstantRange));

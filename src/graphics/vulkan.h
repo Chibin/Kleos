@@ -137,7 +137,7 @@ struct VulkanContext
     PFN_vkAcquireNextImageKHR fpAcquireNextImageKHR;
     PFN_vkQueuePresentKHR fpQueuePresentKHR;
 
-    uint32_t currentBuffer;
+    uint32_t currentBufferIndex;
 
     int32_t curFrame;
 	int32_t frameCount;
