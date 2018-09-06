@@ -539,7 +539,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     PFN_vkGetSwapchainImagesKHR fpGetSwapchainImagesKHR;
     PFN_vkAcquireNextImageKHR fpAcquireNextImageKHR;
     PFN_vkQueuePresentKHR fpQueuePresentKHR;
-    uint32_t swapchainImageCount;
 
 	VkCommandPool cmdPool;
 
@@ -555,7 +554,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     uint32_t currentBuffer;
 
-    VkFormat format;
 	VkColorSpaceKHR colorSpace;
 
     VkCommandBuffer setupCmd = {}; // Command Buffer for initialization commands
@@ -566,7 +564,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     VkPhysicalDeviceMemoryProperties memoryProperties = {};
 
-    int32_t frameCount = 0;
     uint32_t width = 0;
     uint32_t height = 0;
 
@@ -747,7 +744,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
      * the surface has no preferred format. Otherwise, at least one
      * supported format will be returned.
      */
-    format =
+    vc->format =
         (formatCount == 1 && surfFormats[0].format == VK_FORMAT_UNDEFINED) ? 
         VK_FORMAT_R8G8B8A8_UNORM : surfFormats[0].format;
     colorSpace = surfFormats[0].colorSpace;
@@ -776,14 +773,14 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         &cmdPool,
         &gpu,
         &surface,
-        &format,
+        &vc->format,
         &swapchain,
         &width,
         &height,
         &vc->depth,
         &device,
         colorSpace,
-        &swapchainImageCount,
+        &vc->swapchainImageCount,
         &currentBuffer);
 
     VulkanInitDepthBuffer(vc, width, height, &vc->depth, &device, &setupCmd, &cmdPool);
@@ -829,7 +826,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->swapchain = swapchain;
     vc->currentBuffer = currentBuffer;
     vc->curFrame = 0;
-    vc->frameCount = frameCount;
+    vc->frameCount = 0;
 
     vc->cmdPool = cmdPool;
     vc->setupCmd = setupCmd;
@@ -846,8 +843,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->descSet = descSet;
 
     vc->quit = false;
-    vc->format = format;
-    vc->swapchainImageCount = swapchainImageCount;
     return vc;
 
 }

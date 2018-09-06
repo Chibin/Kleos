@@ -3,14 +3,12 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
     VkResult err;
     VkShaderModule vertShaderModule = {};
     VkShaderModule fragShaderModule = {};
-    VkPipelineCache pipelineCache = {};
-
-    VkPipelineCacheCreateInfo pipelineCacheInfo;
 
     vc->vertices.viBindings[0].binding = VERTEX_BUFFER_BIND_ID;
     vc->vertices.viBindings[0].stride = stride;
     vc->vertices.viBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
+    /* the attr order is based on the shader code  */
     vc->vertices.viAttrs[0].binding = VERTEX_BUFFER_BIND_ID;
     vc->vertices.viAttrs[0].location = 0;
     vc->vertices.viAttrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -26,24 +24,20 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
     vc->vertices.viAttrs[2].format = VK_FORMAT_R32G32_SFLOAT;
     vc->vertices.viAttrs[2].offset = offsetof(Vertex, uv);
 
+    VkPipelineVertexInputStateCreateInfo vi;
     vc->vertices.vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vc->vertices.vi.pNext = NULL;
     vc->vertices.vi.vertexBindingDescriptionCount = 1;
     vc->vertices.vi.pVertexBindingDescriptions = vc->vertices.viBindings;
     vc->vertices.vi.vertexAttributeDescriptionCount = 3;
     vc->vertices.vi.pVertexAttributeDescriptions = vc->vertices.viAttrs;
-
-    VkPipelineVertexInputStateCreateInfo vi;
-    VkPipelineInputAssemblyStateCreateInfo ia;
-    VkPipelineRasterizationStateCreateInfo rs;
-
     vi = vc->vertices.vi;
 
-    memset(&ia, 0, sizeof(ia));
+    VkPipelineInputAssemblyStateCreateInfo ia = {};
     ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     ia.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-    memset(&rs, 0, sizeof(rs));
+    VkPipelineRasterizationStateCreateInfo rs = {};
     rs.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rs.depthClampEnable = VK_FALSE;
     rs.rasterizerDiscardEnable = VK_FALSE;
@@ -64,7 +58,7 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
 
     /* If the wide lines feature is not enabled, and no element of the
      * pDynamicStates member of pDynamicState is VK_DYNAMIC_STATE_LINE_WIDTH,
-     * the lineWidth member of pRasterizationState must be 1.0
+     * then lineWidth member of pRasterizationState must be 1.0
      */
     if (*dynamicState.pDynamicStates != VK_DYNAMIC_STATE_LINE_WIDTH)
     {
@@ -143,7 +137,8 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
     pipelineCreateInfo.basePipelineIndex;
     */
 
-    memset(&pipelineCacheInfo, 0, sizeof(pipelineCacheInfo));
+    VkPipelineCache pipelineCache = {};
+    VkPipelineCacheCreateInfo pipelineCacheInfo = {};
     pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     err = vkCreatePipelineCache(vc->device, &pipelineCacheInfo, NULL, &pipelineCache);
     ASSERT(!err);
@@ -157,4 +152,3 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
     vkDestroyShaderModule(vc->device, vertShaderModule, NULL);
 
 }
-
