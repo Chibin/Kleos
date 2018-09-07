@@ -685,31 +685,11 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     ubo.model = glm::mat4();
     VulkanUpdateUniformBuffer(vc, &ubo);
 
-    Bitmap stringBitmap = {};
-    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
-    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
-    stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
-
-    f32 rectWidth = 0.35f;
-    f32 rectHeight = 0.175f;
-    f32 padding = rectHeight * 0.1f;
-
-    /* This is in raw OpenGL coordinates */
-    v3 startingPosition = v3{ -1, 1 - rectHeight + padding, 0 };
+#if 0
+    /* doing inverse matrix testing to get back to screen space */
     glm::vec4 test =   glm::inverse(g_camera->view) * glm::inverse(*g_projection) * glm::vec4(-1, 1, 0, 1);
     glm::vec4 test2 = *g_projection * g_camera->view * glm::vec4(test.x, test.y, test.z, 1);
-
-    Rect *statsRect =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
-
-    statsRect->isScreenCoordinateSpace = true;
-    statsRect->bitmap = &stringBitmap;
-    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
-
-    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-    statsRect->bitmap = &gameMetadata->whiteBitmap;
-
-    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+#endif
 
     gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
                                                   gameMetadata->playerRect->bitmapID);
@@ -847,10 +827,56 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
 
-    OpenGLEndUseProgram();
+    Bitmap *lastBitmapBeforeUI = bitmap;
 
-    vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
+    /* DRAW UI for OpenGL */
+    Bitmap stringBitmap = {};
+    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
+    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
+    stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
+
+    f32 rectWidth = 0.35f;
+    f32 rectHeight = 0.175f;
+    f32 padding = rectHeight * 0.1f;
+
+    /* This is in raw OpenGL coordinates */
+    v3 startingPosition = v3{ -1, 1 - rectHeight + padding, 0 };
+
+    Rect *statsRect =
+        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
+
+    statsRect->isScreenCoordinateSpace = true;
+    statsRect->bitmap = &stringBitmap;
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+
+    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+    statsRect->bitmap = &gameMetadata->whiteBitmap;
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+
+    SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
+
+    for (memory_index i = 0; i < perFrameRenderGroup->rectEntityCount; i++)
+    {
+        Rect *rect = (Rect *)perFrameRenderGroup->rectMemory.base + i;
+        bitmap = rect->bitmap;
+        ASSERT(bitmap != nullptr);
+
+        OpenGLLoadBitmap(bitmap, textureID);
+
+        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
+
+        glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
+                perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
+        DrawRawRectangle(perFrameRenderGroup->rectCount);
+
+        ClearUsedVertexRenderGroup(perFrameRenderGroup);
+    }
+
+    /* End Draw UI */
+
+    OpenGLLoadBitmap(lastBitmapBeforeUI, textureID);
+
+    OpenGLEndUseProgram();
 
     g_debugMode = true;
     if (g_debugMode)
@@ -907,6 +933,32 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         OpenGLEndUseProgram();
     }
+
+    vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
+
+    ClearUsedVertexRenderGroup(perFrameRenderGroup);
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+
+    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+    statsRect->bitmap = &gameMetadata->whiteBitmap;
+
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+    for (memory_index i = 0; i < perFrameRenderGroup->rectEntityCount; i++)
+    {
+        Rect *rect = (Rect *)perFrameRenderGroup->rectMemory.base + i;
+        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
+    }
+    VulkanPrepareVertices(
+            vc,
+            &g_vkBuffers.bufs[g_vkBuffers.count],
+            &g_vkBuffers.mems[g_vkBuffers.count],
+            (void *)perFrameRenderGroup->vertexMemory.base,
+            perFrameRenderGroup->vertexMemory.used);
+    VulkanAddDrawCmd(
+            vc,
+            &g_vkBuffers.bufs[g_vkBuffers.count++],
+            SafeCastToU32(perFrameRenderGroup->rectCount * 6));
 
     VulkanEndBufferCommands(vc);
     VulkanEndRender(vc);

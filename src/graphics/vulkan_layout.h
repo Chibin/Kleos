@@ -60,4 +60,3 @@ void VulkanInitPipelineLayout(VulkanContext *vc)
     ASSERT(!err);
 
 }
-

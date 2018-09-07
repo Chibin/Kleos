@@ -264,7 +264,7 @@ void VulkanPrepare2ndPipeline(VulkanContext *vc, u32 stride)
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
     shaderStages[0].module = VulkanPrepareShader(&vc->device,
-            "./materials/programs/vulkan/test-vert.spv",
+            "./materials/programs/vulkan/screen_space-vert.spv",
             &vertShaderModule);
     shaderStages[0].pName = "main";
 
