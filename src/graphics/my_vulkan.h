@@ -25,7 +25,7 @@
         }                                                                      \
 	}
 
-#define  ATTACHMENT_COUNT 2
+#define  ATTACHMENT_COUNT 3
 #include "vulkan_shader.h"
 #include "vulkan_layers.h"
 void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear);
@@ -338,82 +338,14 @@ void VulkanEndBufferCommands(VulkanContext *vc)
             1,
             pmemoryBarrier);
 
-
     ASSERT(vkEndCommandBuffer(vc->drawCmd) == VK_SUCCESS);
 }
 
 static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
 {
-    const VkCommandBufferInheritanceInfo cmdBufHInfo = {
-        /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
-        /*.pNext =*/ NULL,
-        /*.renderPass =*/ VK_NULL_HANDLE,
-        /*.subpass =*/ 0,
-        /*.framebuffer =*/ VK_NULL_HANDLE,
-        /*.occlusionQueryEnable =*/ VK_FALSE,
-        /*.queryFlags =*/ 0,
-        /*.pipelineStatistics =*/ 0,
-    };
-
-    const VkCommandBufferBeginInfo cmdBufInfo = {
-        /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        /*.pNext =*/ NULL,
-        /*.flags =*/ 0,
-        /*.pInheritanceInfo =*/ &cmdBufHInfo,
-    };
-
-    VkClearValue clearValues[2] = {
-        {/*.color.float32 =*/ {0.2f, 0.2f, 0.2f, 0.2f}},
-        {/*.depthStencil =*/ {vc->depthStencil, 0}},
-    };
-
-    VkRect2D vkrect = {};
-    vkrect.offset.x = 0;
-    vkrect.offset.y = 0;
-    vkrect.extent.width = vc->width;
-    vkrect.extent.height = vc->height;
-
-    const VkRenderPassBeginInfo rpBegin = {
-        /*.sType =*/ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        /*.pNext =*/ NULL,
-        /*.renderPass =*/  vc->renderPass,
-        /*.framebuffer =*/ vc->framebuffers[vc->currentBufferIndex],
-        /*.renderArea =*/ vkrect,
-        /*.clearValueCount =*/ 2,
-        /*.pClearValues =*/ clearValues,
-    };
-
     VkResult err;
-    err = vkBeginCommandBuffer(vc->drawCmd, &cmdBufInfo);
-    ASSERT(!err);
 
-    vkCmdBeginRenderPass(vc->drawCmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline);
-    vkCmdBindDescriptorSets(
-            vc->drawCmd,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            vc->pipelineLayout,
-            0,
-            1,
-            &vc->descSet,
-            0,
-            NULL);
-
-    VkViewport viewport;
-    memset(&viewport, 0, sizeof(viewport));
-    viewport.height = (float)vc->height;
-    viewport.width = (float)vc->width;
-    viewport.minDepth = (float)0.0f;
-    viewport.maxDepth = (float)1.0f;
-    vkCmdSetViewport(vc->drawCmd, 0, 1, &viewport);
-
-    VkRect2D scissor;
-    memset(&scissor, 0, sizeof(scissor));
-    scissor.extent.width = vc->width;
-    scissor.extent.height = vc->height;
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-    vkCmdSetScissor(vc->drawCmd, 0, 1, &scissor);
+    VulkanPrepareDrawBufferCommands(vc);
 
     VkDeviceSize offsets[1] = {0};
     vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
@@ -557,7 +489,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     VkCommandBuffer setupCmd = {}; // Command Buffer for initialization commands
     VkCommandBuffer drawCmd = {};  // Command Buffer for drawing commands
-    VkPipeline pipeline = {};
 
     VkPhysicalDeviceMemoryProperties memoryProperties = {};
 
@@ -830,8 +761,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->drawCmd = drawCmd;
     vc->queue = queue;
 
-    vc->pipeline = pipeline;
-
     vc->width = width;
     vc->height = height;
     vc->depthStencil = 1.0;
@@ -885,7 +814,7 @@ void VulkanInitFrameBuffers(VulkanContext *vc)
     VkDevice *device = &vc->device;
 
     /* The amount of frame buffers rely on how many attachments we have in the renderpass */
-    VkImageView attachmentsFrameBuffer[2];
+    VkImageView attachmentsFrameBuffer[ATTACHMENT_COUNT];
     attachmentsFrameBuffer[1] = vc->depth.view;
 
     const VkFramebufferCreateInfo fbInfo = {
@@ -893,7 +822,7 @@ void VulkanInitFrameBuffers(VulkanContext *vc)
         /*.pNext =*/            NULL,
         /*.flags =*/            0,
         /*.renderPass =*/       vc->renderPass,
-        /*.attachmentCount =*/  2,
+        /*.attachmentCount =*/  ATTACHMENT_COUNT,
         /*.pAttachments =*/     attachmentsFrameBuffer,
         /*.width =*/            vc->width,
         /*.height =*/           vc->height,
@@ -906,6 +835,7 @@ void VulkanInitFrameBuffers(VulkanContext *vc)
     for (memory_index i = 0; i < vc->swapchainImageCount; i++)
     {
         attachmentsFrameBuffer[0] = vc->buffers[i].view;
+        attachmentsFrameBuffer[2] = vc->buffers[i].view;
         err = vkCreateFramebuffer(*device, &fbInfo, NULL, &vc->framebuffers[i]);
         ASSERT(!err);
     }

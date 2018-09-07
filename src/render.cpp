@@ -209,6 +209,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         memset(&vc->vertices, 0, sizeof(vc->vertices));
         VulkanPreparePipeline(vc, sizeof(Vertex));
+        VulkanPrepare2ndPipeline(vc, sizeof(Vertex));
 
         START_DEBUG_TIMING();
 
@@ -847,6 +848,9 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
 
     OpenGLEndUseProgram();
+
+    vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
 
     g_debugMode = true;
     if (g_debugMode)

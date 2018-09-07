@@ -106,6 +106,7 @@ struct VulkanContext
     VkRenderPass renderPass;
     VkRenderPass renderPassWithNoClear;
     VkPipeline pipeline;
+    VkPipeline pipeline2;
     VkPipelineLayout pipelineLayout;
     VkSemaphore presentCompleteSemaphore;
 

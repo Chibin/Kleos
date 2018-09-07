@@ -4,7 +4,7 @@ void VulkanInitRenderPass(VulkanContext *vc)
     /* attachments are ordered based on how we create the frame buffer?*/
     const VkAttachmentDescription attachments[ATTACHMENT_COUNT] = {
         {
-            /*.flags =*/            0,
+            /*.flags =*/            VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT,
             /*.format =*/           vc->format,
             /*.samples =*/          VK_SAMPLE_COUNT_1_BIT,
             /*.loadOp =*/           VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -24,6 +24,17 @@ void VulkanInitRenderPass(VulkanContext *vc)
             /*.stencilStoreOp =*/   VK_ATTACHMENT_STORE_OP_DONT_CARE,
             /*.initialLayout =*/    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             /*.finalLayout =*/      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        },
+        {
+            /*.flags =*/            VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT,
+            /*.format =*/           vc->format,
+            /*.samples =*/          VK_SAMPLE_COUNT_1_BIT,
+            /*.loadOp =*/           VK_ATTACHMENT_LOAD_OP_LOAD,
+            /*.storeOp =*/          VK_ATTACHMENT_STORE_OP_STORE,
+            /*.stencilLoadOp =*/    VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            /*.stencilStoreOp =*/   VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            /*.initialLayout =*/    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            /*.finalLayout =*/      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         },
     };
 
@@ -63,12 +74,22 @@ void VulkanInitRenderPass(VulkanContext *vc)
         /*.colorAttachmentCount =*/     1,
         /*.pColorAttachments =*/        &colorReference,
         /*.pResolveAttachments =*/      NULL,
-        /*.pDepthStencilAttachment =*/  &depthReference,
+        /*.pDepthStencilAttachment =*/  0,
         /*.preserveAttachmentCount =*/  0,
         /*.pPreserveAttachments =*/     NULL,
     };
 
-    const VkSubpassDescription subPasses[] = {UISubPass, depthStencilSubPass};
+    const VkSubpassDescription subPasses[] = {depthStencilSubPass, UISubPass};
+
+    VkSubpassDependency subpassDependency = {
+        /*uint32_t                srcSubpass*/      0,
+        /*uint32_t                dstSubpass*/      1,
+        /*VkPipelineStageFlags    srcStageMask*/    VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+        /*VkPipelineStageFlags    dstStageMask*/    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        /*VkAccessFlags           srcAccessMask*/   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        /*VkAccessFlags           dstAccessMask*/   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+        /*VkDependencyFlags       dependencyFlags*/ VK_DEPENDENCY_BY_REGION_BIT,
+    };
 
     const VkRenderPassCreateInfo rpInfo = {
         /*.sType =*/            VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -76,10 +97,10 @@ void VulkanInitRenderPass(VulkanContext *vc)
         /*.flags =*/            0,
         /*.attachmentCount =*/  ATTACHMENT_COUNT,
         /*.pAttachments =*/     attachments,
-        /*.subpassCount =*/     1,
-        /*.pSubpasses =*/       &depthStencilSubPass,
-        /*.dependencyCount =*/  0,
-        /*.pDependencies =*/    NULL,
+        /*.subpassCount =*/     2,
+        /*.pSubpasses =*/       subPasses,
+        /*.dependencyCount =*/  1,
+        /*.pDependencies =*/    &subpassDependency,
     };
 
     err = vkCreateRenderPass(vc->device, &rpInfo, NULL, &vc->renderPass);
