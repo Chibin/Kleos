@@ -3,7 +3,7 @@ void VulkanPrepareDescriptorSet(VulkanContext *vc)
     VkResult err;
     VkDevice *device = &vc->device;
 
-    VkDescriptorImageInfo texDescs[DEMO_TEXTURE_COUNT];
+    VkDescriptorImageInfo texDescs[DEMO_TEXTURE_COUNT] = {};
 
     VkDescriptorSetAllocateInfo allocInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -16,7 +16,6 @@ void VulkanPrepareDescriptorSet(VulkanContext *vc)
     ASSERT(!err);
 
     TextureObject *textures = vc->textures;
-    memset(&texDescs, 0, sizeof(texDescs));
     for (memory_index i = 0; i < DEMO_TEXTURE_COUNT; i++)
     {
         texDescs[i].sampler = textures[i].sampler;

@@ -84,6 +84,8 @@ struct TextureObject
 
     void *data;
     memory_index dataSize;
+
+    char *imagePath;
 };
 
 
@@ -154,6 +156,7 @@ struct VulkanContext
     UniformObject uniformDataFragment;
     Depth depth;
     TextureObject textures[DEMO_TEXTURE_COUNT];
+    TextureObject UITextures[DEMO_TEXTURE_COUNT];
 
     uint32_t swapchainImageCount;
 

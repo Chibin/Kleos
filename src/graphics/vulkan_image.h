@@ -170,6 +170,7 @@ void VulkanCreateImageSampler(
     ASSERT(err == VK_SUCCESS);
 }
 
+#if 0
 void VulkanCreateTextureImage(
         VkDevice *device,
         VkPhysicalDeviceMemoryProperties *memoryProperties,
@@ -214,3 +215,4 @@ void VulkanCreateTextureImage(
             &textureImageMemory,
             VK_IMAGE_LAYOUT_UNDEFINED);
 }
+#endif
