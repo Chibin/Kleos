@@ -192,8 +192,33 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
+        TTF_Font *font = OpenFont();
+        ASSERT(font != nullptr);
+        gameMetadata->font = font;
+
         g_vkBuffers.count = 0;
         g_vkBuffers.maxNum = 100;
+
+        Bitmap stringBitmap = {};
+        char buffer[150];
+        sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", 9999.999f, 60.0f, 9999.99f); // NOLINT
+        StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
+        stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
+
+        vc->UITextures[0].texWidth = stringBitmap.width;
+        vc->UITextures[0].texHeight = stringBitmap.height;
+        vc->UITextures[0].dataSize = stringBitmap.width * stringBitmap.height * 4;
+        vc->UITextures[0].data = stringBitmap.data;
+
+        VulkanPrepareTexture(vc,
+                &vc->gpu,
+                &vc->device,
+                &vc->setupCmd,
+                &vc->cmdPool,
+                &vc->queue,
+                &vc->memoryProperties,
+                false,
+                vc->UITextures);
 
         /* Creating pipeline layout, descriptor pool, and render pass can be done
          * indenpendently
@@ -202,7 +227,23 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         vc->pipelineLayout = {};
         VulkanInitPipelineLayout(vc);
-        VulkanPrepareDescriptorSet(vc);
+        VulkanSetDescriptorSet(
+                vc,
+                &vc->descSet,
+                vc->textures,
+                DEMO_TEXTURE_COUNT,
+                &vc->uniformData,
+                &vc->uniformDataFragment);
+
+#if 0
+        VulkanSetDescriptorSet(
+                vc,
+                &vc->secondDescSet,
+                vc->UITextures,
+                DEMO_TEXTURE_COUNT,
+                &vc->uniformData,
+                &vc->uniformDataFragment);
+#endif
 
         VulkanInitRenderPass(vc);
         VulkanInitFrameBuffers(vc);
@@ -222,10 +263,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ASSERT(!g_reservedMemory);
 
         glGenTextures(1, &g_permanentTextureID);
-
-        TTF_Font *font = OpenFont();
-        ASSERT(font != nullptr);
-        gameMetadata->font = font;
 
         g_reservedMemory = reservedMemory;
 
@@ -589,7 +626,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     pushConstants = {};
 
     VulkanPrepareRender(vc);
-    VulkanPrepareDrawBufferCommands(vc);
+    VulkanBeginRenderPass(vc);
+    VulkanSetViewportAndScissor(vc);
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
@@ -936,6 +974,17 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
+#if 0
+    vkCmdBindDescriptorSets(
+            vc->drawCmd,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vc->pipelineLayout,
+            0,
+            1,
+            &vc->secondDescSet,
+            0,
+            NULL);
+#endif
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);

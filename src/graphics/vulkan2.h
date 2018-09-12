@@ -100,14 +100,10 @@ void VulkanPrepareTexture(VulkanContext *vc,
         if ((props.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) && !useStagingBuffer)
         {
             /* Device can texture using linear textures */
-            s32 texWidth = 0;
-            s32 texHeight = 0;
-            s32 texChannels = 0;
-            stbi_uc* pixels = stbi_load("./materials/textures/awesomeface.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-            textures[i].texWidth = texWidth;
-            textures[i].texHeight = texHeight;
-            textures[i].dataSize = texWidth * texHeight * 4;
-            textures[i].data = pixels;
+            ASSERT(textures[i].texWidth > 0);
+            ASSERT(textures[i].texHeight > 0);
+            ASSERT(textures[i].dataSize > 0);
+            ASSERT(textures[i].data != NULL);
 
             VulkanSetTextureImage(
                     device,
@@ -119,7 +115,6 @@ void VulkanPrepareTexture(VulkanContext *vc,
                     VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-            stbi_image_free(pixels);
         }
         else if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)
         {

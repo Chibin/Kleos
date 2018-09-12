@@ -121,6 +121,7 @@ struct VulkanContext
 
     VkDescriptorPool descPool;
     VkDescriptorSet descSet;
+    VkDescriptorSet secondDescSet;
     VkDescriptorSetLayout descLayout;
 
     PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback;

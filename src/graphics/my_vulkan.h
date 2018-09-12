@@ -228,7 +228,7 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
     VulkanDestroyTextureImage(device, &stagingTexture);
 }
 
-void VulkanPrepareDrawBufferCommands(VulkanContext *vc)
+void VulkanBeginRenderPass(VulkanContext *vc)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
@@ -285,6 +285,10 @@ void VulkanPrepareDrawBufferCommands(VulkanContext *vc)
             0,
             NULL);
 
+}
+
+void VulkanSetViewportAndScissor(VulkanContext *vc)
+{
     VkViewport viewport = {};
     viewport.height = (float)vc->height;
     viewport.width = (float)vc->width;
@@ -345,7 +349,8 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
 {
     VkResult err;
 
-    VulkanPrepareDrawBufferCommands(vc);
+    VulkanBeginRenderPass(vc);
+    VulkanSetViewportAndScissor(vc);
 
     VkDeviceSize offsets[1] = {0};
     vkCmdBindVertexBuffers(vc->drawCmd, VERTEX_BUFFER_BIND_ID, 1, &vc->vertices.buf, offsets);
@@ -736,7 +741,16 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     /* end prepare uniform buffer */
 
 	bool useStagingBuffer = false;
-    TextureObject *textures = vc->textures;
+    s32 texWidth = 0;
+    s32 texHeight = 0;
+    s32 texChannels = 0;
+    stbi_uc* pixels = stbi_load("./materials/textures/awesomeface.png",
+            &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    vc->textures[0].texWidth = texWidth;
+    vc->textures[0].texHeight = texHeight;
+    vc->textures[0].dataSize = texWidth * texHeight * 4;
+    vc->textures[0].data = pixels;
+
     VulkanPrepareTexture(vc,
         &gpu,
         &device,
@@ -745,7 +759,9 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         &queue,
         &memoryProperties,
         useStagingBuffer,
-        textures);
+        vc->textures);
+
+    stbi_image_free(pixels);
 
     vc->device = device;
     vc->gpu = gpu;
@@ -764,6 +780,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->width = width;
     vc->height = height;
     vc->depthStencil = 1.0;
+    vc->memoryProperties = memoryProperties;
     vc->depthIncrement = -0.01f;
 
     vc->descSet = {};
@@ -775,6 +792,8 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
 void VulkanPrepareDescriptorPool(VulkanContext *vc)
 {
+    /* TODO: Update parameters to account of max sets and poolsize count */
+
     VkResult err;
     /* does not need to be "in order" */
     const VkDescriptorPoolSize typeCount[] = {
@@ -792,7 +811,11 @@ void VulkanPrepareDescriptorPool(VulkanContext *vc)
         /*.sType =*/            VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         /*.pNext =*/            NULL,
         /*.flags =*/            0,
-        /*.maxSets =*/          1,
+        /* Max set is talking about the amount of descriptor sets we can
+         * allocate? Each descriptor set we allocate will have the
+         * type count? So, 1 uniform buffer, and 1 sampler.
+         */
+        /*.maxSets =*/          2,
         /*.poolSizeCount =*/    2,
         /*.pPoolSizes =*/       &typeCount[0],
     };

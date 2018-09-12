@@ -63,7 +63,7 @@ void VulkanCreateImage(
 
 static void VulkanSetTextureImage(
         VkDevice *device,
-        VkCommandBuffer *setupCmd,
+        VkCommandBuffer *cmdBuffer,
         VkCommandPool *cmdPool,
         VkPhysicalDeviceMemoryProperties *memoryProperties,
         struct TextureObject *texObj,
@@ -116,7 +116,7 @@ static void VulkanSetTextureImage(
             texObj->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             VulkanAddPipelineBarrier(
                     device,
-                    setupCmd,
+                    cmdBuffer,
                     cmdPool,
                     texObj->image,
                     VK_IMAGE_ASPECT_COLOR_BIT,
