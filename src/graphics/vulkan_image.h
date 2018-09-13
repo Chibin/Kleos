@@ -69,9 +69,9 @@ static void VulkanSetTextureImage(
         struct TextureObject *texObj,
         VkImageTiling tiling,
         VkImageUsageFlags usage,
-        VkFlags requiredProps)
+        VkFlags requiredProps,
+        VkFormat texFormat)
 {
-            const VkFormat texFormat = VK_FORMAT_R8G8B8A8_UNORM;
             VkResult err;
 
             VulkanCreateImage(

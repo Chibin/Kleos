@@ -199,15 +199,27 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_vkBuffers.count = 0;
         g_vkBuffers.maxNum = 100;
 
+        s32 texWidth = 0;
+        s32 texHeight = 0;
+        s32 texChannels = 0;
+        stbi_uc* pixels = stbi_load("./materials/textures/awesomeface.png",
+                &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        vc->textures[0].texWidth = texWidth;
+        vc->textures[0].texHeight = texHeight;
+        vc->textures[0].dataSize = texWidth * texHeight * 4;
+        vc->textures[0].data = pixels;
+
+        bool useStagingBuffer = false;
+
         Bitmap stringBitmap = {};
         char buffer[150];
-        sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", 9999.999f, 60.0f, 9999.99f); // NOLINT
-        StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
+        sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", 3.0f, 6.0f, 9.0f); // NOLINT
+        StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                       // NOLINT
         stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
         vc->UITextures[0].texWidth = stringBitmap.width;
         vc->UITextures[0].texHeight = stringBitmap.height;
-        vc->UITextures[0].dataSize = stringBitmap.width * stringBitmap.height * 4;
+        vc->UITextures[0].dataSize = stringBitmap.size;
         vc->UITextures[0].data = stringBitmap.data;
 
         VulkanPrepareTexture(vc,
@@ -217,8 +229,21 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                 &vc->cmdPool,
                 &vc->queue,
                 &vc->memoryProperties,
-                false,
+                useStagingBuffer,
                 vc->UITextures);
+
+        VulkanPrepareTexture(vc,
+                &vc->gpu,
+                &vc->device,
+                &vc->setupCmd,
+                &vc->cmdPool,
+                &vc->queue,
+                &vc->memoryProperties,
+                useStagingBuffer,
+                vc->textures);
+
+
+        stbi_image_free(pixels);
 
         /* Creating pipeline layout, descriptor pool, and render pass can be done
          * indenpendently
@@ -235,7 +260,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                 &vc->uniformData,
                 &vc->uniformDataFragment);
 
-#if 0
         VulkanSetDescriptorSet(
                 vc,
                 &vc->secondDescSet,
@@ -243,7 +267,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                 DEMO_TEXTURE_COUNT,
                 &vc->uniformData,
                 &vc->uniformDataFragment);
-#endif
 
         VulkanInitRenderPass(vc);
         VulkanInitFrameBuffers(vc);
@@ -691,12 +714,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     /* DrawParticles() */
 
-    /* Draw text at the corner */
-
-    StringToTexture(gameMetadata->font, "testing this", g_permanentTextureID);
-    OpenGLBindTexture(g_permanentTextureID);
-    /* End draw text at corner */
-
     OpenGLBeginUseProgram(program, textureID);
 
     /* load uniform variable to shader program before drawing */
@@ -881,7 +898,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     v3 startingPosition = v3{ -1, 1 - rectHeight + padding, 0 };
 
     Rect *statsRect =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
+        CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK, rectWidth, rectHeight);
 
     statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
@@ -974,7 +991,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
-#if 0
     vkCmdBindDescriptorSets(
             vc->drawCmd,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -984,7 +1000,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             &vc->secondDescSet,
             0,
             NULL);
-#endif
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);

@@ -166,7 +166,8 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
             &stagingTexture,
             VK_IMAGE_TILING_LINEAR,
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            VK_FORMAT_R8G8B8A8_UNORM);
 
     VulkanSetTextureImage(
             device,
@@ -176,7 +177,8 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
             texture,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            VK_FORMAT_R8G8B8A8_UNORM);
 
     VulkanAddPipelineBarrier(
             device,
@@ -739,29 +741,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         uniformDataFragment,
         &uboFrag);
     /* end prepare uniform buffer */
-
-	bool useStagingBuffer = false;
-    s32 texWidth = 0;
-    s32 texHeight = 0;
-    s32 texChannels = 0;
-    stbi_uc* pixels = stbi_load("./materials/textures/awesomeface.png",
-            &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    vc->textures[0].texWidth = texWidth;
-    vc->textures[0].texHeight = texHeight;
-    vc->textures[0].dataSize = texWidth * texHeight * 4;
-    vc->textures[0].data = pixels;
-
-    VulkanPrepareTexture(vc,
-        &gpu,
-        &device,
-        &setupCmd,
-        &cmdPool,
-        &queue,
-        &memoryProperties,
-        useStagingBuffer,
-        vc->textures);
-
-    stbi_image_free(pixels);
 
     vc->device = device;
     vc->gpu = gpu;

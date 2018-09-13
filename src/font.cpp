@@ -43,7 +43,7 @@ inline SDL_Surface *StringToSDLSurface(TTF_Font *font, const char *msg, v4 vColo
                         ConvertColorF32ToU8(vColor.a) };
 
     // Render the message
-    SDL_Surface *surface = TTF_RenderText_Blended(font, msg, color);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended(font, msg, color);
     if (surface == nullptr)
     {
         printf("Failed to TTF_RenderText\n");
@@ -124,10 +124,12 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
         format = GL_RGBA;
     }
 
-    FlipImage((u32 *)surface->pixels, width, height);
+    /* Need to use this if it's OpenGL only */
+    //FlipImage((u32 *)surface->pixels, width, height);
 
-    bitmap->data = (u8 *)AllocateMemory(gm, width * height * sizeof(u32));
+    bitmap->data = (u8 *)AllocateMemory(gm, width * height * 4);
     CopyData((u32 *)surface->pixels, (u32 *)bitmap->data, width * height);
+    bitmap->size = width * height * 4;
     bitmap->format = format;
     bitmap->width = width;
     bitmap->height = height;
@@ -146,6 +148,9 @@ void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
     {
         format = GL_RGBA;
     }
+
+    ASSERT(surface->format->BytesPerPixel == 4);
+
     u32 width = surface->w;
     u32 height = surface->h;
 
@@ -156,7 +161,6 @@ void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
     // Clean up the surface and font
     SDL_FreeSurface(surface);
 }
-
 
 void StringToBitmap(GameMemory *gm, Bitmap *bitmap, TTF_Font *font, const char *msg)
 {

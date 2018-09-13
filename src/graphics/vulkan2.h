@@ -113,7 +113,8 @@ void VulkanPrepareTexture(VulkanContext *vc,
                     &textures[i],
                     VK_IMAGE_TILING_LINEAR,
                     VK_IMAGE_USAGE_SAMPLED_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                    texFormat);
 
         }
         else if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)

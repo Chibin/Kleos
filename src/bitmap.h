@@ -29,6 +29,7 @@ struct Bitmap
 {
     u32 width;
     u32 height;
+    u32 size;
     GLenum format;
     u8 *data;
     ImageType freeImageType;

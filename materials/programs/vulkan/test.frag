@@ -13,9 +13,9 @@ layout (location = 0) out vec4 color;
 void main()
 {
     color = texture(tex, TexCoord) + vColor;
-    //if (color.a < 0.01)
-    //{
-    //    discard;
-    //}
+    if (texture(tex, TexCoord).a < 0.01)
+    {
+        discard;
+    }
 }
 
