@@ -11,7 +11,7 @@
 
 void _processOpenGLErrors(const char *file, int line);
 
-void MainGameLoop(SDL_Window *mainWindow, SDL_Window *secondWindow, RenderAPI *renderAPI)
+void MainGameLoop(SDL_Window *openglWindow, SDL_Window *vulkanWindow, RenderAPI *renderAPI)
 {
     /* sanity check */
     ASSERT(sizeof(real32) == sizeof(GLfloat));
@@ -50,7 +50,7 @@ void MainGameLoop(SDL_Window *mainWindow, SDL_Window *secondWindow, RenderAPI *r
     FindFile(GetProgramPath(), "render*dll");
 
     VulkanContext *vc = nullptr;
-    vc = VulkanSetup(&secondWindow);
+    vc = VulkanSetup(&vulkanWindow);
     gameMetadata.vulkanContext = vc;
 
     while (continueRunning && !vc->quit)
@@ -59,7 +59,7 @@ void MainGameLoop(SDL_Window *mainWindow, SDL_Window *secondWindow, RenderAPI *r
         ProcessOpenGLErrors();
 
         /* equivalent to glswapbuffer? */
-        SDL_GL_SwapWindow(mainWindow);
+        SDL_GL_SwapWindow(openglWindow);
     }
 }
 

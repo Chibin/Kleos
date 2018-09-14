@@ -130,36 +130,8 @@ static Animation2D *g_spriteAnimation = nullptr;
 static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 
-Vertex vb[6] = {};
-
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
-    vb[0].vPosition =   {-1.0f, -1.0f,  0.0};
-    vb[0].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
-    vb[0].vNormal =     {0.0f, 0.0f, 0.0f};
-    vb[0].vUv =         {0.0f, 0.0f};
-    vb[1].vPosition =   {1.0f, -1.0f,  0.0};
-    vb[1].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
-    vb[1].vNormal =     {0.0f, 0.0f, 0.0f};
-    vb[1].vUv =         {1.0f, 0.0f};
-    vb[2].vPosition =   {0.0f,  1.0f,  0.0};
-    vb[2].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
-    vb[2].vNormal =     {0.0f, 0.0f, 0.0f};
-    vb[2].vUv =         {0.5f, 1.0f};
-
-    vb[3].vPosition =   {-1* -1.0f, -1* -1.0f,  0.0};
-    vb[3].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
-    vb[3].vNormal =     {0.0f, 0.0f, 0.0f};
-    vb[3].vUv =         {0.0f, 0.0f};
-    vb[4].vPosition =   {-1* 1.0f, -1* -1.0f,  0.0};
-    vb[4].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
-    vb[4].vNormal =     {0.0f, 0.0f, 0.0f};
-    vb[4].vUv =         {1.0f, 0.0f};
-    vb[5].vPosition =   {-1* 0.0f,  -1* 1.0f,  0.0};
-    vb[5].vColor =      {1.0f, 0.0f, 0.0f, 1.0f};
-    vb[5].vNormal =     {0.0f, 0.0f, 0.0f};
-    vb[5].vUv =         {0.5f, 1.0f};
-
     SDL_Event event;
     bool continueRunning = true;
 
