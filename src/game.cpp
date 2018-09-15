@@ -55,13 +55,16 @@ void MainGameLoop(SDL_Window *mainWindow, b32 isVulkanActive, RenderAPI *renderA
     VulkanContext *vc = nullptr;
     vc = VulkanSetup(&mainWindow);
     gameMetadata.vulkanContext = vc;
+    /* only one of them can be active */
+    gameMetadata.isVulkanActive = isVulkanActive;
+    gameMetadata.isOpenGLActive = !isVulkanActive;
 
     while (continueRunning && !vc->quit)
     {
         continueRunning = ((renderAPI->updateAndRender)(&gameMetadata) != 0);
         ProcessOpenGLErrors();
 
-        if (!isVulkanActive)
+        if (!gameMetadata.isVulkanActive)
         {
             /* equivalent to glswapbuffer? */
             SDL_GL_SwapWindow(mainWindow);

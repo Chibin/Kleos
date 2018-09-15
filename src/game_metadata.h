@@ -36,6 +36,8 @@ struct GameMetadata
     struct Rect *playerRect;
 
     VulkanContext *vulkanContext;
+    b32 isVulkanActive;
+    b32 isOpenGLActive;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

@@ -104,7 +104,7 @@ static void VulkanSetTextureImage(
                 vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
                 err = vkMapMemory(*device, texObj->mem, 0, memReqs.size, 0, &data);
                 ASSERT(!err);
-                ASSERT(memReqs.size == texObj->dataSize);
+                //ASSERT(memReqs.size == texObj->dataSize);
                 memcpy(data, texObj->data, memReqs.size);
 
 #if 0
