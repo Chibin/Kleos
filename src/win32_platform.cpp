@@ -72,6 +72,7 @@ bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
         printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
     }
 
+    /* XXX: We probably don't need this */
     /* clean up the screen */
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);

@@ -130,8 +130,13 @@ static Animation2D *g_spriteAnimation = nullptr;
 static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 
+#define USE_VULKAN 1
+#define USE_OPENGL 0
+
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
+    ASSERT(USE_VULKAN != USE_OPENGL);
+
     SDL_Event event;
     bool continueRunning = true;
 
@@ -143,6 +148,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     VulkanContext *vc = gameMetadata->vulkanContext;
 
+#if USE_VULKAN
     //if (vc->depthStencil > 0.99f)
     //{
     //    vc->depthIncrement = -0.001f;
@@ -161,6 +167,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     {
         vc->quit = true;
     }
+#endif
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
@@ -171,6 +178,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_vkBuffers.count = 0;
         g_vkBuffers.maxNum = 100;
 
+#if USE_VULKAN
         s32 texWidth = 0;
         s32 texHeight = 0;
         s32 texChannels = 0;
@@ -178,6 +186,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                 &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         vc->textures[0].texWidth = texWidth;
         vc->textures[0].texHeight = texHeight;
+        vc->textures[0].texPitch = 0;
         vc->textures[0].dataSize = texWidth * texHeight * 4;
         vc->textures[0].data = pixels;
 
@@ -185,13 +194,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         Bitmap stringBitmap = {};
         char buffer[150];
-        sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", 3.0f, 6.0f, 9.0f); // NOLINT
+        sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f      ", 33.0f, 6.0f, 9.0f); // NOLINT
         StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                       // NOLINT
         stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
         vc->UITextures[0].texWidth = stringBitmap.width;
         vc->UITextures[0].texHeight = stringBitmap.height;
-        vc->UITextures[0].dataSize = stringBitmap.size;
+        vc->UITextures[0].texPitch = stringBitmap.pitch;
+        vc->UITextures[0].dataSize = stringBitmap.width * stringBitmap.height * 4;
         vc->UITextures[0].data = stringBitmap.data;
 
         VulkanPrepareTexture(vc,
@@ -246,6 +256,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         memset(&vc->vertices, 0, sizeof(vc->vertices));
         VulkanPreparePipeline(vc, sizeof(Vertex));
         VulkanPrepare2ndPipeline(vc, sizeof(Vertex));
+#endif
 
         START_DEBUG_TIMING();
 
@@ -321,6 +332,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         gameMetadata->initFromGameUpdateAndRender = true;
 
+#if USE_OPENGL
         /*  Each vertex attribute takes its data from memory managed by a
          *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
          *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
@@ -336,6 +348,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
                         nullptr,                                                    /* use null as way to not load anything to vbo*/
                         gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
+#endif
 
         //ParticleSystem *ps = &gameMetadata->particleSystem;
         f32 base = -1.01f;
@@ -400,10 +413,12 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     /* TODO: One time init might be done here as the game progress ? */
 
+#if USE_OPENGL
     /* start with a 'clear' screen */
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // NOLINT
+#endif
 
     ASSERT(gameMetadata->program);
     ASSERT(gameMetadata->debugProgram);
@@ -620,10 +635,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     } pushConstants;
     pushConstants = {};
 
-    VulkanPrepareRender(vc);
-    VulkanBeginRenderPass(vc);
-    VulkanSetViewportAndScissor(vc);
-
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[150];
@@ -646,6 +657,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     gt->lastCycleCount = endCycleCount;
 
+#if USE_VULKAN
+    VulkanPrepareRender(vc);
+    VulkanBeginRenderPass(vc);
+    VulkanSetViewportAndScissor(vc);
+#endif
+#if USE_OPENGL
     /* TODO: Fix alpha blending... it's currently not true transparency.
      * you need to disable this if you want the back parts to be shown when
      * alpha blending
@@ -677,15 +694,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     GLuint modelLoc, viewLoc, projectionLoc;
 
-    if (g_debugMode)
-    {
-        // DrawHurtBoxes();
-        // DrawHitBoxes();
-        // DrawCollisions();
-    }
-
-    /* DrawParticles() */
-
     OpenGLBeginUseProgram(program, textureID);
 
     /* load uniform variable to shader program before drawing */
@@ -696,26 +704,21 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
-    ubo = {};
-
     OpenGLCheckErrors();
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+#endif
 
     /* DRAW UI */
-
+#if USE_OPENGL
     SetOpenGLDrawToScreenCoordinate(projectionLoc, viewLoc);
+#endif
 
+#if USE_VULKAN
     ubo = {};
     ubo.view = glm::mat4();
     ubo.projection = glm::mat4();
     ubo.model = glm::mat4();
     VulkanUpdateUniformBuffer(vc, &ubo);
-
-#if 0
-    /* doing inverse matrix testing to get back to screen space */
-    glm::vec4 test =   glm::inverse(g_camera->view) * glm::inverse(*g_projection) * glm::vec4(-1, 1, 0, 1);
-    glm::vec4 test2 = *g_projection * g_camera->view * glm::vec4(test.x, test.y, test.z, 1);
 #endif
 
     gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
@@ -753,6 +756,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)))
         {
 
+#if USE_VULKAN
             if (perFrameRenderGroup->vertexMemory.used > 0)
             {
                 ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
@@ -768,15 +772,18 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                         &g_vkBuffers.bufs[g_vkBuffers.count++],
                         SafeCastToU32(perFrameRenderGroup->rectCount * 6));
             }
-
+#endif
+#if USE_OPENGL
             glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
                          perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
             DrawRawRectangle(perFrameRenderGroup->rectCount);
 
+#endif
             ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
             if (rect->isScreenCoordinateSpace)
             {
+#if USE_VULKAN
                 pushConstants.proj = glm::mat4();
                 pushConstants.view = glm::mat4();
                 vkCmdPushConstants(
@@ -786,12 +793,14 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                         0,
                         sizeof(PushConstantMatrix),
                         &pushConstants);
-
+#endif
+#if USE_OPENGL
                 SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
-
+#endif
             }
             else
             {
+#if USE_VULKAN
                 pushConstants.proj = *g_projection;
                 pushConstants.view = g_camera->view;
                 vkCmdPushConstants(
@@ -801,20 +810,24 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                         0,
                         sizeof(PushConstantMatrix),
                         &pushConstants);
+#endif
+#if USE_OPENGL
 
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
                 glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+#endif
 
             }
 
+#if USE_OPENGL
             OpenGLUpdateTextureParameter(&textureParam);
 
             if (bitmap != prevBitmap)
             {
                 OpenGLLoadBitmap(bitmap, textureID);
             }
+#endif
             prevBitmap = bitmap;
-
             isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
         }
 
@@ -822,6 +835,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         prevTextureParam = textureParam;
     }
 
+#if USE_VULKAN
     pushConstants.proj = *g_projection;
     pushConstants.view = g_camera->view;
     vkCmdPushConstants(
@@ -843,13 +857,16 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             vc,
             &g_vkBuffers.bufs[g_vkBuffers.count++],
             SafeCastToU32(perFrameRenderGroup->rectCount * 6));
+#endif
 
+#if USE_OPENGL
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
     glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
                  perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
     DrawRawRectangle(perFrameRenderGroup->rectCount);
+#endif
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
@@ -871,9 +888,10 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK, rectWidth, rectHeight);
-
     statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
+
+#if USE_OPENGL
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
     statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
@@ -902,8 +920,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     /* End Draw UI */
 
     OpenGLLoadBitmap(lastBitmapBeforeUI, textureID);
-
     OpenGLEndUseProgram();
+#endif
 
     g_debugMode = true;
     if (g_debugMode)
@@ -912,7 +930,9 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
 
         /* Draw collissions, hurtboxes and hitboxes */
+#if USE_OPENGL
         OpenGLBeginUseProgram(debugProgram, textureID);
+#endif
 
         for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
         {
@@ -932,6 +952,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
 
+#if USE_VULKAN
         ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
         VulkanPrepareVertices(
                 vc,
@@ -944,6 +965,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 &g_vkBuffers.bufs[g_vkBuffers.count++],
                 SafeCastToU32(perFrameRenderGroup->rectCount * 6));
 
+#endif
+#if USE_OPENGL
         modelLoc = glGetUniformLocation(debugProgram, "model");
         viewLoc = glGetUniformLocation(program, "view");
         projectionLoc = glGetUniformLocation(program, "projection");
@@ -957,9 +980,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         DrawRawPointRectangle(perFrameRenderGroup->rectCount);
         DrawRawRectangle(perFrameRenderGroup->rectCount);
-
         OpenGLEndUseProgram();
+#endif
+
     }
+
+#if USE_VULKAN
 
     vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
@@ -1001,14 +1027,19 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
     vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
-    glBindVertexArray(0);
-    OpenGLCheckErrors();
     for (memory_index i = 0; i < g_vkBuffers.count; i++)
     {
         vkDestroyBuffer(vc->device, g_vkBuffers.bufs[i], nullptr);
         vkFreeMemory(vc->device, g_vkBuffers.mems[i], nullptr);
     }
     g_vkBuffers.count = 0;
+#endif
+#if USE_OPENGL
+    glBindVertexArray(0);
+    OpenGLCheckErrors();
+
+    OpenGLEndUseProgram();
+#endif
 }
 
 void LoadStuff(GameMetadata *gameMetadata)
@@ -1082,18 +1113,8 @@ inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc
      * "background" first so that the "transparent" part of the texture renders
      * the background properly. otherwise, you'll just get a blank background.
      */
-#if 0
-    f32  left   = 0 - g_player->position.x;
-    f32  right  = 10 - g_player->position.x;
-    f32  bottom = -10 - g_player->position.y;
-    f32  top    = 0.8f - g_player->position.y;
-    f32  near   = 0.1f;
-    f32  far    = 100.0f;
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::ortho(left, right, bottom, top, near, far)));
-#else
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-#endif
 }
 
 inline void LoadShaders(GameMetadata *gameMetadata)

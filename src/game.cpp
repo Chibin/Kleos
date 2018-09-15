@@ -11,7 +11,7 @@
 
 void _processOpenGLErrors(const char *file, int line);
 
-void MainGameLoop(SDL_Window *openglWindow, SDL_Window *vulkanWindow, RenderAPI *renderAPI)
+void MainGameLoop(SDL_Window *mainWindow, b32 isVulkanActive, RenderAPI *renderAPI)
 {
     /* sanity check */
     ASSERT(sizeof(real32) == sizeof(GLfloat));
@@ -49,8 +49,11 @@ void MainGameLoop(SDL_Window *openglWindow, SDL_Window *vulkanWindow, RenderAPI 
 
     FindFile(GetProgramPath(), "render*dll");
 
+    /* We still want to initialize vulkan. This is so that we have the
+     * capability to switch between OpenGl and Vulkan.
+     */
     VulkanContext *vc = nullptr;
-    vc = VulkanSetup(&vulkanWindow);
+    vc = VulkanSetup(&mainWindow);
     gameMetadata.vulkanContext = vc;
 
     while (continueRunning && !vc->quit)
@@ -58,8 +61,11 @@ void MainGameLoop(SDL_Window *openglWindow, SDL_Window *vulkanWindow, RenderAPI 
         continueRunning = ((renderAPI->updateAndRender)(&gameMetadata) != 0);
         ProcessOpenGLErrors();
 
-        /* equivalent to glswapbuffer? */
-        SDL_GL_SwapWindow(openglWindow);
+        if (!isVulkanActive)
+        {
+            /* equivalent to glswapbuffer? */
+            SDL_GL_SwapWindow(mainWindow);
+        }
     }
 }
 

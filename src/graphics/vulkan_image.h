@@ -95,10 +95,10 @@ static void VulkanSetTextureImage(
                     /*.arrayLayer =*/   0,
                 };
 
-                VkSubresourceLayout layout;
+                VkSubresourceLayout subResourceLayout;
                 void *data;
 
-                vkGetImageSubresourceLayout(*device, texObj->image, &subres, &layout);
+                vkGetImageSubresourceLayout(*device, texObj->image, &subres, &subResourceLayout);
 
                 VkMemoryRequirements memReqs;
                 vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
@@ -107,6 +107,17 @@ static void VulkanSetTextureImage(
                 ASSERT(memReqs.size == texObj->dataSize);
                 memcpy(data, texObj->data, memReqs.size);
 
+#if 0
+                /* not sure if this even works */
+                char *mappedBytes = (char *)data + subResourceLayout.offset;
+                char *texObjData = (char*)texObj->data;
+
+                for(int i = 0; i < texObj->texHeight; ++i) {
+                    memcpy(mappedBytes, texObjData, texObj->texPitch);
+                    mappedBytes += subResourceLayout.rowPitch;
+                    texObjData += texObj->texPitch;
+                }
+#endif
                 vkUnmapMemory(*device, texObj->mem);
             }
 

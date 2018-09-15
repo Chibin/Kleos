@@ -100,16 +100,18 @@ inline void FlipImage(u32 *pixels, u32 width, u32 height)
         for (uint32 counter = 0; counter < width; counter++)
         {
 
+#if 1
             *(firstPixel + counter) ^= *(secondPixel + counter)
                 ^= *(firstPixel + counter) ^= *(secondPixel + counter);
-
-            //u32 temp = *(firstPixel + counter);
-            //*(firstPixel + counter) = *(secondPixel + counter);
-            //*(secondPixel + counter) = temp;
-            //u32 temp = *(firstPixel + counter);
-            //SWAP_POINTER_VALUES(firstPixel, secondPixel, u32);
-            //firstPixel++;
-            //secondPixel++;
+#else
+            u32 temp = *(firstPixel + counter);
+            *(firstPixel + counter) = *(secondPixel + counter);
+            *(secondPixel + counter) = temp;
+            u32 temp = *(firstPixel + counter);
+            SWAP_POINTER_VALUES(firstPixel, secondPixel, u32);
+            firstPixel++;
+            secondPixel++;
+#endif
         }
     }
 }
@@ -118,21 +120,29 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
 {
     u32 width = surface->w;
     u32 height = surface->h;
+    u32 pitch = surface->pitch;
     GLenum format = GL_RGB;
     if (surface->format->BytesPerPixel == 4)
     {
         format = GL_RGBA;
     }
 
+    SDL_LockSurface(surface);
+
+#if 0
     /* Need to use this if it's OpenGL only */
     //FlipImage((u32 *)surface->pixels, width, height);
 
     bitmap->data = (u8 *)AllocateMemory(gm, width * height * 4);
     CopyData((u32 *)surface->pixels, (u32 *)bitmap->data, width * height);
+#endif
+
+    bitmap->data = (u8 *)surface->pixels;
     bitmap->size = width * height * 4;
     bitmap->format = format;
     bitmap->width = width;
     bitmap->height = height;
+    bitmap->pitch = height;
 };
 
 void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
@@ -173,6 +183,6 @@ void StringToBitmap(GameMemory *gm, Bitmap *bitmap, TTF_Font *font, const char *
 
     SDLSurfaceToBitmap(gm, surface, bitmap);
 
-    SDL_FreeSurface(surface);
+    //SDL_FreeSurface(surface);
 }
 #endif

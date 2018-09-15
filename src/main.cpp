@@ -7,24 +7,20 @@
 int main(int /*unused*/, char ** /*unused*/)
 {
     const char *programName = "First game trial :)";
-    SDL_Window *openglWindow = nullptr;
-	SDL_Window *vulkanWindow = nullptr;
+    SDL_Window *mainWindow = nullptr;
     /* our opengl context handle */
     SDL_GLContext mainContext;
     RenderAPI renderAPI = {};
 
-    SDL_Window *firstWindow = vulkanWindow;
-    SDL_Window *secondWindow = openglWindow;
-
-    if (!WindowSetup(&openglWindow, programName) ||
-        !WindowSetup(&vulkanWindow, programName) ||
-        !WindowsOpenGLSetup(openglWindow, &mainContext) || !WindowsSDLTTFSetup() ||
+    if (!WindowSetup(&mainWindow, programName) ||
+        !WindowsOpenGLSetup(mainWindow, &mainContext) || !WindowsSDLTTFSetup() ||
         !LoadDLLWindows(&renderAPI))
     {
         return -1;
     }
 
-    MainGameLoop(openglWindow, vulkanWindow, &renderAPI);
-    WindowsCleanup(firstWindow, &mainContext);
+    b32 isVulkanActive = true;
+    MainGameLoop(mainWindow, isVulkanActive, &renderAPI);
+    WindowsCleanup(mainWindow, &mainContext);
     return 0;
 }
