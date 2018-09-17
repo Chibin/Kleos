@@ -5,12 +5,24 @@
 static bool g_canJump = true;
 static bool g_canAttack = true;
 
-void ProcessInputDown(SDL_Keycode sym, bool *continueRunning)
+void ToggleBetweenVulkanAndOpenGL(GameMetadata *gameMetadata)
+{
+    gameMetadata->isVulkanActive = !gameMetadata->isVulkanActive;
+    gameMetadata->isOpenGLActive = !gameMetadata->isVulkanActive;
+}
+
+void ProcessInputDown(
+        SDL_Keycode sym,
+        GameMetadata *gameMetadata,
+        b32 *continueRunning)
 {
     switch (sym)
     {
     case SDLK_ESCAPE:
         *continueRunning = false;
+        break;
+    case  SDLK_1:
+        ToggleBetweenVulkanAndOpenGL(gameMetadata);
         break;
     default:
         /* TODO: differentiate different types of input
@@ -50,7 +62,7 @@ void ProcessMouseInput(const SDL_Event &event, Camera *camera)
     }
 }
 
-void ProcessKeysHeldDown(Entity *entity, const Uint8 *keystate)
+void ProcessKeysHeldDown(Entity *entity, const u8 *keystate)
 {
     if (((keystate[SDL_SCANCODE_UP] != 0u) ||
          (keystate[SDL_SCANCODE_SPACE] != 0u)) &&

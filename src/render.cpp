@@ -195,7 +195,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             bool useStagingBuffer = false;
 
             Bitmap stringBitmap = {};
-            char buffer[150];
+            char buffer[256];
             sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f      ", 33.0f, 6.0f, 9.0f); // NOLINT
             StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                       // NOLINT
             stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
@@ -334,25 +334,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         gameMetadata->initFromGameUpdateAndRender = true;
 
-        if (gameMetadata->isOpenGLActive)
-        {
-            /*  Each vertex attribute takes its data from memory managed by a
-             *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
-             *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
-             *  Since the previously defined VBO was bound before
-             *  calling glVertexAttribPointer vertex attribute 0 is now associated with
-             * its vertex data.
-             */
-
-            glGenVertexArrays(1, &gameMetadata->vaoID);
-            glGenBuffers(1, &gameMetadata->eboID);
-            glGenBuffers(1, &gameMetadata->vboID);
-
-            OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                    nullptr,                                                    /* use null as way to not load anything to vbo*/
-                    gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
-        }
-
         //ParticleSystem *ps = &gameMetadata->particleSystem;
         f32 base = -1.01f;
         f32 width = 0.05f;
@@ -390,7 +371,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
      * move. The amount of keyboard repeat depends on the setting the user has
      * on their computer, so not reliable.
      */
-    const Uint8 *keystate = SDL_GetKeyboardState(nullptr);
+    const u8 *keystate = SDL_GetKeyboardState(nullptr);
     ProcessKeysHeldDown(g_player, keystate);
 
     while (SDL_PollEvent(&event) != 0)
@@ -404,7 +385,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ProcessMouseInput(event, g_camera);
             break;
         case SDL_KEYDOWN:
-            ProcessInputDown(event.key.keysym.sym, &continueRunning);
+            ProcessInputDown(
+                    event.key.keysym.sym,
+                    gameMetadata,
+                    &continueRunning);
             break;
         case SDL_KEYUP:
             ProcessInputUp(event.key.keysym.sym);
@@ -418,6 +402,28 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (gameMetadata->isOpenGLActive)
     {
+
+        if (!gameMetadata->initOpenGL)
+        {
+            gameMetadata->initOpenGL = true;
+
+            /*  Each vertex attribute takes its data from memory managed by a
+             *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
+             *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
+             *  Since the previously defined VBO was bound before
+             *  calling glVertexAttribPointer vertex attribute 0 is now associated with
+             * its vertex data.
+             */
+
+            glGenVertexArrays(1, &gameMetadata->vaoID);
+            glGenBuffers(1, &gameMetadata->eboID);
+            glGenBuffers(1, &gameMetadata->vboID);
+
+            OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
+                    nullptr,                                                    /* use null as way to not load anything to vbo*/
+                    gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
+        }
+
         /* start with a 'clear' screen */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glEnable(GL_DEPTH_TEST);
@@ -641,7 +647,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
-    char buffer[150];
+    char buffer[256];
     UniformBufferObject ubo = {};
 
     Bitmap perFrameSentinelNode = {};
