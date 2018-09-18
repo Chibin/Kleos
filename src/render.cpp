@@ -130,13 +130,8 @@ static Animation2D *g_spriteAnimation = nullptr;
 static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 
-#define USE_VULKAN 0
-#define USE_OPENGL 1
-
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
-    ASSERT(USE_VULKAN != USE_OPENGL);
-
     SDL_Event event;
     bool continueRunning = true;
 
@@ -150,17 +145,18 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (gameMetadata->isVulkanActive)
     {
-        //if (vc->depthStencil > 0.99f)
-        //{
-        //    vc->depthIncrement = -0.001f;
-        //}
-        //if (vc->depthStencil < 0.8f)
-        //{
-        //    vc->depthIncrement = 0.001f;
-        //}
+#if 0
+        if (vc->depthStencil > 0.99f)
+        {
+            vc->depthIncrement = -0.001f;
+        }
+        if (vc->depthStencil < 0.8f)
+        {
+            vc->depthIncrement = 0.001f;
+        }
 
-        //vc->depthStencil += vc->depthIncrement;
-
+        vc->depthStencil += vc->depthIncrement;
+#endif
         //Wait for work to finish before updating MVP.
         vkDeviceWaitIdle(vc->device);
         vc->curFrame++;
@@ -188,7 +184,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
             vc->textures[0].texWidth = texWidth;
             vc->textures[0].texHeight = texHeight;
-            vc->textures[0].texPitch = 0;
+            /* stbi doesn't have a "pitch" per se, but it's probably
+             * the same as the width.
+             */
+            vc->textures[0].texPitch = texWidth;
             vc->textures[0].dataSize = texWidth * texHeight * 4;
             vc->textures[0].data = pixels;
 
@@ -225,7 +224,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->memoryProperties,
                     useStagingBuffer,
                     vc->textures);
-
 
             stbi_image_free(pixels);
 
@@ -419,9 +417,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             glGenBuffers(1, &gameMetadata->eboID);
             glGenBuffers(1, &gameMetadata->vboID);
 
-            OpenGLCreateVAO(gameMetadata->vaoID, gameMetadata->vboID, sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                    nullptr,                                                    /* use null as way to not load anything to vbo*/
-                    gameMetadata->eboID, sizeof(g_rectIndices), g_rectIndices); // NOLINT
+            OpenGLCreateVAO(
+                    gameMetadata->vaoID,
+                    gameMetadata->vboID,
+                    sizeof(Vertex) * NUM_OF_RECT_CORNER,
+                    nullptr,   /* use null to skip preloading data to vbo */
+                    gameMetadata->eboID, sizeof(g_rectIndices),
+                    g_rectIndices); // NOLINT
         }
 
         /* start with a 'clear' screen */

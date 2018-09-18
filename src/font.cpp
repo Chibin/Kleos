@@ -142,7 +142,7 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
     bitmap->format = format;
     bitmap->width = width;
     bitmap->height = height;
-    bitmap->pitch = height;
+    bitmap->pitch = pitch;
 };
 
 void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)

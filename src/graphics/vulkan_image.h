@@ -96,28 +96,47 @@ static void VulkanSetTextureImage(
                 };
 
                 VkSubresourceLayout subResourceLayout;
-                void *data;
+                void *mapped;
 
                 vkGetImageSubresourceLayout(*device, texObj->image, &subres, &subResourceLayout);
 
                 VkMemoryRequirements memReqs;
                 vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
-                err = vkMapMemory(*device, texObj->mem, 0, memReqs.size, 0, &data);
+                err = vkMapMemory(*device, texObj->mem, 0, memReqs.size, 0, &mapped);
                 ASSERT(!err);
-                //ASSERT(memReqs.size == texObj->dataSize);
-                memcpy(data, texObj->data, memReqs.size);
 
-#if 0
-                /* not sure if this even works */
-                char *mappedBytes = (char *)data + subResourceLayout.offset;
-                char *texObjData = (char*)texObj->data;
+                /* Let's just assume that the data is perfectly aligned if they
+                 * are the same size.
+                 */
+                if (memReqs.size == texObj->dataSize)
+                    memcpy(mapped, texObj->data, memReqs.size);
+                else
+                {
 
-                for(int i = 0; i < texObj->texHeight; ++i) {
-                    memcpy(mappedBytes, texObjData, texObj->texPitch);
-                    mappedBytes += subResourceLayout.rowPitch;
-                    texObjData += texObj->texPitch;
+                    VkDeviceSize counter = 0;
+                    u8 *data = (u8 *)texObj->data;
+                    mapped = (u8 *)mapped + subResourceLayout.offset;
+
+                    VkDeviceSize bytesToCopy = texObj->texPitch;
+                    ASSERT(bytesToCopy > 0);
+
+                    /* When the image has an odd amount of width/height, then
+                     * the SDL_Surface will most likely have an misaligned
+                     * pitch vs the subResource layout. I'm realigning it here
+                     * to adhere to Vulkan requirements. Otherwise, you'll get
+                     * jumbled sample image.
+                     */
+                    for (memory_index y = 0; y < texObj->texHeight; y++)
+                    {
+                        memcpy(mapped, data, bytesToCopy);
+
+                        mapped = (u8 *)mapped + subResourceLayout.rowPitch;
+                        data += bytesToCopy;
+                        counter += subResourceLayout.rowPitch;
+                    }
+                    ASSERT(counter == memReqs.size);
                 }
-#endif
+
                 vkUnmapMemory(*device, texObj->mem);
             }
 
