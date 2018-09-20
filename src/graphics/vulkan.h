@@ -80,7 +80,7 @@ struct TextureObject
 
     VkDeviceMemory mem;
     VkImageView view;
-    int32_t texWidth, texHeight, texPitch;
+    u32 texWidth, texHeight, texPitch;
 
     void *data;
     memory_index dataSize;

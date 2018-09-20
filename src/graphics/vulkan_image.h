@@ -61,6 +61,65 @@ void VulkanCreateImage(
     ASSERT(!err);
 }
 
+void VulkanCopyImageFromHostToLocal(
+        VkDevice *device,
+        u32 pitch,
+        u32 height,
+        VkImage image,
+        VkDeviceMemory mem,
+        memory_index dataSize,
+        u8 *data)
+{
+    VkResult err;
+    const VkImageSubresource subres = {
+        /*.aspectMask =*/   VK_IMAGE_ASPECT_COLOR_BIT,
+        /*.mipLevel =*/     0,
+        /*.arrayLayer =*/   0,
+    };
+
+    VkSubresourceLayout subResourceLayout;
+    void *mapped;
+
+    vkGetImageSubresourceLayout(*device, image, &subres, &subResourceLayout);
+
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(*device, image, &memReqs);
+    err = vkMapMemory(*device, mem, 0, memReqs.size, 0, &mapped);
+    ASSERT(!err);
+
+    /* Let's just assume that the data is perfectly aligned if they
+     * are the same size.
+     */
+    if (memReqs.size == dataSize)
+        memcpy(mapped, data, memReqs.size);
+    else
+    {
+        VkDeviceSize counter = 0;
+        mapped = (u8 *)mapped + subResourceLayout.offset;
+
+        VkDeviceSize bytesToCopy = pitch;
+        ASSERT(bytesToCopy > 0);
+
+        /* When the image has an odd amount of width/height, then
+         * the SDL_Surface will most likely have an misaligned
+         * pitch vs the subResource layout. I'm realigning it here
+         * to adhere to Vulkan requirements. Otherwise, you'll get
+         * jumbled sample image.
+         */
+        for (memory_index y = 0; y < height; y++)
+        {
+            memcpy(mapped, data, bytesToCopy);
+
+            mapped = (u8 *)mapped + subResourceLayout.rowPitch;
+            data += bytesToCopy;
+            counter += subResourceLayout.rowPitch;
+        }
+        ASSERT(counter == memReqs.size);
+    }
+
+    vkUnmapMemory(*device, mem);
+}
+
 static void VulkanSetTextureImage(
         VkDevice *device,
         VkCommandBuffer *cmdBuffer,
@@ -70,10 +129,9 @@ static void VulkanSetTextureImage(
         VkImageTiling tiling,
         VkImageUsageFlags usage,
         VkFlags requiredProps,
-        VkFormat texFormat)
+        VkFormat texFormat,
+        VkImageLayout desiredLayout)
 {
-            VkResult err;
-
             VulkanCreateImage(
                     device,
                     memoryProperties,
@@ -89,61 +147,21 @@ static void VulkanSetTextureImage(
 
             if (requiredProps & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
             {
-                const VkImageSubresource subres = {
-                    /*.aspectMask =*/   VK_IMAGE_ASPECT_COLOR_BIT,
-                    /*.mipLevel =*/     0,
-                    /*.arrayLayer =*/   0,
-                };
-
-                VkSubresourceLayout subResourceLayout;
-                void *mapped;
-
-                vkGetImageSubresourceLayout(*device, texObj->image, &subres, &subResourceLayout);
-
-                VkMemoryRequirements memReqs;
-                vkGetImageMemoryRequirements(*device, texObj->image, &memReqs);
-                err = vkMapMemory(*device, texObj->mem, 0, memReqs.size, 0, &mapped);
-                ASSERT(!err);
-
-                /* Let's just assume that the data is perfectly aligned if they
-                 * are the same size.
-                 */
-                if (memReqs.size == texObj->dataSize)
-                    memcpy(mapped, texObj->data, memReqs.size);
-                else
-                {
-
-                    VkDeviceSize counter = 0;
-                    u8 *data = (u8 *)texObj->data;
-                    mapped = (u8 *)mapped + subResourceLayout.offset;
-
-                    VkDeviceSize bytesToCopy = texObj->texPitch;
-                    ASSERT(bytesToCopy > 0);
-
-                    /* When the image has an odd amount of width/height, then
-                     * the SDL_Surface will most likely have an misaligned
-                     * pitch vs the subResource layout. I'm realigning it here
-                     * to adhere to Vulkan requirements. Otherwise, you'll get
-                     * jumbled sample image.
-                     */
-                    for (memory_index y = 0; y < texObj->texHeight; y++)
-                    {
-                        memcpy(mapped, data, bytesToCopy);
-
-                        mapped = (u8 *)mapped + subResourceLayout.rowPitch;
-                        data += bytesToCopy;
-                        counter += subResourceLayout.rowPitch;
-                    }
-                    ASSERT(counter == memReqs.size);
-                }
-
-                vkUnmapMemory(*device, texObj->mem);
+                VulkanCopyImageFromHostToLocal(
+                        device,
+                        texObj->texPitch,
+                        texObj->texHeight,
+                        texObj->image,
+                        texObj->mem,
+                        texObj->dataSize,
+                        (u8 *)texObj->data);
             }
 
             /* setting the image layout does not reference the actual memory so no need
              * to add a mem ref
              */
-            texObj->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            //texObj->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            texObj->imageLayout = desiredLayout;
             VulkanAddPipelineBarrier(
                     device,
                     cmdBuffer,

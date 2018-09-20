@@ -105,7 +105,6 @@ void VulkanDestroyTextureImage(
         vkFreeMemory(*device, texObj->mem, NULL);
 }
 
-
 void VulkanUpdateVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize)
 {
 
@@ -167,7 +166,8 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
             VK_IMAGE_TILING_LINEAR,
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-            VK_FORMAT_R8G8B8A8_UNORM);
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     VulkanSetTextureImage(
             device,
@@ -178,7 +178,8 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            VK_FORMAT_R8G8B8A8_UNORM);
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     VulkanAddPipelineBarrier(
             device,

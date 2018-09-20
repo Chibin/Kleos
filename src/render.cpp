@@ -195,14 +195,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             Bitmap stringBitmap = {};
             char buffer[256];
-            sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f      ", 33.0f, 6.0f, 9.0f); // NOLINT
+            sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f    ", 33.0f, 66.0f, 99.0f); // NOLINT
             StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                       // NOLINT
             stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
             vc->UITextures[0].texWidth = stringBitmap.width;
             vc->UITextures[0].texHeight = stringBitmap.height;
             vc->UITextures[0].texPitch = stringBitmap.pitch;
-            vc->UITextures[0].dataSize = stringBitmap.width * stringBitmap.height * 4;
+            vc->UITextures[0].dataSize = stringBitmap.size;
             vc->UITextures[0].data = stringBitmap.data;
 
             VulkanPrepareTexture(vc,
@@ -213,7 +213,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->queue,
                     &vc->memoryProperties,
                     useStagingBuffer,
-                    vc->UITextures);
+                    vc->UITextures,
+                    VK_IMAGE_LAYOUT_GENERAL);
 
             VulkanPrepareTexture(vc,
                     &vc->gpu,
@@ -223,7 +224,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->queue,
                     &vc->memoryProperties,
                     useStagingBuffer,
-                    vc->textures);
+                    vc->textures,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
             stbi_image_free(pixels);
 
@@ -1019,6 +1021,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     if (gameMetadata->isVulkanActive)
     {
 
+        /* TODO: Update UI texture */
+        /* use texture of arrays or arrays of texture? */
         vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
         vkCmdBindDescriptorSets(
@@ -1030,6 +1034,17 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 &vc->secondDescSet,
                 0,
                 NULL);
+
+        ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
+        ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
+        VulkanCopyImageFromHostToLocal(
+                &vc-> device,
+                stringBitmap.pitch,
+                stringBitmap.height,
+                vc->UITextures[0].image,
+                vc->UITextures[0].mem,
+                stringBitmap.size,
+                stringBitmap.data);
 
         ClearUsedVertexRenderGroup(perFrameRenderGroup);
         PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);

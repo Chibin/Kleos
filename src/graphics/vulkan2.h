@@ -88,7 +88,8 @@ void VulkanPrepareTexture(VulkanContext *vc,
         VkQueue *queue,
         VkPhysicalDeviceMemoryProperties *memoryProperties,
         bool useStagingBuffer,
-        TextureObject *textures)
+        TextureObject *textures,
+        VkImageLayout desiredLayout)
 {
     const VkFormat texFormat = VK_FORMAT_R8G8B8A8_UNORM;
     VkFormatProperties props = {};
@@ -114,7 +115,8 @@ void VulkanPrepareTexture(VulkanContext *vc,
                     VK_IMAGE_TILING_LINEAR,
                     VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                    texFormat);
+                    texFormat,
+                    desiredLayout);
 
         }
         else if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)
