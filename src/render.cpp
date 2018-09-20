@@ -286,11 +286,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         g_eda = CreateEntityDynamicArray(reservedMemory);
 
-        float screen_width = screenResolution.v[0];
-        float screen_height = screenResolution.v[1];
+        f32 screenWidth = screenResolution.v[0];
+        f32 screenHeight = screenResolution.v[1];
         g_projection = (glm::mat4 *)AllocateMemory(reservedMemory, (sizeof(glm::mat4)));
         *g_projection =
-            glm::infinitePerspective(45.0f, screen_width / screen_height, 0.1f);
+            glm::infinitePerspective(45.0f, screenWidth / screenHeight, 0.1f);
 
         g_rectManager = CreateRectManager(reservedMemory);
 
@@ -907,12 +907,14 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
     stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
-    f32 rectWidth = 0.35f;
-    f32 rectHeight = 0.175f;
-    f32 padding = rectHeight * 0.1f;
+    f32 screenWidth = gameMetadata->screenResolution.v[0];
+    f32 screenHeight = gameMetadata->screenResolution.v[1];
+    f32 scaleFactor = 3.0f;
+    f32 rectWidth  = stringBitmap.width / screenWidth * scaleFactor;
+    f32 rectHeight = stringBitmap.height / screenHeight * scaleFactor;
 
     /* This is in raw OpenGL coordinates */
-    v3 startingPosition = v3{ -1, 1 - rectHeight + padding, 0 };
+    v3 startingPosition = v3{ -1, 1 - rectHeight, 0 };
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK, rectWidth, rectHeight);
