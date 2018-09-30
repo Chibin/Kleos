@@ -178,21 +178,34 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         if (gameMetadata->isVulkanActive)
         {
+            bool useStagingBuffer = false;
+
             s32 texWidth = 0;
             s32 texHeight = 0;
             s32 texChannels = 0;
-            stbi_uc* pixels = stbi_load("./materials/textures/awesomeface.png",
+            stbi_uc *pixels = stbi_load("./materials/textures/awesomeface.png",
                     &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
             vc->textures[0].texWidth = texWidth;
             vc->textures[0].texHeight = texHeight;
-            /* stbi doesn't have a "pitch" per se, but it's probably
-             * the same as the width.
+            /* stbi does not do padding, so the pitch is the component times
+             * the width of the image. The component is 4 because of STBI_rgb_alpha.
              */
-            vc->textures[0].texPitch = texWidth;
+            vc->textures[0].texPitch = texWidth * 4;
             vc->textures[0].dataSize = texWidth * texHeight * 4;
             vc->textures[0].data = pixels;
 
-            bool useStagingBuffer = false;
+            VulkanPrepareTexture(vc,
+                    &vc->gpu,
+                    &vc->device,
+                    &vc->setupCmd,
+                    &vc->cmdPool,
+                    &vc->queue,
+                    &vc->memoryProperties,
+                    useStagingBuffer,
+                    vc->textures,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+            stbi_image_free(pixels);
 
             Bitmap stringBitmap = {};
             char buffer[256];
@@ -221,6 +234,17 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     vc->UITextures,
                     VK_IMAGE_LAYOUT_GENERAL);
 
+            stbi_uc *playerPixels = stbi_load( "./materials/textures/arche.png",
+                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            vc->playerTextures[0].texWidth = texWidth;
+            vc->playerTextures[0].texHeight = texHeight;
+            /* stbi does not do padding, so the pitch is the component times
+             * the width of the image. The component is 4 because of STBI_rgb_alpha.
+             */
+            vc->playerTextures[0].texPitch = texWidth * 4;
+            vc->playerTextures[0].dataSize = texWidth * texHeight * 4;
+            vc->playerTextures[0].data = pixels;
+
             VulkanPrepareTexture(vc,
                     &vc->gpu,
                     &vc->device,
@@ -229,10 +253,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->queue,
                     &vc->memoryProperties,
                     useStagingBuffer,
-                    vc->textures,
+                    vc->playerTextures,
                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-            stbi_image_free(pixels);
+            stbi_image_free(playerPixels);
 
             /* Creating pipeline layout, descriptor pool, and render pass can be done
              * indenpendently
@@ -253,6 +277,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     vc,
                     &vc->secondDescSet,
                     vc->UITextures,
+                    DEMO_TEXTURE_COUNT,
+                    &vc->uniformData,
+                    &vc->uniformDataFragment);
+
+            VulkanSetDescriptorSet(
+                    vc,
+                    &vc->playerDescSet,
+                    vc->playerTextures,
                     DEMO_TEXTURE_COUNT,
                     &vc->uniformData,
                     &vc->uniformDataFragment);
@@ -791,6 +823,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                             &g_vkBuffers.mems[g_vkBuffers.count],
                             (void *)perFrameRenderGroup->vertexMemory.base,
                             perFrameRenderGroup->vertexMemory.used);
+
                     VulkanAddDrawCmd(
                             vc,
                             &g_vkBuffers.bufs[g_vkBuffers.count++],
@@ -803,7 +836,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
                         perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
                 DrawRawRectangle(perFrameRenderGroup->rectCount);
-
             }
 
             ClearUsedVertexRenderGroup(perFrameRenderGroup);
@@ -849,15 +881,44 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
             }
 
-            if (gameMetadata->isOpenGLActive)
+            if (bitmap != prevBitmap)
             {
-                OpenGLUpdateTextureParameter(&textureParam);
-
-                if (bitmap != prevBitmap)
+                if (gameMetadata->isOpenGLActive)
                 {
+                    OpenGLUpdateTextureParameter(&textureParam);
                     OpenGLLoadBitmap(bitmap, textureID);
                 }
+
+                if (gameMetadata->isVulkanActive)
+                {
+
+                    if (gameMetadata->playerRect->bitmap == bitmap)
+                    {
+                        vkCmdBindDescriptorSets(
+                                vc->drawCmd,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                vc->pipelineLayout,
+                                0,
+                                1,
+                                &vc->playerDescSet,
+                                0,
+                                NULL);
+                    }
+                    else
+                    {
+                        vkCmdBindDescriptorSets(
+                                vc->drawCmd,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                vc->pipelineLayout,
+                                0,
+                                1,
+                                &vc->descSet,
+                                0,
+                                NULL);
+                    }
+                }
             }
+
             prevBitmap = bitmap;
             isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
         }
@@ -1220,7 +1281,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
     g_spriteAnimation->timePerFrame = 1000 * 0.75;
 
-#if 1
     /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
     v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
     g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
@@ -1232,18 +1292,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
                                                       bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       bottomLeft  = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       topLeft     = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-#else
-    /* https://en.m.wikipedia.org/wiki/C_syntax#Designated_initializers */
-    g_spriteAnimation->frameCoords[0] = RectUVCoords{ .topRight    = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      .bottomRight = PixelToUV(v2{ 60, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      .bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      .topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-
-    g_spriteAnimation->frameCoords[1] = RectUVCoords{ .topRight    = PixelToUV(v2{ 60 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      .bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      .bottomLeft  = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      .topLeft     = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-#endif
 
 }
 #endif

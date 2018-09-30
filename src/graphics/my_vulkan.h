@@ -684,40 +684,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
 }
 
-void VulkanPrepareDescriptorPool(VulkanContext *vc)
-{
-    /* TODO: Update parameters to account of max sets and poolsize count */
-
-    VkResult err;
-    /* does not need to be "in order" */
-    const VkDescriptorPoolSize typeCount[] = {
-        {
-        /*.type =*/             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
-        },
-        {
-        /*.type =*/             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        /*.descriptorCount =*/  DEMO_TEXTURE_COUNT,
-        },
-    };
-
-    const VkDescriptorPoolCreateInfo descriptorPool = {
-        /*.sType =*/            VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        /*.pNext =*/            NULL,
-        /*.flags =*/            0,
-        /* Max set is talking about the amount of descriptor sets we can
-         * allocate? Each descriptor set we allocate will have the
-         * type count? So, 1 uniform buffer, and 1 sampler.
-         */
-        /*.maxSets =*/          2,
-        /*.poolSizeCount =*/    2,
-        /*.pPoolSizes =*/       &typeCount[0],
-    };
-
-    err = vkCreateDescriptorPool(vc->device, &descriptorPool, NULL, &vc->descPool);
-    ASSERT(!err);
-}
-
 /* Use the swapchain images by associating swapchain image view with the
  * framebuffer. If you have depth enabled, you will also need to associate the
  * depth view with the frame buffer. Each framebuffer will require a
