@@ -53,9 +53,6 @@ static bool AvailableMemoryTypeFromProperties(
     return false;
 }
 
-#include "vulkan_memory.h"
-#include "vulkan_image.h"
-
 void VulkanFlushInit(
         VkDevice *device,
         VkCommandBuffer *setupCmd,
@@ -105,6 +102,9 @@ void VulkanDestroyTextureImage(
         vkFreeMemory(*device, texObj->mem, NULL);
 }
 
+#include "vulkan_memory.h"
+#include "vulkan_image.h"
+
 void VulkanUpdateVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize)
 {
 
@@ -143,92 +143,6 @@ void VulkanPrepareVertices(
     memcpy(data, verticesData, memSize);
     vkUnmapMemory(vc->device, *mem);
 
-}
-
-void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
-        VkDevice *device,
-        VkCommandBuffer *setupCmd,
-        VkCommandPool *cmdPool,
-        VkQueue *queue,
-        VkPhysicalDeviceMemoryProperties *memoryProperties,
-        TextureObject *texture
-        )
-{
-    struct TextureObject stagingTexture;
-
-    memset(&stagingTexture, 0, sizeof(stagingTexture));
-    VulkanSetTextureImage(
-            device,
-            setupCmd,
-            cmdPool,
-            memoryProperties,
-            &stagingTexture,
-            VK_IMAGE_TILING_LINEAR,
-            VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-            VK_FORMAT_R8G8B8A8_UNORM,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    VulkanSetTextureImage(
-            device,
-            setupCmd,
-            cmdPool,
-            memoryProperties,
-            texture,
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            VK_FORMAT_R8G8B8A8_UNORM,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    VulkanAddPipelineBarrier(
-            device,
-            setupCmd,
-            cmdPool,
-            stagingTexture.image,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            stagingTexture.imageLayout,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            (VkAccessFlagBits)0);
-
-    VulkanAddPipelineBarrier(
-            device,
-            setupCmd,
-            cmdPool,
-            texture->image,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            texture->imageLayout,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            (VkAccessFlagBits)0);
-
-    VkImageCopy copyRegion = {};
-    copyRegion.srcSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.srcOffset =         {0, 0, 0};
-    copyRegion.dstSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-    copyRegion.dstOffset =         {0, 0, 0};
-
-    /* TODO: use safe casting */
-    copyRegion.extent =            {uint32(stagingTexture.texWidth),
-                                    uint32(stagingTexture.texHeight),
-                                    1};
-
-    vkCmdCopyImage(
-            *setupCmd, stagingTexture.image,
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->image,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-    VulkanAddPipelineBarrier(
-            device,
-            setupCmd,
-            cmdPool,
-            texture->image,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            texture->imageLayout,
-            (VkAccessFlagBits)0);
-
-    VulkanFlushInit(device, setupCmd, cmdPool, queue);
-    VulkanDestroyTextureImage(device, &stagingTexture);
 }
 
 void VulkanBeginRenderPass(VulkanContext *vc)

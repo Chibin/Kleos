@@ -171,6 +171,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         TTF_Font *font = OpenFont();
         ASSERT(font != nullptr);
         gameMetadata->font = font;
+        //ASSERT(TTF_FontFaceIsFixedWidth(font) == 1);
 
         g_vkBuffers.count = 0;
         g_vkBuffers.maxNum = 100;
@@ -195,8 +196,12 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             Bitmap stringBitmap = {};
             char buffer[256];
-            sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f    ", 33.0f, 66.0f, 99.0f); // NOLINT
-            StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                       // NOLINT
+            /* Hack: There's a bunch of blank spaces at the end to accomodate
+             * the amout of extra characters for later images.
+             * This will give us a longer width when creating a vkimage.
+             */
+            sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f              ", 33.0f, 66.0f, 99.0f); // NOLINT
+            StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                             // NOLINT
             stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
             vc->UITextures[0].texWidth = stringBitmap.width;

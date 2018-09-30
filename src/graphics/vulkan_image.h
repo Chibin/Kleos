@@ -91,7 +91,9 @@ void VulkanCopyImageFromHostToLocal(
      * are the same size.
      */
     if (memReqs.size == dataSize)
+    {
         memcpy(mapped, data, memReqs.size);
+    }
     else
     {
         VkDeviceSize counter = 0;
@@ -99,6 +101,7 @@ void VulkanCopyImageFromHostToLocal(
 
         VkDeviceSize bytesToCopy = pitch;
         ASSERT(bytesToCopy > 0);
+        VkDeviceSize remaining = subResourceLayout.rowPitch - bytesToCopy;
 
         /* When the image has an odd amount of width/height, then
          * the SDL_Surface will most likely have an misaligned
@@ -109,6 +112,14 @@ void VulkanCopyImageFromHostToLocal(
         for (memory_index y = 0; y < height; y++)
         {
             memcpy(mapped, data, bytesToCopy);
+            /* If the width of the new bitmap we are trying to copy is less than the previous one,
+             * then it's possible to have left over data from the previous bitmap image.
+             * This will clear it out.
+             */
+            if (remaining > 0)
+            {
+                memset((u8 *)mapped + bytesToCopy, 0, remaining);
+            }
 
             mapped = (u8 *)mapped + subResourceLayout.rowPitch;
             data += bytesToCopy;
@@ -216,6 +227,158 @@ void VulkanCreateImageSampler(
 
     err = vkCreateImageView(*device, &viewInfo, NULL, &texture->view);
     ASSERT(err == VK_SUCCESS);
+}
+
+void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
+        VkDevice *device,
+        VkCommandBuffer *setupCmd,
+        VkCommandPool *cmdPool,
+        VkQueue *queue,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        TextureObject *texture
+        )
+{
+    struct TextureObject stagingTexture;
+
+    memset(&stagingTexture, 0, sizeof(stagingTexture));
+    VulkanSetTextureImage(
+            device,
+            setupCmd,
+            cmdPool,
+            memoryProperties,
+            &stagingTexture,
+            VK_IMAGE_TILING_LINEAR,
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    VulkanSetTextureImage(
+            device,
+            setupCmd,
+            cmdPool,
+            memoryProperties,
+            texture,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    VulkanAddPipelineBarrier(
+            device,
+            setupCmd,
+            cmdPool,
+            stagingTexture.image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            stagingTexture.imageLayout,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            (VkAccessFlagBits)0);
+
+    VulkanAddPipelineBarrier(
+            device,
+            setupCmd,
+            cmdPool,
+            texture->image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            texture->imageLayout,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            (VkAccessFlagBits)0);
+
+    VkImageCopy copyRegion = {};
+    copyRegion.srcSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.srcOffset =         {0, 0, 0};
+    copyRegion.dstSubresource =    {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copyRegion.dstOffset =         {0, 0, 0};
+
+    /* TODO: use safe casting */
+    copyRegion.extent =            {uint32(stagingTexture.texWidth),
+                                    uint32(stagingTexture.texHeight),
+                                    1};
+
+    vkCmdCopyImage(
+            *setupCmd, stagingTexture.image,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+    VulkanAddPipelineBarrier(
+            device,
+            setupCmd,
+            cmdPool,
+            texture->image,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            texture->imageLayout,
+            (VkAccessFlagBits)0);
+
+    VulkanFlushInit(device, setupCmd, cmdPool, queue);
+    VulkanDestroyTextureImage(device, &stagingTexture);
+}
+
+void VulkanPrepareTexture(VulkanContext *vc,
+        VkPhysicalDevice *gpu,
+        VkDevice *device,
+        VkCommandBuffer *setupCmd,
+        VkCommandPool *cmdPool,
+        VkQueue *queue,
+        VkPhysicalDeviceMemoryProperties *memoryProperties,
+        bool useStagingBuffer,
+        TextureObject *textures,
+        VkImageLayout desiredLayout)
+{
+    const VkFormat texFormat = VK_FORMAT_R8G8B8A8_UNORM;
+    VkFormatProperties props = {};
+
+    vkGetPhysicalDeviceFormatProperties(*gpu, texFormat, &props);
+
+    for (memory_index i = 0; i < DEMO_TEXTURE_COUNT; i++)
+    {
+        if ((props.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) && !useStagingBuffer)
+        {
+            /* Device can texture using linear textures */
+            ASSERT(textures[i].texWidth > 0);
+            ASSERT(textures[i].texHeight > 0);
+            ASSERT(textures[i].dataSize > 0);
+            ASSERT(textures[i].data != NULL);
+
+            VulkanSetTextureImage(
+                    device,
+                    setupCmd,
+                    cmdPool,
+                    memoryProperties,
+                    &textures[i],
+                    VK_IMAGE_TILING_LINEAR,
+                    VK_IMAGE_USAGE_SAMPLED_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                    texFormat,
+                    desiredLayout);
+
+        }
+        else if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)
+        {
+
+            VulkanUseStagingBufferToCopyLinearTextureToOptimized(
+                    device,
+                    setupCmd,
+                    cmdPool,
+                    queue,
+                    memoryProperties,
+                    &textures[i]
+                    );
+
+        }
+        else
+        {
+            /* Can't support VK_FORMAT_R8G8B8A8_UNORM !? */
+            ASSERT(!"No support for B8G8R8A8_UNORM as texture image format");
+        }
+
+        VulkanCreateImageSampler(
+                device,
+                texFormat,
+                &textures[i]);
+    }
+
 }
 
 #if 0
