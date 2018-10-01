@@ -17,6 +17,7 @@
 #pragma warning(disable : 4201)
 #define GLM_SWIZZLE
 #define GLM_SWIZZLE_XYZW
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -179,11 +180,16 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         if (gameMetadata->isVulkanActive)
         {
             bool useStagingBuffer = false;
+            stbi_set_flip_vertically_on_load(1);
 
             s32 texWidth = 0;
             s32 texHeight = 0;
             s32 texChannels = 0;
+#if 1
             stbi_uc *pixels = stbi_load("./materials/textures/awesomeface.png",
+#else
+            stbi_uc *pixels = stbi_load( "./materials/textures/arche.png",
+#endif
                     &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
             vc->textures[0].texWidth = texWidth;
             vc->textures[0].texHeight = texHeight;
@@ -203,7 +209,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->memoryProperties,
                     useStagingBuffer,
                     vc->textures,
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);;
 
             stbi_image_free(pixels);
 
@@ -243,7 +249,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
              */
             vc->playerTextures[0].texPitch = texWidth * 4;
             vc->playerTextures[0].dataSize = texWidth * texHeight * 4;
-            vc->playerTextures[0].data = pixels;
+            vc->playerTextures[0].data = playerPixels;
 
             VulkanPrepareTexture(vc,
                     &vc->gpu,
@@ -348,7 +354,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
-        gameMetadata->playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
+        gameMetadata->playerRect = CreateRectangle(reservedMemory, pos, COLOR_BLACK, 2, 1);
         AssociateEntity(gameMetadata->playerRect, g_player, false);
         g_rectManager->player = gameMetadata->playerRect;
         gameMetadata->playerRect->type = REGULAR;
@@ -508,7 +514,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 {
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
-    /* 
+    /*
      * Attack animation startup
      * Create animation hitboxes
      * Create animation hurtboxes
@@ -863,7 +869,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             {
                 if (gameMetadata->isVulkanActive)
                 {
-                    pushConstants.proj = *g_projection;
+
+                    glm::mat4 correction = glm::mat4();
+                    correction[1][1] = -1;
+                    correction[2][2] = 0.5;
+                    correction[2][3] = 0.5;
+
+                    pushConstants.proj = correction * (*g_projection);
                     pushConstants.view = g_camera->view;
                     vkCmdPushConstants(
                             vc->drawCmd,
@@ -929,7 +941,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     if (gameMetadata->isVulkanActive)
     {
-        pushConstants.proj = *g_projection;
+        glm::mat4 correction = glm::mat4();
+        correction[1][1] = -1;
+        correction[2][2] = 0.5;
+        correction[2][3] = 0.5;
+
+        pushConstants.proj = correction * (*g_projection);
         pushConstants.view = g_camera->view;
         vkCmdPushConstants(
                 vc->drawCmd,
@@ -1283,6 +1300,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
     /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
     v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
+#if 0
     g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
                                                       bottomRight = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
@@ -1292,6 +1310,16 @@ inline void LoadAssets(GameMetadata *gameMetadata)
                                                       bottomRight = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       bottomLeft  = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       topLeft     = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
+#else
+    g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomRight = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
 
+    g_spriteAnimation->frameCoords[1] = RectUVCoords{ topRight    = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomRight = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomLeft  = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      topLeft     = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
+#endif
 }
 #endif

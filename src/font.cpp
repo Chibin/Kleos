@@ -129,12 +129,9 @@ inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitm
 
     SDL_LockSurface(surface);
 
-#if 0
+#if 1
     /* Need to use this if it's OpenGL only */
-    //FlipImage((u32 *)surface->pixels, width, height);
-
-    bitmap->data = (u8 *)AllocateMemory(gm, width * height * 4);
-    CopyData((u32 *)surface->pixels, (u32 *)bitmap->data, width * height);
+    FlipImage((u32 *)surface->pixels, width, height);
 #endif
 
     bitmap->data = (u8 *)surface->pixels;

@@ -29,8 +29,10 @@ void main()
     vColor = vTestColor;
 
     gl_Position = pushConsts.projection * pushConsts.view * vec4(vPositionModelSpace, 1.0);
-    //gl_Position = ubo.projection * ubo.view * vec4(vPositionModelSpace, 1.0);
-    gl_Position.y = -gl_Position.y;
-    gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
+
+    //gl_Position.y = -gl_Position.y;
+    // can gl_Position.z be removed by using `#define GLM_FORCE_DEPTH_ZERO_TO_ONE` in
+    // the render code?
+    //gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
 }
 

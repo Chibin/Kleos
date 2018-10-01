@@ -207,7 +207,13 @@ void VulkanBeginRenderPass(VulkanContext *vc)
 void VulkanSetViewportAndScissor(VulkanContext *vc)
 {
     VkViewport viewport = {};
+#if 1
+    viewport.y = 0;
     viewport.height = (float)vc->height;
+#else
+    viewport.y = (float)vc->height;
+    viewport.height = -1 * (float)vc->height;
+#endif
     viewport.width = (float)vc->width;
     viewport.minDepth = (float)0.0f;
     viewport.maxDepth = (float)1.0f;
