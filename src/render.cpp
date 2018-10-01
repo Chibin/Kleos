@@ -988,11 +988,16 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     Bitmap stringBitmap = {};
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
     StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
+
+    ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
+    ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
+
     stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
     f32 screenWidth = gameMetadata->screenResolution.v[0];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
     f32 scaleFactor = 3.0f;
+
     f32 rectWidth  = stringBitmap.width / screenWidth * scaleFactor;
     f32 rectHeight = stringBitmap.height / screenHeight * scaleFactor;
 
@@ -1001,6 +1006,26 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
+
+    if (gameMetadata->isVulkanActive)
+    {
+        /* I am doing some "shady" things in the vulkan side.
+         * There's a fixed sized image that we're always updating.
+         * sometimes, the new texture is smaller than the fixed size image we have.
+         * so we have to scale the UV coordinates based on the newly generated coordinates.
+         * bleh... but it works -- kind of.
+         * Ideally, the text overlay should be generated based on a generated glyph.
+         */
+        Vertex *vTopRight = &(statsRect->vertices[0]);
+        vTopRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+        Vertex *vBottomRight = &(statsRect->vertices[1]);
+        vBottomRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, 0}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+        Vertex *vBottomLeft = &(statsRect->vertices[2]);
+        vBottomLeft->vUv = v2{ 0, 0 };
+        Vertex *topLeft = &(statsRect->vertices[3]);
+        topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+    }
+
     statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
 
@@ -1300,7 +1325,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
     /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
     v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
-#if 0
     g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
                                                       bottomRight = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
@@ -1310,16 +1334,5 @@ inline void LoadAssets(GameMetadata *gameMetadata)
                                                       bottomRight = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       bottomLeft  = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       topLeft     = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-#else
-    g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomRight = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-
-    g_spriteAnimation->frameCoords[1] = RectUVCoords{ topRight    = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomRight = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomLeft  = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      topLeft     = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-#endif
 }
 #endif
