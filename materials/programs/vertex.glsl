@@ -21,6 +21,5 @@ void main()
     TexCoord = vTexCoord;
     vColor = vTestColor;
 
-    gl_PointSize = 10.0;
     gl_Position = projection * view * vec4(vPositionModelSpace, 1.0);
 }

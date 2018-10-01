@@ -354,7 +354,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         v3 pos = { 0, 0, 0.01f };
         g_player = &g_entityManager->entities[index];
         g_player->type = 2;
-        gameMetadata->playerRect = CreateRectangle(reservedMemory, pos, COLOR_BLACK, 2, 1);
+        gameMetadata->playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
         AssociateEntity(gameMetadata->playerRect, g_player, false);
         g_rectManager->player = gameMetadata->playerRect;
         gameMetadata->playerRect->type = REGULAR;
@@ -872,8 +872,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
                     glm::mat4 correction = glm::mat4();
                     correction[1][1] = -1;
-                    correction[2][2] = 0.5;
-                    correction[2][3] = 0.5;
+                    //correction[2][2] = 0.5;
+                    //correction[2][3] = 0.5;
 
                     pushConstants.proj = correction * (*g_projection);
                     pushConstants.view = g_camera->view;
@@ -943,8 +943,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     {
         glm::mat4 correction = glm::mat4();
         correction[1][1] = -1;
-        correction[2][2] = 0.5;
-        correction[2][3] = 0.5;
+        //correction[2][2] = 0.5;
+        //correction[2][3] = 0.5;
 
         pushConstants.proj = correction * (*g_projection);
         pushConstants.view = g_camera->view;
@@ -1000,7 +1000,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     v3 startingPosition = v3{ -1, 1 - rectHeight, 0 };
 
     Rect *statsRect =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK, rectWidth, rectHeight);
+        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
     statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
 

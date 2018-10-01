@@ -77,6 +77,7 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
     }
     else
     {
+        printf("width %d height %d\n", surfCapabilities.currentExtent.width, surfCapabilities.currentExtent.height);
         // If the surface size is defined, the swap chain size must match
         swapchainExtent = surfCapabilities.currentExtent;
         *width = surfCapabilities.currentExtent.width;
