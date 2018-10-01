@@ -1283,15 +1283,15 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
     /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
     v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
-    g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomRight = PixelToUV(v2{ 60, basePixelHeight }, bitmapWidth, bitmapHeight),
+    g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomRight = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
                                                       topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
 
-    g_spriteAnimation->frameCoords[1] = RectUVCoords{ topRight    = PixelToUV(v2{ 60 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomRight = PixelToUV(v2{ 60 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomLeft  = PixelToUV(v2{ 0 + 60, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      topLeft     = PixelToUV(v2{ 0 + 60, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
+    g_spriteAnimation->frameCoords[1] = RectUVCoords{ topRight    = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomRight = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      bottomLeft  = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
+                                                      topLeft     = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
 
 }
 #endif
