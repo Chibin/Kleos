@@ -185,11 +185,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             s32 texWidth = 0;
             s32 texHeight = 0;
             s32 texChannels = 0;
-#if 1
             stbi_uc *pixels = stbi_load("./materials/textures/awesomeface.png",
-#else
-            stbi_uc *pixels = stbi_load( "./materials/textures/arche.png",
-#endif
                     &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
             vc->textures[0].texWidth = texWidth;
             vc->textures[0].texHeight = texHeight;
@@ -441,8 +437,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         }
     }
 
-    /* TODO: One time init might be done here as the game progress ? */
-
     if (gameMetadata->isOpenGLActive)
     {
 
@@ -473,7 +467,12 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         /* start with a 'clear' screen */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glEnable(GL_DEPTH_TEST);
+        //glEnable(GL_DEPTH_TEST);
+        /* Ignore depth values (Z) to cause drawing bottom to top */
+        //glDepthFunc(GL_NEVER);
+        /* same as the one above? */
+        glDisable (GL_DEPTH_TEST);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // NOLINT
     }
 
