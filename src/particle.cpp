@@ -41,7 +41,9 @@ inline void UpdateAndGenerateParticleRectInfo(RenderGroup *renderGroup, Particle
                 particle->rect.color.g,
                 particle->rect.color.b,
                 alpha});
+#if 0
         PushRenderGroupRectInfo(renderGroup, &particle->rect);
+#endif
     }
 }
 #endif

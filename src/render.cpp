@@ -75,6 +75,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "render_group.h"
 
 #include "renderer/vulkan/my_vulkan.cpp"
+#include "renderer/common.cpp"
 
 #define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
@@ -747,10 +748,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         glm::mat4 position = glm::mat4();
         position = glm::translate(position, player->position);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                g_player->data, GL_STATIC_DRAW);
-
         OpenGLCheckErrors();
         OpenGLBeginUseProgram(program, textureID);
 
@@ -772,6 +769,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         SetOpenGLDrawToScreenCoordinate(projectionLoc, viewLoc);
     }
 
+#if 0
     if (gameMetadata->isVulkanActive)
     {
         ubo = {};
@@ -780,10 +778,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         ubo.model = glm::mat4();
         VulkanUpdateUniformBuffer(vc, &ubo);
     }
-
-    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
-                                                  gameMetadata->playerRect->bitmapID);
-    PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
+#endif
 
     ASSERT(g_rectManager->Traversable.size > 0);
     for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
@@ -794,12 +789,31 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
 
+    for (memory_index i = 0; i < gameMetadata->particleSystem.particleCount; i++)
+    {
+        Particle *particle = &gameMetadata->particleSystem.particles[i]; // NOLINT
+        PushRenderGroupRectInfo(perFrameRenderGroup, &particle->rect);
+    }
+
+    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
+                                                  gameMetadata->playerRect->bitmapID);
+
+    PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
+
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
     Bitmap *bitmap = nullptr;
     Bitmap *prevBitmap = nullptr;
+    Bitmap *firstBitmap = nullptr;
+
     TextureParam prevTextureParam = {};
     b32 isPrevScreenCoordinateSpace = false;
+
+    if (gameMetadata->isOpenGLActive)
+    {
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+    }
 
     for (memory_index i = 0; i < perFrameRenderGroup->rectEntityCount; i++)
     {
@@ -808,180 +822,62 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         //bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
         bitmap = rect->bitmap;
         ASSERT(bitmap != nullptr);
+        if (firstBitmap == nullptr)
+        {
+            firstBitmap = bitmap;
+        }
 
         TextureParam textureParam = bitmap->textureParam;
 
         if ((bitmap != prevBitmap) ||
-            (textureParam != prevTextureParam ||
-            (isPrevScreenCoordinateSpace != rect->isScreenCoordinateSpace)))
+            (textureParam != prevTextureParam))
         {
 
-            if (gameMetadata->isVulkanActive)
-            {
-                if (perFrameRenderGroup->vertexMemory.used > 0)
-                {
-                    ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
-                    memset(&vc->vertices, 0, sizeof(vc->vertices));
-                    VulkanPrepareVertices(
-                            vc,
-                            &g_vkBuffers.bufs[g_vkBuffers.count],
-                            &g_vkBuffers.mems[g_vkBuffers.count],
-                            (void *)perFrameRenderGroup->vertexMemory.base,
-                            perFrameRenderGroup->vertexMemory.used);
-
-                    VulkanAddDrawCmd(
-                            vc,
-                            &g_vkBuffers.bufs[g_vkBuffers.count++],
-                            SafeCastToU32(perFrameRenderGroup->rectCount * 6));
-                }
-            }
-
-            if (gameMetadata->isOpenGLActive)
-            {
-                glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
-                        perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
-                DrawRawRectangle(perFrameRenderGroup->rectCount);
-            }
+            Draw(
+                    gameMetadata,
+                    perFrameRenderGroup,
+                    vc,
+                    &g_vkBuffers,
+                    g_camera,
+                    g_projection);
 
             ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
-            if (rect->isScreenCoordinateSpace)
-            {
-                if (gameMetadata->isVulkanActive)
-                {
-                    pushConstants.proj = glm::mat4();
-                    pushConstants.view = glm::mat4();
-                    vkCmdPushConstants(
-                            vc->drawCmd,
-                            vc->pipelineLayout,
-                            VK_SHADER_STAGE_VERTEX_BIT,
-                            0,
-                            sizeof(PushConstantMatrix),
-                            &pushConstants);
-                }
-                if (gameMetadata->isOpenGLActive)
-                {
-                    SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
-                }
-            }
-            else
-            {
-                if (gameMetadata->isVulkanActive)
-                {
-
-                    glm::mat4 correction = glm::mat4();
-                    correction[1][1] = -1;
-                    //correction[2][2] = 0.5;
-                    //correction[2][3] = 0.5;
-
-                    pushConstants.proj = correction * (*g_projection);
-                    pushConstants.view = g_camera->view;
-                    vkCmdPushConstants(
-                            vc->drawCmd,
-                            vc->pipelineLayout,
-                            VK_SHADER_STAGE_VERTEX_BIT,
-                            0,
-                            sizeof(PushConstantMatrix),
-                            &pushConstants);
-                }
-                if (gameMetadata->isOpenGLActive)
-                {
-                    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-                    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-                }
-
-            }
-
             if (bitmap != prevBitmap)
             {
-                if (gameMetadata->isOpenGLActive)
-                {
-                    OpenGLUpdateTextureParameter(&textureParam);
-                    OpenGLLoadBitmap(bitmap, textureID);
-                }
-
-                if (gameMetadata->isVulkanActive)
-                {
-
-                    if (gameMetadata->playerRect->bitmap == bitmap)
-                    {
-                        vkCmdBindDescriptorSets(
-                                vc->drawCmd,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                vc->pipelineLayout,
-                                0,
-                                1,
-                                &vc->playerDescSet,
-                                0,
-                                NULL);
-                    }
-                    else
-                    {
-                        vkCmdBindDescriptorSets(
-                                vc->drawCmd,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                vc->pipelineLayout,
-                                0,
-                                1,
-                                &vc->descSet,
-                                0,
-                                NULL);
-                    }
-                }
+                UpdateSamplerImage(
+                        gameMetadata,
+                        vc,
+                        bitmap,
+                        &textureParam,
+                        &textureID);
             }
 
             prevBitmap = bitmap;
-            isPrevScreenCoordinateSpace = rect->isScreenCoordinateSpace;
         }
 
         PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         prevTextureParam = textureParam;
     }
 
-    if (gameMetadata->isVulkanActive)
-    {
-        glm::mat4 correction = glm::mat4();
-        correction[1][1] = -1;
-        //correction[2][2] = 0.5;
-        //correction[2][3] = 0.5;
+    UpdateUBOandPushConstants(
+            gameMetadata,
+            vc,
+            g_camera,
+            g_projection,
+            &viewLoc,
+            &projectionLoc);
 
-        pushConstants.proj = correction * (*g_projection);
-        pushConstants.view = g_camera->view;
-        vkCmdPushConstants(
-                vc->drawCmd,
-                vc->pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT,
-                0,
-                sizeof(PushConstantMatrix),
-                &pushConstants);
-
-        ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
-        VulkanPrepareVertices(
-                vc,
-                &g_vkBuffers.bufs[g_vkBuffers.count],
-                &g_vkBuffers.mems[g_vkBuffers.count],
-                (void *)perFrameRenderGroup->vertexMemory.base,
-                perFrameRenderGroup->vertexMemory.used);
-        VulkanAddDrawCmd(
-                vc,
-                &g_vkBuffers.bufs[g_vkBuffers.count++],
-                SafeCastToU32(perFrameRenderGroup->rectCount * 6));
-    }
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
-        glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
-                perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
-        DrawRawRectangle(perFrameRenderGroup->rectCount);
-    }
+    Draw(
+            gameMetadata,
+            perFrameRenderGroup,
+            vc,
+            &g_vkBuffers,
+            g_camera,
+            g_projection);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
-
-    Bitmap *lastBitmapBeforeUI = bitmap;
 
     /* DRAW UI for OpenGL */
     Bitmap stringBitmap = {};
@@ -1005,31 +901,13 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
-
-    if (gameMetadata->isVulkanActive)
-    {
-        /* I am doing some "shady" things in the vulkan side.
-         * There's a fixed sized image that we're always updating.
-         * sometimes, the new texture is smaller than the fixed size image we have.
-         * so we have to scale the UV coordinates based on the newly generated coordinates.
-         * bleh... but it works -- kind of.
-         * Ideally, the text overlay should be generated based on a generated glyph.
-         */
-        Vertex *vTopRight = &(statsRect->vertices[0]);
-        vTopRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-        Vertex *vBottomRight = &(statsRect->vertices[1]);
-        vBottomRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, 0}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-        Vertex *vBottomLeft = &(statsRect->vertices[2]);
-        vBottomLeft->vUv = v2{ 0, 0 };
-        Vertex *topLeft = &(statsRect->vertices[3]);
-        topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-    }
-
     statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
 
+    /* UI has the highest priority on the screen, so it should be drawn last */
     if (gameMetadata->isOpenGLActive)
     {
+        /* Start draw UI */
         PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
         statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
@@ -1056,16 +934,23 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         }
 
         /* End Draw UI */
-
-        OpenGLLoadBitmap(lastBitmapBeforeUI, textureID);
         OpenGLEndUseProgram();
     }
+
+    TextureParam textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
+    UpdateSamplerImage(
+            gameMetadata,
+            vc,
+            firstBitmap,
+            &textureParam,
+            &textureID);
 
     g_debugMode = true;
     if (g_debugMode)
     {
         perFrameRenderGroup->rectCount = 0;
         ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
+
 
         /* Draw collissions, hurtboxes and hitboxes */
         if (gameMetadata->isOpenGLActive)
@@ -1156,6 +1041,23 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 stringBitmap.data);
 
         ClearUsedVertexRenderGroup(perFrameRenderGroup);
+
+        /* I am doing some "shady" things in the vulkan side.
+         * There's a fixed sized image that we're always updating.
+         * sometimes, the new texture is smaller than the fixed size image we have.
+         * so we have to scale the UV coordinates based on the newly generated coordinates.
+         * bleh... but it works -- kind of.
+         * Ideally, the text overlay should be generated based on a generated glyph.
+         */
+        Vertex *vTopRight = &(statsRect->vertices[0]);
+        vTopRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+        Vertex *vBottomRight = &(statsRect->vertices[1]);
+        vBottomRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, 0}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+        Vertex *vBottomLeft = &(statsRect->vertices[2]);
+        vBottomLeft->vUv = v2{ 0, 0 };
+        Vertex *topLeft = &(statsRect->vertices[3]);
+        topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+
         PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
         statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
@@ -1167,6 +1069,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             Rect *rect = (Rect *)perFrameRenderGroup->rectMemory.base + i;
             PushRenderGroupRectVertex(perFrameRenderGroup, rect);
         }
+
         VulkanPrepareVertices(
                 vc,
                 &g_vkBuffers.bufs[g_vkBuffers.count],
@@ -1180,6 +1083,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
         VulkanEndBufferCommands(vc);
         VulkanEndRender(vc);
+
+        /* clean up */
         vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
         vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 

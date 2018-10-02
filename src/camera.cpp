@@ -35,7 +35,7 @@ void CameraZoomOut(Camera *camera)
 {
     printf("down! zooming out\n");
 
-    GLfloat zoomAmount = 4;
+    GLfloat zoomAmount = 1;
     camera->pos += glm::vec3(0, 0, zoomAmount);
 
     camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
@@ -44,7 +44,7 @@ void CameraZoomOut(Camera *camera)
 void CameraZoomIn(Camera *camera)
 {
     printf("up! zooming in\n");
-    GLfloat zoomAmount = 4;
+    GLfloat zoomAmount = 1;
 
     if ((camera->pos[2] - zoomAmount) < 0)
     {
