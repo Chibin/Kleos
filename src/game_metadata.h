@@ -4,7 +4,7 @@
 
 #include "bitmap.h"
 #include "particle.h"
-#include "graphics/vulkan.h"
+#include "renderer/vulkan/vulkan.h"
 
 struct GameMetadata
 {

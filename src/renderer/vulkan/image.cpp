@@ -1,6 +1,6 @@
 /* create a pipeline barrier wtih the approriate src and dest stages
  */
-#include "vulkan_barrier.h"
+#include "./barrier.cpp"
 
 void VulkanCreateImage(
         VkDevice *device,

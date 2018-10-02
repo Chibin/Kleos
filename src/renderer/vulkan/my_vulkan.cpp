@@ -26,8 +26,8 @@
 	}
 
 #define  ATTACHMENT_COUNT 3
-#include "vulkan_shader.h"
-#include "vulkan_layers.h"
+#include "./shader.cpp"
+#include "./layers.cpp"
 void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear);
 
 static bool AvailableMemoryTypeFromProperties(
@@ -102,8 +102,8 @@ void VulkanDestroyTextureImage(
         vkFreeMemory(*device, texObj->mem, NULL);
 }
 
-#include "vulkan_memory.h"
-#include "vulkan_image.h"
+#include "./memory.cpp"
+#include "./image.cpp"
 
 void VulkanUpdateVertices(VulkanContext *vc, void *verticesData, VkDeviceSize verticesSize)
 {
@@ -361,17 +361,17 @@ void VulkanUpdateUniformBuffer(VulkanContext *vc, UniformBufferObject *ubo)
 
 }
 
-#include "vulkan2.h"
-#include "vulkan_instance.h"
-#include "vulkan_surface.h"
-#include "vulkan_extensions.h"
-#include "vulkan_gpu.h"
-#include "vulkan_device.h"
-#include "vulkan_buffers.h"
-#include "vulkan_layout.h"
-#include "vulkan_pipeline.h"
-#include "vulkan_render_pass.h"
-#include "vulkan_descriptor.h"
+#include "./vulkan2.cpp"
+#include "./instance.cpp"
+#include "./surface.cpp"
+#include "./extensions.cpp"
+#include "./gpu.cpp"
+#include "./device.cpp"
+#include "./buffers.cpp"
+#include "./layout.cpp"
+#include "./pipeline.cpp"
+#include "./render_pass.cpp"
+#include "./descriptor.cpp"
 
 VulkanContext *VulkanSetup(SDL_Window **window)
 {

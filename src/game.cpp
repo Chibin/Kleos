@@ -5,7 +5,7 @@
 #include "main.h"
 #include <GL/glew.h>
 
-#include "graphics/my_vulkan.h"
+#include "renderer/vulkan/my_vulkan.cpp"
 
 #define ProcessOpenGLErrors() _processOpenGLErrors(__FILE__, __LINE__)
 

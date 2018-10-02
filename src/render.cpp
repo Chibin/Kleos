@@ -74,7 +74,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "particle.cpp"
 #include "render_group.h"
 
-#include "graphics/my_vulkan.h"
+#include "renderer/vulkan/my_vulkan.cpp"
 
 #define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
