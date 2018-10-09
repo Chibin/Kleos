@@ -73,6 +73,7 @@ inline void *RequestToReservedMemory(memory_index size)
 
 #include "particle.cpp"
 #include "render_group.h"
+#include "asset.cpp"
 
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"
@@ -1216,27 +1217,31 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
     u32 bitmapWidth = archeBitmap->width;
     u32 bitmapHeight = archeBitmap->height;
-    f32 spriteHeight = 60.0f;
-    f32 basePixelHeight = bitmapHeight - spriteHeight;
+
+    /* Replace with read file data */
+    FrameData frameData = {};
+
+    LoadFrameData(&frameData, "./assets/texture_data/frames.txt");
 
     g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
     ZeroSize(g_spriteAnimation, sizeof(Animation2D));
     g_spriteAnimation->direction = LEFT;
-    g_spriteAnimation->totalFrames = 2;
+    g_spriteAnimation->totalFrames = frameData.frameCount;
     g_spriteAnimation->frameCoords =
         (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
     g_spriteAnimation->timePerFrame = 1000 * 0.75;
 
     /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
     v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
-    g_spriteAnimation->frameCoords[0] = RectUVCoords{ topRight    = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomRight = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomLeft  = PixelToUV(v2{ 0, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      topLeft     = PixelToUV(v2{ 0, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
-
-    g_spriteAnimation->frameCoords[1] = RectUVCoords{ topRight    = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomRight = PixelToUV(v2{ 2 * spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      bottomLeft  = PixelToUV(v2{ spriteHeight, basePixelHeight }, bitmapWidth, bitmapHeight),
-                                                      topLeft     = PixelToUV(v2{ spriteHeight, basePixelHeight + spriteHeight }, bitmapWidth, bitmapHeight)};
+    for(memory_index i = 0; i < g_spriteAnimation->totalFrames; i++)
+    {
+        g_spriteAnimation->frameCoords[i] =
+            RectUVCoords{
+                topRight    = PixelToUV(frameData.frames[i].pixel[0], bitmapWidth, bitmapHeight),
+                bottomRight = PixelToUV(frameData.frames[i].pixel[1], bitmapWidth, bitmapHeight),
+                bottomLeft  = PixelToUV(frameData.frames[i].pixel[2], bitmapWidth, bitmapHeight),
+                topLeft     = PixelToUV(frameData.frames[i].pixel[3], bitmapWidth, bitmapHeight)
+            };
+    }
 }
 #endif

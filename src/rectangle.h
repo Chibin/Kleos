@@ -21,6 +21,18 @@ enum Direction
     RIGHT = 2,
 };
 
+/* higher number means they will be drawn first */
+enum RenderLayer
+{
+    DEBUG = 0,
+    PLAYER = 1,
+    FRONT_STATIC = 2,
+    ITEMS = 3,
+    MOBS = 4,
+
+    BACKGROUND = 1000,
+};
+
 struct RectUVCoords
 {
 #pragma warning(push)
@@ -39,6 +51,13 @@ struct RectUVCoords
 };
 
 #include "animation.h"
+
+
+struct DrawLayer
+{
+
+
+};
 
 struct Rect
 {

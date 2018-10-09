@@ -71,6 +71,19 @@ union v2 {
     real32 v[2];
 };
 
+struct v2i
+{
+    union
+    {
+        struct
+        {
+            s32 x;
+            s32 y;
+        };
+        s32 v[2];
+    };
+};
+
 union v3 {
     struct
     {

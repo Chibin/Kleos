@@ -208,6 +208,11 @@ inline v2 PixelToUV(v2 pixel, u32 width, u32 height)
     return v2{ pixel.x / width, pixel.y / height };
 }
 
+inline v2 PixelToUV(v2i pixel, u32 width, u32 height)
+{
+    return v2{ (float)pixel.x / (float)width, (float)pixel.y / (float)height };
+}
+
 inline void UpdateFrameDirection(Animation2D *a, Direction d)
 {
     if (a->direction == d)
