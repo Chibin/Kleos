@@ -198,5 +198,4 @@ void LoadFrameData(FrameCycle *fc, const char* file)
         printf("%d\n", fdrs);
     }
 
-    ASSERT(!"SOMETHING");
 }
