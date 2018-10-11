@@ -934,10 +934,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
          */
         glBindVertexArray(vao);
 
-        /* TODO: remove this from here... this is just testing it out */
-        glm::mat4 position = glm::mat4();
-        position = glm::translate(position, player->position);
-
         OpenGLCheckErrors();
         OpenGLBeginUseProgram(program, textureID);
 
@@ -945,9 +941,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         modelLoc = glGetUniformLocation(program, "model");
         viewLoc = glGetUniformLocation(program, "view");
         projectionLoc = glGetUniformLocation(program, "projection");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
 
         OpenGLCheckErrors();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
