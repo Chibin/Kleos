@@ -15,7 +15,7 @@ void VulkanSetDescriptorSet(
 
     VkDescriptorSetAllocateInfo allocInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.descriptorPool =*/       vc->descPool,
         /*.descriptorSetCount =*/   1,
         /*.pSetLayouts =*/          &vc->descLayout
@@ -39,7 +39,7 @@ void VulkanSetDescriptorSet(
     write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     write.pBufferInfo = &uniformData->bufferInfo;
     write.pImageInfo = texDescs;
-    vkUpdateDescriptorSets(*device, 1, &write, 0, NULL);
+    vkUpdateDescriptorSets(*device, 1, &write, 0, nullptr);
 
     VkWriteDescriptorSet writeFragment;
     memset(&writeFragment, 0, sizeof(writeFragment));
@@ -50,7 +50,7 @@ void VulkanSetDescriptorSet(
     writeFragment.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     writeFragment.pBufferInfo = &uniformDataFragment->bufferInfo;
     writeFragment.pImageInfo = texDescs;
-    vkUpdateDescriptorSets(*device, 1, &writeFragment, 0, NULL);
+    vkUpdateDescriptorSets(*device, 1, &writeFragment, 0, nullptr);
 
     free(texDescs);
 }
@@ -74,7 +74,7 @@ void VulkanPrepareDescriptorPool(VulkanContext *vc)
 
     const VkDescriptorPoolCreateInfo descriptorPool = {
         /*.sType =*/            VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        /*.pNext =*/            NULL,
+        /*.pNext =*/            nullptr,
         /*.flags =*/            0,
         /* Max set is talking about the amount of descriptor sets we can
          * allocate? Each descriptor set we allocate will have the
@@ -85,7 +85,7 @@ void VulkanPrepareDescriptorPool(VulkanContext *vc)
         /*.pPoolSizes =*/       &typeCount[0],
     };
 
-    err = vkCreateDescriptorPool(vc->device, &descriptorPool, NULL, &vc->descPool);
+    err = vkCreateDescriptorPool(vc->device, &descriptorPool, nullptr, &vc->descPool);
     ASSERT(!err);
 }
 

@@ -23,18 +23,18 @@ void VulkanInitDevice(VulkanContext *vc,
 
     VkDeviceCreateInfo deviceInfo = {
         /*.sType =*/ 			       VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        /*.pNext =*/ 			       NULL,
+        /*.pNext =*/ 			       nullptr,
 		/*.flags =*/				   false,
         /*.queueCreateInfoCount =*/    1,
         /*.pQueueCreateInfos =*/  	   &queueInfo,
         /*.enabledLayerCount =*/  	   enabledLayerCount,
-        /*.ppEnabledLayerNames =*/     (const char *const *)((validate) ? deviceValidationLayers : NULL),
+        /*.ppEnabledLayerNames =*/     (const char *const *)((validate) ? deviceValidationLayers : nullptr),
         /*.enabledExtensionCount =*/   enabledExtensionCount,
         /*.ppEnabledExtensionNames =*/ (const char *const *)extensionNames,
         /*.pEnabledFeatures =*/ 	   &deviceFeatures,
     };
 
-    err = vkCreateDevice(*gpu, &deviceInfo, NULL, device);
+    err = vkCreateDevice(*gpu, &deviceInfo, nullptr, device);
 	ASSERT(err == VK_SUCCESS);
 }
 

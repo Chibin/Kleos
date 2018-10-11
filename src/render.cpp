@@ -696,7 +696,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameTimestep *gt = gameMetadata->gameTimestep;
     char buffer[256];
-    UniformBufferObject ubo = {};
 
     Bitmap perFrameSentinelNode = {};
     perFrameSentinelNode.next = &perFrameSentinelNode;
@@ -771,6 +770,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     }
 
 #if 0
+    UniformBufferObject ubo = {};
     if (gameMetadata->isVulkanActive)
     {
         ubo = {};
@@ -1222,6 +1222,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     FrameCycle frameCycle = {};
 
     LoadFrameData(&frameCycle, "./assets/texture_data/frames.txt");
+    /* TODO: free the frames if we don't need it anymore */
 
     g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
     ZeroSize(g_spriteAnimation, sizeof(Animation2D));

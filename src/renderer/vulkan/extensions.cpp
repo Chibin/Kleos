@@ -9,7 +9,7 @@ void VulkanSetSurfaceExtensionNames(
     u32 instanceExtensionCount = 0;
     u32 extensionCount = 0;
 
-	err = vkEnumerateInstanceExtensionProperties(NULL, &instanceExtensionCount, NULL);
+	err = vkEnumerateInstanceExtensionProperties(NULL, &instanceExtensionCount, nullptr);
 	ASSERT(err == VK_SUCCESS);
 
 	if (instanceExtensionCount > 0)
@@ -84,14 +84,14 @@ void VulkanSetSwapchainExtensionName(
 	VkBool32 swapchainExtFound = 0;
 	u32 extensionCount = 0;
 
-	err = vkEnumerateDeviceExtensionProperties(*gpu, NULL, &deviceExtensionCount, NULL);
+	err = vkEnumerateDeviceExtensionProperties(*gpu, nullptr, &deviceExtensionCount, nullptr);
 	ASSERT(err == VK_SUCCESS);
 
 	if (deviceExtensionCount > 0)
 	{
 		VkExtensionProperties *deviceExtensions =
 			(VkExtensionProperties *)malloc(sizeof(VkExtensionProperties) * deviceExtensionCount);
-		err = vkEnumerateDeviceExtensionProperties(*gpu, NULL, &deviceExtensionCount, deviceExtensions);
+		err = vkEnumerateDeviceExtensionProperties(*gpu, nullptr, &deviceExtensionCount, deviceExtensions);
 		ASSERT(err == VK_SUCCESS);
 
 		for (memory_index i = 0; i < deviceExtensionCount; i++)
@@ -141,10 +141,10 @@ void VulkanGetDebugEXTFunctions(
     dbgCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
     dbgCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
     dbgCreateInfo.pfnCallback = useBreak ? BreakCallback : DbgFunc;
-    dbgCreateInfo.pUserData = NULL;
-    dbgCreateInfo.pNext = NULL;
+    dbgCreateInfo.pUserData = nullptr;
+    dbgCreateInfo.pNext = nullptr;
 
-    err = fpCreateDebugReportCallbackEXT(*inst, &dbgCreateInfo, NULL, msgCallback);
+    err = fpCreateDebugReportCallbackEXT(*inst, &dbgCreateInfo, nullptr, msgCallback);
     switch (err)
     {
         case VK_SUCCESS:

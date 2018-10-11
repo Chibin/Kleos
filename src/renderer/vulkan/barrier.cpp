@@ -54,7 +54,7 @@ void VulkanAddPipelineBarrier(
         {
             VkCommandBufferAllocateInfo cmd = {};
             cmd.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            cmd.pNext = NULL;
+            cmd.pNext = nullptr;
             cmd.commandPool = *cmdPool;
             cmd.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cmd.commandBufferCount = 1;
@@ -64,7 +64,7 @@ void VulkanAddPipelineBarrier(
 
             VkCommandBufferInheritanceInfo cmdBufHInfo = {};
             cmdBufHInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-            cmdBufHInfo.pNext = NULL;
+            cmdBufHInfo.pNext = nullptr;
             cmdBufHInfo.renderPass = VK_NULL_HANDLE;
             cmdBufHInfo.subpass = 0;
             cmdBufHInfo.framebuffer = VK_NULL_HANDLE;
@@ -74,7 +74,7 @@ void VulkanAddPipelineBarrier(
 
             VkCommandBufferBeginInfo cmdBufInfo = {};
             cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            cmdBufInfo.pNext = NULL;
+            cmdBufInfo.pNext = nullptr;
             cmdBufInfo.flags = 0;
             cmdBufInfo.pInheritanceInfo = &cmdBufHInfo;
 
@@ -84,7 +84,7 @@ void VulkanAddPipelineBarrier(
 
         VkImageMemoryBarrier imageMemoryBarrier = {};
         imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        imageMemoryBarrier.pNext = NULL;
+        imageMemoryBarrier.pNext = nullptr;
         imageMemoryBarrier.srcAccessMask = srcAccessMask;
         imageMemoryBarrier.dstAccessMask = 0;
         imageMemoryBarrier.oldLayout = oldImageLayout;
@@ -124,5 +124,5 @@ void VulkanAddPipelineBarrier(
                 &srcStages,
                 &destStages);
 
-        vkCmdPipelineBarrier(*setupCmd, srcStages, destStages, 0, 0, NULL, 0, NULL, 1, pImageMemoryBarrier);
+        vkCmdPipelineBarrier(*setupCmd, srcStages, destStages, 0, 0, nullptr, 0, nullptr, 1, pImageMemoryBarrier);
 }

@@ -9,7 +9,7 @@
     {                                                                          \
         fp##entrypoint =                                                 	   \
             (PFN_vk##entrypoint)vkGetInstanceProcAddr(inst, "vk" #entrypoint); \
-        if (fp##entrypoint == NULL) {                                          \
+        if (fp##entrypoint == nullptr) {                                          \
             PAUSE_HERE("vkGetInstanceProcAddr failed to find vk" #entrypoint   \
                      "vkGetInstanceProcAddr Failure");                         \
         }                                                                      \
@@ -19,7 +19,7 @@
     {                                                                          \
         fp##entrypoint =                                                 	   \
             (PFN_vk##entrypoint)vkGetDeviceProcAddr(dev, "vk" #entrypoint);    \
-        if (fp##entrypoint == NULL) {                                    	   \
+        if (fp##entrypoint == nullptr) {                                    	   \
             PAUSE_HERE("vkGetDeviceProcAddr failed to find vk" #entrypoint     \
                      "vkGetDeviceProcAddr Failure");                           \
         }                                                                      \
@@ -74,14 +74,14 @@ void VulkanFlushInit(
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = NULL;
+    submitInfo.pNext = nullptr;
     submitInfo.waitSemaphoreCount = 0;
-    submitInfo.pWaitSemaphores = NULL;
-    submitInfo.pWaitDstStageMask = NULL;
+    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.pWaitDstStageMask = nullptr;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = cmdBufs;
     submitInfo.signalSemaphoreCount = 0;
-    submitInfo.pSignalSemaphores = NULL;
+    submitInfo.pSignalSemaphores = nullptr;
 
     err = vkQueueSubmit(*queue, 1, &submitInfo, nullFence);
     ASSERT(!err);
@@ -98,8 +98,8 @@ void VulkanDestroyTextureImage(
         struct TextureObject *texObj)
 {
         /* clean up staging resources */
-        vkDestroyImage(*device, texObj->image, NULL);
-        vkFreeMemory(*device, texObj->mem, NULL);
+        vkDestroyImage(*device, texObj->image, nullptr);
+        vkFreeMemory(*device, texObj->mem, nullptr);
 }
 
 #include "./memory.cpp"
@@ -149,7 +149,7 @@ void VulkanBeginRenderPass(VulkanContext *vc)
 {
     const VkCommandBufferInheritanceInfo cmdBufHInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
-        /*.pNext =*/ NULL,
+        /*.pNext =*/ nullptr,
         /*.renderPass =*/ VK_NULL_HANDLE,
         /*.subpass =*/ 0,
         /*.framebuffer =*/ VK_NULL_HANDLE,
@@ -160,7 +160,7 @@ void VulkanBeginRenderPass(VulkanContext *vc)
 
     const VkCommandBufferBeginInfo cmdBufInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        /*.pNext =*/ NULL,
+        /*.pNext =*/ nullptr,
         /*.flags =*/ 0,
         /*.pInheritanceInfo =*/ &cmdBufHInfo,
     };
@@ -178,7 +178,7 @@ void VulkanBeginRenderPass(VulkanContext *vc)
 
     const VkRenderPassBeginInfo rpBegin = {
         /*.sType =*/            VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        /*.pNext =*/            NULL,
+        /*.pNext =*/            nullptr,
         /*.renderPass =*/       vc->renderPass,
         /*.framebuffer =*/      vc->framebuffers[vc->currentBufferIndex],
         /*.renderArea =*/       vkrect,
@@ -200,7 +200,7 @@ void VulkanBeginRenderPass(VulkanContext *vc)
             1,
             &vc->descSet,
             0,
-            NULL);
+            nullptr);
 
 }
 
@@ -241,7 +241,7 @@ void VulkanEndBufferCommands(VulkanContext *vc)
 
     VkImageMemoryBarrier prePresentBarrier = {
         /*.sType =*/                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.srcAccessMask =*/        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         /*.dstAccessMask =*/        VK_ACCESS_MEMORY_READ_BIT,
         /*.oldLayout =*/            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -259,9 +259,9 @@ void VulkanEndBufferCommands(VulkanContext *vc)
             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
             0,
             0,
-            NULL,
+            nullptr,
             0,
-            NULL,
+            nullptr,
             1,
             pmemoryBarrier);
 
@@ -284,7 +284,7 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
 
     VkImageMemoryBarrier prePresentBarrier = {
         /*.sType =*/                VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.srcAccessMask =*/        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         /*.dstAccessMask =*/        VK_ACCESS_MEMORY_READ_BIT,
         /*.oldLayout =*/            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -302,9 +302,9 @@ static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, 
             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
             0,
             0,
-            NULL,
+            nullptr,
             0,
-            NULL,
+            nullptr,
             1,
             pmemoryBarrier);
 
@@ -407,7 +407,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     VkResult err;
     uint32_t deviceValidationLayerCount = 0;
-    char **instanceValidationLayers = NULL;
+    char **instanceValidationLayers = nullptr;
 	VkBool32 validationFound = 0;
 	bool useBreak = false;
 
@@ -435,7 +435,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 	};
 
     u32 instanceLayerCount = 0;
-	err = vkEnumerateInstanceLayerProperties(&instanceLayerCount, NULL);
+	err = vkEnumerateInstanceLayerProperties(&instanceLayerCount, nullptr);
 	ASSERT(!err);
 
     VulkanSetInstanceLayer(
@@ -459,7 +459,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
 	const VkApplicationInfo app = {
 		/*.sType =*/                VK_STRUCTURE_TYPE_APPLICATION_INFO,
-		/*.pNext =*/                NULL,
+		/*.pNext =*/                nullptr,
 		/*.pApplicationName =*/     "HELLO",
 		/*.applicationVersion =*/   0,
 		/*.pEngineName =*/          "HELLO",
@@ -469,8 +469,8 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
 	VkInstanceCreateInfo instInfo = {
 		/*.sType =*/                    VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-		/*.pNext =*/                    NULL,
-		/*.flags =*/                    NULL,
+		/*.pNext =*/                    nullptr,
+		/*.flags =*/                    0,
 		/*.pApplicationInfo =*/         &app,
 		/*.enabledLayerCount =*/        enabledLayerCount,
 		/*.ppEnabledLayerNames =*/      (const char *const *)deviceValidationLayers,
@@ -531,7 +531,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->fpGetPhysicalDeviceSurfacePresentModesKHR = fpGetPhysicalDeviceSurfacePresentModesKHR;
 
 	u32 queueCount = 0;
-    VkQueueFamilyProperties *queueProps = NULL;
+    VkQueueFamilyProperties *queueProps = nullptr;
     VulkanInitQueueProperties(&gpu, &queueCount, &queueProps);
 
     b32 queueHasGraphicsSupport = false;
@@ -589,7 +589,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     /* Get the list of VkFormat's that are supported */
     u32 formatCount;
-    err = fpGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &formatCount, NULL);
+    err = fpGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &formatCount, nullptr);
     ASSERT(err == VK_SUCCESS && formatCount >= 1);
     VkSurfaceFormatKHR *surfFormats =
         (VkSurfaceFormatKHR *)malloc(formatCount * sizeof(VkSurfaceFormatKHR));
@@ -607,16 +607,16 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     const VkCommandPoolCreateInfo cmdPoolInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        /*.pNext =*/ NULL,
+        /*.pNext =*/ nullptr,
         /*.flags =*/ VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         /*.queueFamilyIndex =*/ graphicsQueueNodeIndex,
     };
-    err = vkCreateCommandPool(device, &cmdPoolInfo, NULL, &cmdPool);
+    err = vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool);
     ASSERT(err == VK_SUCCESS);
 
     const VkCommandBufferAllocateInfo cmd = {
         /*.sType =*/                VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.commandPool =*/          cmdPool,
         /*.level =*/                VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         /*.commandBufferCount =*/   1,
@@ -708,7 +708,7 @@ void VulkanInitFrameBuffers(VulkanContext *vc)
 
     const VkFramebufferCreateInfo fbInfo = {
         /*.sType =*/            VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        /*.pNext =*/            NULL,
+        /*.pNext =*/            nullptr,
         /*.flags =*/            0,
         /*.renderPass =*/       vc->renderPass,
         /*.attachmentCount =*/  ATTACHMENT_COUNT,
@@ -725,7 +725,7 @@ void VulkanInitFrameBuffers(VulkanContext *vc)
     {
         attachmentsFrameBuffer[0] = vc->buffers[i].view;
         attachmentsFrameBuffer[2] = vc->buffers[i].view;
-        err = vkCreateFramebuffer(*device, &fbInfo, NULL, &vc->framebuffers[i]);
+        err = vkCreateFramebuffer(*device, &fbInfo, nullptr, &vc->framebuffers[i]);
         ASSERT(!err);
     }
 
@@ -738,14 +738,14 @@ void VulkanEndRender(VulkanContext *vc)
     VkPipelineStageFlags pipeStageFlags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     VkSubmitInfo submitInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.waitSemaphoreCount =*/   1,
         /*.pWaitSemaphores =*/      &vc->presentCompleteSemaphore,
         /*.pWaitDstStageMask =*/    &pipeStageFlags,
         /*.commandBufferCount =*/   1,
         /*.pCommandBuffers =*/      &vc->drawCmd,
         /*.signalSemaphoreCount =*/ 0,
-        /*.pSignalSemaphores =*/    NULL
+        /*.pSignalSemaphores =*/    nullptr
     };
 
     err = vkQueueSubmit(vc->queue, 1, &submitInfo, nullFence);
@@ -753,7 +753,7 @@ void VulkanEndRender(VulkanContext *vc)
 
     VkPresentInfoKHR present = {
         /*.sType =*/                VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.waitSemaphoreCount =*/   0,
         /*.pWaitSemaphores =*/      nullptr,
         /*.swapchainCount =*/       1,
@@ -785,7 +785,7 @@ void VulkanEndRender(VulkanContext *vc)
     err = vkQueueWaitIdle(vc->queue);
     ASSERT(err == VK_SUCCESS);
 
-    vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, NULL);
+    vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, nullptr);
 }
 
 void VulkanPrepareRender(VulkanContext *vc)
@@ -793,13 +793,13 @@ void VulkanPrepareRender(VulkanContext *vc)
     VkResult err;
     VkSemaphoreCreateInfo presentCompleteSemaphoreCreateInfo = {
         /*.sType =*/ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        /*.pNext =*/ NULL,
+        /*.pNext =*/ nullptr,
         /*.flags =*/ 0,
     };
 
     err = vkCreateSemaphore(vc->device,
                             &presentCompleteSemaphoreCreateInfo,
-                            NULL,
+                            nullptr,
                             &vc->presentCompleteSemaphore);
     ASSERT(!err);
 
@@ -822,7 +822,7 @@ void VulkanPrepareRender(VulkanContext *vc)
          */
         PAUSE_HERE("pausing\n");
         VulkanRender(vc, 0, true);
-        vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, NULL);
+        vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, nullptr);
         return;
     }
     else if (err == VK_SUBOPTIMAL_KHR)

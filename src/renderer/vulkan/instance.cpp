@@ -3,7 +3,7 @@ void VulkanSetInstance(
         VkInstanceCreateInfo *instInfo)
 {
     VkResult err;
-	err = vkCreateInstance(instInfo, NULL, inst);
+	err = vkCreateInstance(instInfo, nullptr, inst);
 	if (err == VK_ERROR_INCOMPATIBLE_DRIVER)
 	{
 		PAUSE_HERE("Cannot find a compatible Vulkan installable client driver "

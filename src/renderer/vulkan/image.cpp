@@ -19,7 +19,7 @@ void VulkanCreateImage(
     VkResult err = {};
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.pNext = NULL;
+    imageInfo.pNext = nullptr;
     imageInfo.flags = 0;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
     imageInfo.format = format;
@@ -43,7 +43,7 @@ void VulkanCreateImage(
 
     VkMemoryAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.pNext = NULL;
+    allocInfo.pNext = nullptr;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = 0;
 
@@ -193,7 +193,7 @@ void VulkanCreateImageSampler(
     VkResult err = {};
     VkSamplerCreateInfo samplerInfo = {};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.pNext = NULL;
+    samplerInfo.pNext = nullptr;
     samplerInfo.magFilter = VK_FILTER_NEAREST;
     samplerInfo.minFilter = VK_FILTER_NEAREST;
     samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
@@ -211,7 +211,7 @@ void VulkanCreateImageSampler(
 
     VkImageViewCreateInfo viewInfo = {};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext = NULL;
+    viewInfo.pNext = nullptr;
     viewInfo.image = texture->image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = texFormat;
@@ -222,10 +222,10 @@ void VulkanCreateImageSampler(
     viewInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     viewInfo.flags = 0;
 
-    err = vkCreateSampler(*device, &samplerInfo, NULL, &texture->sampler);
+    err = vkCreateSampler(*device, &samplerInfo, nullptr, &texture->sampler);
     ASSERT(err == VK_SUCCESS);
 
-    err = vkCreateImageView(*device, &viewInfo, NULL, &texture->view);
+    err = vkCreateImageView(*device, &viewInfo, nullptr, &texture->view);
     ASSERT(err == VK_SUCCESS);
 }
 
@@ -339,7 +339,7 @@ void VulkanPrepareTexture(VulkanContext *vc,
             ASSERT(textures[i].texWidth > 0);
             ASSERT(textures[i].texHeight > 0);
             ASSERT(textures[i].dataSize > 0);
-            ASSERT(textures[i].data != NULL);
+            ASSERT(textures[i].data != nullptr);
 
             VulkanSetTextureImage(
                     device,

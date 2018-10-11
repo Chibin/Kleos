@@ -57,7 +57,7 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
     ASSERT(err == VK_SUCCESS);
 
     u32 presentModeCount;
-    err = vc->fpGetPhysicalDeviceSurfacePresentModesKHR(*gpu, *surface, &presentModeCount, NULL);
+    err = vc->fpGetPhysicalDeviceSurfacePresentModesKHR(*gpu, *surface, &presentModeCount, nullptr);
     ASSERT(err == VK_SUCCESS);
 
     VkPresentModeKHR *presentModes = (VkPresentModeKHR *)malloc(presentModeCount * sizeof(VkPresentModeKHR));
@@ -114,7 +114,7 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
 
     const VkSwapchainCreateInfoKHR swapchainInfo = {
         /*.sType =*/                 VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        /*.pNext =*/                 NULL,
+        /*.pNext =*/                 nullptr,
         /*.flags =*/                 false,
         /*.surface =*/               *surface,
         /*.minImageCount =*/         desiredNumberOfSwapchainImages,
@@ -127,7 +127,7 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
         /*.imageUsage =*/            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         /*.imageSharingMode =*/      VK_SHARING_MODE_EXCLUSIVE,
         /*.queueFamilyIndexCount =*/ 0,
-        /*.pQueueFamilyIndices =*/   NULL,
+        /*.pQueueFamilyIndices =*/   nullptr,
         /*.preTransform =*/          preTransform,
         /*.compositeAlpha =*/        VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         /*.presentMode =*/           swapchainPresentMode,
@@ -135,7 +135,7 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
         /*.oldSwapchain =*/          oldSwapchain,
     };
 
-    err = vc->fpCreateSwapchainKHR(*device, &swapchainInfo, NULL, swapchain);
+    err = vc->fpCreateSwapchainKHR(*device, &swapchainInfo, nullptr, swapchain);
     ASSERT(err == VK_SUCCESS);
 
     // If we just re-created an existing swapchain, we should destroy the old
@@ -144,10 +144,10 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
     // presentable images once the platform is done with them.
     if (oldSwapchain != VK_NULL_HANDLE)
     {
-        vc->fpDestroySwapchainKHR(*device, oldSwapchain, NULL);
+        vc->fpDestroySwapchainKHR(*device, oldSwapchain, nullptr);
     }
 
-    err = vc->fpGetSwapchainImagesKHR(*device, *swapchain, swapchainImageCount, NULL);
+    err = vc->fpGetSwapchainImagesKHR(*device, *swapchain, swapchainImageCount, nullptr);
     ASSERT(err == VK_SUCCESS);
 
     VkImage *swapchainImages = (VkImage *)malloc(*swapchainImageCount * sizeof(VkImage));
@@ -165,7 +165,7 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
 
         VkImageViewCreateInfo colorAttachmentView = {
             /*.sType =*/            VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            /*.pNext =*/            NULL,
+            /*.pNext =*/            nullptr,
             /*.flags =*/            0,
             /* XXX: this is added by me. not sure if it will work */
             /*.image =*/            swapchainImages[i],
@@ -200,13 +200,13 @@ void VulkanPrepareSwapchain(VulkanContext *vc,
                 (VkAccessFlagBits)0);
 
         colorAttachmentView.image = vc->buffers[i].image;
-        err = vkCreateImageView(*device, &colorAttachmentView, NULL, &vc->buffers[i].view);
+        err = vkCreateImageView(*device, &colorAttachmentView, nullptr, &vc->buffers[i].view);
         ASSERT(!err);
     }
 
     *currentBuffer = 0;
 
-    if (presentModes != NULL)
+    if (presentModes != nullptr)
     {
         free(presentModes);
     }

@@ -26,7 +26,7 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
 
     VkPipelineVertexInputStateCreateInfo vi;
     vc->vertices.vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vc->vertices.vi.pNext = NULL;
+    vc->vertices.vi.pNext = nullptr;
     vc->vertices.vi.vertexBindingDescriptionCount = 1;
     vc->vertices.vi.pVertexBindingDescriptions = vc->vertices.viBindings;
     vc->vertices.vi.vertexAttributeDescriptionCount = 3;
@@ -92,7 +92,7 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
 
     VkPipelineMultisampleStateCreateInfo ms = {};
     ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    ms.pSampleMask = NULL;
+    ms.pSampleMask = nullptr;
     ms.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     // Two stages: vs and fs
@@ -141,16 +141,16 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
     VkPipelineCache pipelineCache = {};
     VkPipelineCacheCreateInfo pipelineCacheInfo = {};
     pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-    err = vkCreatePipelineCache(vc->device, &pipelineCacheInfo, NULL, &pipelineCache);
+    err = vkCreatePipelineCache(vc->device, &pipelineCacheInfo, nullptr, &pipelineCache);
     ASSERT(!err);
 
-    err = vkCreateGraphicsPipelines(vc->device, pipelineCache, 1, &pipelineCreateInfo, NULL, &vc->pipeline);
+    err = vkCreateGraphicsPipelines(vc->device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &vc->pipeline);
     ASSERT(!err);
 
-    vkDestroyPipelineCache(vc->device, pipelineCache, NULL);
+    vkDestroyPipelineCache(vc->device, pipelineCache, nullptr);
 
-    vkDestroyShaderModule(vc->device, fragShaderModule, NULL);
-    vkDestroyShaderModule(vc->device, vertShaderModule, NULL);
+    vkDestroyShaderModule(vc->device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(vc->device, vertShaderModule, nullptr);
 
 }
 
@@ -191,7 +191,7 @@ void VulkanPrepare2ndPipeline(VulkanContext *vc, u32 stride)
 
     VkPipelineVertexInputStateCreateInfo vi;
     vc->vertices.vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vc->vertices.vi.pNext = NULL;
+    vc->vertices.vi.pNext = nullptr;
     vc->vertices.vi.vertexBindingDescriptionCount = 1;
     vc->vertices.vi.pVertexBindingDescriptions = vc->vertices.viBindings;
     vc->vertices.vi.vertexAttributeDescriptionCount = 3;
@@ -257,7 +257,7 @@ void VulkanPrepare2ndPipeline(VulkanContext *vc, u32 stride)
 
     VkPipelineMultisampleStateCreateInfo ms = {};
     ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    ms.pSampleMask = NULL;
+    ms.pSampleMask = nullptr;
     ms.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     // Two stages: vs and fs
@@ -306,15 +306,15 @@ void VulkanPrepare2ndPipeline(VulkanContext *vc, u32 stride)
     VkPipelineCache pipelineCache = {};
     VkPipelineCacheCreateInfo pipelineCacheInfo = {};
     pipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-    err = vkCreatePipelineCache(vc->device, &pipelineCacheInfo, NULL, &pipelineCache);
+    err = vkCreatePipelineCache(vc->device, &pipelineCacheInfo, nullptr, &pipelineCache);
     ASSERT(!err);
 
-    err = vkCreateGraphicsPipelines(vc->device, pipelineCache, 1, &pipelineCreateInfo, NULL, &vc->pipeline2);
+    err = vkCreateGraphicsPipelines(vc->device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &vc->pipeline2);
     ASSERT(!err);
 
-    vkDestroyPipelineCache(vc->device, pipelineCache, NULL);
+    vkDestroyPipelineCache(vc->device, pipelineCache, nullptr);
 
-    vkDestroyShaderModule(vc->device, fragShaderModule, NULL);
-    vkDestroyShaderModule(vc->device, vertShaderModule, NULL);
+    vkDestroyShaderModule(vc->device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(vc->device, vertShaderModule, nullptr);
 
 }

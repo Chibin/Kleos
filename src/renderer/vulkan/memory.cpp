@@ -12,13 +12,13 @@ VkDeviceSize VulkanCreateBuffer(
 
     VkBufferCreateInfo bufferInfo = {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.pNext = NULL;
+    bufferInfo.pNext = nullptr;
     bufferInfo.flags = 0;
     bufferInfo.size = size;
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferInfo.queueFamilyIndexCount = 0;
-    bufferInfo.pQueueFamilyIndices = NULL;
+    bufferInfo.pQueueFamilyIndices = nullptr;
 
     err = vkCreateBuffer(*device, &bufferInfo, nullptr, buffer);
     ASSERT(err == VK_SUCCESS);
@@ -28,7 +28,7 @@ VkDeviceSize VulkanCreateBuffer(
 
     VkMemoryAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.pNext = NULL;
+    allocInfo.pNext = nullptr;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = 0;
     b32 pass = AvailableMemoryTypeFromProperties(memoryProperties,
@@ -37,7 +37,7 @@ VkDeviceSize VulkanCreateBuffer(
                                                  &allocInfo.memoryTypeIndex);
     ASSERT(pass);
 
-    err = vkAllocateMemory(*device, &allocInfo, NULL, bufferMemory);
+    err = vkAllocateMemory(*device, &allocInfo, nullptr, bufferMemory);
     ASSERT(err == VK_SUCCESS);
 
     err = vkBindBufferMemory(*device, *buffer, *bufferMemory, 0);

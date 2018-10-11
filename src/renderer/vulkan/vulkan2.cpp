@@ -12,7 +12,7 @@ void VulkanInitDepthBuffer(
     const VkFormat depthFormat = VK_FORMAT_D16_UNORM;
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType =                    VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.pNext =                    NULL;
+    imageInfo.pNext =                    nullptr;
     imageInfo.flags =                    0;
     imageInfo.imageType =                VK_IMAGE_TYPE_2D;
     imageInfo.format =                   depthFormat;
@@ -24,7 +24,7 @@ void VulkanInitDepthBuffer(
     imageInfo.usage =                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
     depth->format = depthFormat;
-    err = vkCreateImage(*device, &imageInfo, NULL, &depth->image);
+    err = vkCreateImage(*device, &imageInfo, nullptr, &depth->image);
     ASSERT(err == VK_SUCCESS);
 
     VkMemoryRequirements memReqs;
@@ -32,7 +32,7 @@ void VulkanInitDepthBuffer(
 
     VkMemoryAllocateInfo memAlloc = {
         /*.sType =*/            VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        /*.pNext =*/            NULL,
+        /*.pNext =*/            nullptr,
         /*.allocationSize =*/   memReqs.size,
         /*.memoryTypeIndex =*/  0,
     };
@@ -44,7 +44,7 @@ void VulkanInitDepthBuffer(
             &memAlloc.memoryTypeIndex);
     ASSERT(pass);
 
-    err = vkAllocateMemory(*device, &memAlloc, NULL, &depth->mem);
+    err = vkAllocateMemory(*device, &memAlloc, nullptr, &depth->mem);
     ASSERT(err == VK_SUCCESS);
     err = vkBindImageMemory(*device, depth->image, depth->mem, 0);
     ASSERT(err == VK_SUCCESS);
@@ -61,7 +61,7 @@ void VulkanInitDepthBuffer(
 
     VkImageViewCreateInfo viewInfo = {
         /*.sType =*/                VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        /*.pNext =*/                NULL,
+        /*.pNext =*/                nullptr,
         /*.flags =*/                0,
         /*.image =*/                depth->image,
         /*.viewType =*/             VK_IMAGE_VIEW_TYPE_2D,
@@ -75,7 +75,7 @@ void VulkanInitDepthBuffer(
                                     },
     };
 
-    err = vkCreateImageView(*device, &viewInfo, NULL, &depth->view);
+    err = vkCreateImageView(*device, &viewInfo, nullptr, &depth->view);
     ASSERT(err == VK_SUCCESS);
 
 }

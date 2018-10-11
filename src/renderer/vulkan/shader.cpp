@@ -6,12 +6,12 @@ VulkanPrepareShaderModule(VkDevice *device, const void *code, size_t size)
     VkResult err;
 
     moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    moduleCreateInfo.pNext = NULL;
+    moduleCreateInfo.pNext = nullptr;
     moduleCreateInfo.flags = 0;
     moduleCreateInfo.codeSize = size;
     moduleCreateInfo.pCode = (const uint32_t *)code;
 
-    err = vkCreateShaderModule(*device, &moduleCreateInfo, NULL, &module);
+    err = vkCreateShaderModule(*device, &moduleCreateInfo, nullptr, &module);
     ASSERT(!err);
 
     return module;
@@ -23,11 +23,11 @@ char *ReadSPV(const char *filename, size_t *psize)
     void *shaderCode;
     size_t retVal;
 
-    FILE *fp = NULL;
+    FILE *fp = nullptr;
     errno_t err = fopen_s(&fp, filename, "rb");
     if (err != 0)
     {
-        return NULL;
+        return nullptr;
     }
 
     fseek(fp, 0L, SEEK_END);
@@ -39,7 +39,7 @@ char *ReadSPV(const char *filename, size_t *psize)
     retVal = fread(shaderCode, size, 1, fp);
     if (!retVal)
     {
-        return NULL;
+        return nullptr;
     }
 
     *psize = size;

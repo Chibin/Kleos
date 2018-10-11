@@ -57,26 +57,26 @@ void VulkanInitRenderPass(VulkanContext *vc)
         /*.flags =*/                    0,
         /*.pipelineBindPoint =*/        VK_PIPELINE_BIND_POINT_GRAPHICS,
         /*.inputAttachmentCount =*/     0,
-        /*.pInputAttachments =*/        NULL,
+        /*.pInputAttachments =*/        nullptr,
         /*.colorAttachmentCount =*/     1,
         /*.pColorAttachments =*/        &colorReference,
-        /*.pResolveAttachments =*/      NULL,
+        /*.pResolveAttachments =*/      nullptr,
         /*.pDepthStencilAttachment =*/  &depthReference,
         /*.preserveAttachmentCount =*/  0,
-        /*.pPreserveAttachments =*/     NULL,
+        /*.pPreserveAttachments =*/     nullptr,
     };
 
     const VkSubpassDescription UISubPass = {
         /*.flags =*/                    0,
         /*.pipelineBindPoint =*/        VK_PIPELINE_BIND_POINT_GRAPHICS,
         /*.inputAttachmentCount =*/     0,
-        /*.pInputAttachments =*/        NULL,
+        /*.pInputAttachments =*/        nullptr,
         /*.colorAttachmentCount =*/     1,
         /*.pColorAttachments =*/        &colorReference,
-        /*.pResolveAttachments =*/      NULL,
+        /*.pResolveAttachments =*/      nullptr,
         /*.pDepthStencilAttachment =*/  0,
         /*.preserveAttachmentCount =*/  0,
-        /*.pPreserveAttachments =*/     NULL,
+        /*.pPreserveAttachments =*/     nullptr,
     };
 
     const VkSubpassDescription subPasses[] = {depthStencilSubPass, UISubPass};
@@ -93,7 +93,7 @@ void VulkanInitRenderPass(VulkanContext *vc)
 
     const VkRenderPassCreateInfo rpInfo = {
         /*.sType =*/            VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        /*.pNext =*/            NULL,
+        /*.pNext =*/            nullptr,
         /*.flags =*/            0,
         /*.attachmentCount =*/  ATTACHMENT_COUNT,
         /*.pAttachments =*/     attachments,
@@ -103,6 +103,6 @@ void VulkanInitRenderPass(VulkanContext *vc)
         /*.pDependencies =*/    &subpassDependency,
     };
 
-    err = vkCreateRenderPass(vc->device, &rpInfo, NULL, &vc->renderPass);
+    err = vkCreateRenderPass(vc->device, &rpInfo, nullptr, &vc->renderPass);
     ASSERT(!err);
 }

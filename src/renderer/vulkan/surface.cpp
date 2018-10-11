@@ -24,7 +24,7 @@ void VulkanGetSupportedQueueFamily(VulkanContext *vc,
 	// Create a WSI surface for the window
 	PlatformSurfaceCreateInfo createInfo;
 	createInfo.sType = PLATFORM_SURFACE_CREATE_INFO;
-	createInfo.pNext = NULL;
+	createInfo.pNext = nullptr;
 	createInfo.flags = 0;
 
 	SDL_SysWMinfo info;
@@ -33,10 +33,10 @@ void VulkanGetSupportedQueueFamily(VulkanContext *vc,
 
 	PLATFORM_ASSIGN_SURFACEINFO;
 
-	err = PlatformCreateSurface(*inst, &createInfo, NULL, surface);
+	err = PlatformCreateSurface(*inst, &createInfo, nullptr, surface);
 
-	// Query with NULL data to get count
-	vkGetPhysicalDeviceQueueFamilyProperties(*gpu, &queueCount, NULL);
+	// Query with nullptr data to get count
+	vkGetPhysicalDeviceQueueFamilyProperties(*gpu, &queueCount, nullptr);
     //
 	// Iterate over each queue to learn whether it supports presenting
 	VkBool32 *supportsPresent = (VkBool32 *)malloc(queueCount * sizeof(VkBool32));

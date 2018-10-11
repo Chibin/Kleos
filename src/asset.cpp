@@ -22,8 +22,8 @@ char *ReadFrameFile(const char *file, memory_index *o_fileSize)
 {
     SDL_RWops *rw = SDL_RWFromFile(file,"r");
     u64 fileSize = 0;
-    char *buf = NULL;
-    if (rw != NULL) {
+    char *buf = nullptr;
+    if (rw != nullptr) {
         fileSize = SDL_RWsize(rw);
         buf = (char *)malloc(fileSize + 1);
         SDL_RWread(rw, buf, fileSize, 1);
@@ -40,9 +40,9 @@ char *ReadFrameFile(const char *file, memory_index *o_fileSize)
 b32 VerifyStringAndGotoNextLine(char *p, const char *string)
 {
     // test
-    while(string != NULL && *string != '\0')
+    while(string != nullptr && *string != '\0')
     {
-        if (p == NULL || *string != *p)
+        if (p == nullptr || *string != *p)
         {
             return false;
         }
@@ -57,12 +57,12 @@ b32 VerifyStringAndGotoNextLine(char *p, const char *string)
 memory_index CopyLine(const char *from, char *to, memory_index bufferSize)
 {
     memory_index counter = 0;
-    while(counter < bufferSize && from != NULL && *from != '\n')
+    while(counter < bufferSize && from != nullptr && *from != '\n')
     {
         if (*from == '\r')
         {
             from++;
-            ASSERT(from != NULL && *from == '\n');
+            ASSERT(from != nullptr && *from == '\n');
             continue;
         }
         to[counter++] = *from;

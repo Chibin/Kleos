@@ -43,7 +43,7 @@ DbgFunc(VkFlags msgFlags,
     }
 
     printf("%s\n", message);
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FOUND ERROR VALIDATION: DbgFunc", message, NULL);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FOUND ERROR VALIDATION: DbgFunc", message, nullptr);
 
     free(message);
 
@@ -162,7 +162,7 @@ void VulkanSetValidationLayer(
     *enabledValidationLayerCount = 0;
     uint32_t deviceLayerCount = 0;
     err =
-        vkEnumerateDeviceLayerProperties(*gpu, &deviceLayerCount, NULL);
+        vkEnumerateDeviceLayerProperties(*gpu, &deviceLayerCount, nullptr);
     ASSERT(err == VK_SUCCESS);
 
     if (deviceLayerCount > 0)

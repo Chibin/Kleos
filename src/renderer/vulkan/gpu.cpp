@@ -4,7 +4,7 @@ void VulkanSetPhysicalDevice(
 {
     /* Make initial call to query gpuCount, then second call for gpu info*/
 	u32 gpuCount;
-    ASSERT(vkEnumeratePhysicalDevices(*inst, &gpuCount, NULL) == VK_SUCCESS);
+    ASSERT(vkEnumeratePhysicalDevices(*inst, &gpuCount, nullptr) == VK_SUCCESS);
 
 	if (gpuCount > 0)
     {
@@ -34,8 +34,8 @@ void VulkanInitQueueProperties(
         VkQueueFamilyProperties **queueProps)
 {
     u32 queueCount = 0;
-	// Query with NULL data to get count
-	vkGetPhysicalDeviceQueueFamilyProperties(*gpu, &queueCount, NULL);
+	// Query with nullptr data to get count
+	vkGetPhysicalDeviceQueueFamilyProperties(*gpu, &queueCount, nullptr);
 
 	*queueProps = (VkQueueFamilyProperties *)malloc(queueCount * sizeof(VkQueueFamilyProperties));
 	vkGetPhysicalDeviceQueueFamilyProperties(*gpu, &queueCount, *queueProps);
