@@ -681,100 +681,19 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
 }
 
-void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
-            RenderGroup *perFrameRenderGroup, VulkanContext *vc)
+void DrawScene(
+        GameMetadata *gameMetadata,
+        RenderGroup *perFrameRenderGroup,
+        VulkanContext *vc,
+        VulkanBuffers *g_vkBuffers,
+        Camera *g_camera,
+        glm::mat4 *g_projection,
+        GLuint *viewLoc,
+        GLuint *projectionLoc,
+        GLuint *textureID,
+        RectDynamicArray *hitBoxes,
+        RectDynamicArray *hurtBoxes)
 {
-
-    struct PushConstantMatrix
-    {
-        glm::mat4 view;
-        glm::mat4 proj;
-    } pushConstants;
-    pushConstants = {};
-
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-    GameTimestep *gt = gameMetadata->gameTimestep;
-    char buffer[256];
-
-    Bitmap perFrameSentinelNode = {};
-    perFrameSentinelNode.next = &perFrameSentinelNode;
-    perFrameSentinelNode.prev = &perFrameSentinelNode;
-
-    u64 endCounter = SDL_GetPerformanceCounter();
-    u64 counterElapsed = endCounter - gt->lastCounter;
-
-    f64 MSPerFrame = (((1000.0f * (real64)counterElapsed) / (real64)gt->perfCountFrequency));
-    f64 FPS = (real64)gt->perfCountFrequency / (real64)counterElapsed;
-    gt->lastCounter = endCounter;
-
-    u64 endCycleCount = __rdtsc();
-    u64 cyclesElapsed = endCycleCount - gt->lastCycleCount;
-    f64 MCPF = ((f64)cyclesElapsed / (1000.0f * 1000.0f));
-
-    gt->lastCycleCount = endCycleCount;
-
-    if (gameMetadata->isVulkanActive)
-    {
-        VulkanPrepareRender(vc);
-        VulkanBeginRenderPass(vc);
-        VulkanSetViewportAndScissor(vc);
-    }
-
-    GLuint modelLoc, viewLoc, projectionLoc;
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        /* TODO: Fix alpha blending... it's currently not true transparency.
-         * you need to disable this if you want the back parts to be shown when
-         * alpha blending
-         */
-        glDisable(GL_CULL_FACE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        /* TODO: sort materials to their own group for that specific program
-         * bind to the new program
-         */
-        Entity *player = nullptr;
-        player = entity;
-
-        /* programs used first will have higher priority being shown in the
-         * canvas
-         */
-        glBindVertexArray(vao);
-
-        /* TODO: remove this from here... this is just testing it out */
-        glm::mat4 position = glm::mat4();
-        position = glm::translate(position, player->position);
-
-        OpenGLCheckErrors();
-        OpenGLBeginUseProgram(program, textureID);
-
-        /* load uniform variable to shader program before drawing */
-        modelLoc = glGetUniformLocation(program, "model");
-        viewLoc = glGetUniformLocation(program, "view");
-        projectionLoc = glGetUniformLocation(program, "projection");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-
-        OpenGLCheckErrors();
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    }
-
-#if 0
-    UniformBufferObject ubo = {};
-    if (gameMetadata->isVulkanActive)
-    {
-        ubo = {};
-        ubo.view = glm::mat4();
-        ubo.projection = glm::mat4();
-        ubo.model = glm::mat4();
-        VulkanUpdateUniformBuffer(vc, &ubo);
-    }
-#endif
-
     ASSERT(g_rectManager->Traversable.size > 0);
     for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
     {
@@ -826,23 +745,41 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             vc,
             g_camera,
             g_projection,
-            &viewLoc,
-            &projectionLoc);
+            viewLoc,
+            projectionLoc);
 
     DrawRenderGroup(
             gameMetadata,
             perFrameRenderGroup,
             vc,
-            &g_vkBuffers,
+            g_vkBuffers,
             g_camera,
             g_projection,
-            &textureID);
+            textureID);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
+}
 
-    /* Start draw UI */
+void DrawUI(
+        GameMetadata *gameMetadata,
+        RenderGroup *perFrameRenderGroup,
+        VulkanContext *vc,
+        VulkanBuffers *g_vkBuffers,
+        Camera *g_camera,
+        glm::mat4 *g_projection,
+        GLuint *viewLoc,
+        GLuint *projectionLoc,
+        GLuint *textureID,
+        const f64 &MSPerFrame,
+        const f64 &FPS,
+        const f64 &MCPF)
+{
+
+    char buffer[256];
     Bitmap stringBitmap = {};
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+
     /* TODO: create something that can get a new bitmap id? */
     stringBitmap.bitmapID = 99;
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
@@ -919,7 +856,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     /* UI has the highest priority on the screen, so it should be drawn last */
     if (gameMetadata->isOpenGLActive)
     {
-        SetOpenGLDrawToScreenCoordinate(viewLoc, projectionLoc);
+        SetOpenGLDrawToScreenCoordinate(*viewLoc, *projectionLoc);
     }
 
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
@@ -932,15 +869,131 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             gameMetadata,
             perFrameRenderGroup,
             vc,
-            &g_vkBuffers,
+            g_vkBuffers,
             g_camera,
             g_projection,
-            &textureID);
-    /* End Draw UI */
+            textureID);
+
+}
+
+void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
+            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
+            RenderGroup *perFrameRenderGroup, VulkanContext *vc)
+{
+
+    struct PushConstantMatrix
+    {
+        glm::mat4 view;
+        glm::mat4 proj;
+    } pushConstants;
+    pushConstants = {};
+
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    GameTimestep *gt = gameMetadata->gameTimestep;
+
+    u64 endCounter = SDL_GetPerformanceCounter();
+    u64 counterElapsed = endCounter - gt->lastCounter;
+
+    f64 MSPerFrame = (((1000.0f * (real64)counterElapsed) / (real64)gt->perfCountFrequency));
+    f64 FPS = (real64)gt->perfCountFrequency / (real64)counterElapsed;
+    gt->lastCounter = endCounter;
+
+    u64 endCycleCount = __rdtsc();
+    u64 cyclesElapsed = endCycleCount - gt->lastCycleCount;
+    f64 MCPF = ((f64)cyclesElapsed / (1000.0f * 1000.0f));
+
+    gt->lastCycleCount = endCycleCount;
+
+    if (gameMetadata->isVulkanActive)
+    {
+        VulkanPrepareRender(vc);
+        VulkanBeginRenderPass(vc);
+        VulkanSetViewportAndScissor(vc);
+    }
+
+    GLuint modelLoc, viewLoc, projectionLoc;
+
+    if (gameMetadata->isOpenGLActive)
+    {
+        /* TODO: Fix alpha blending... it's currently not true transparency.
+         * you need to disable this if you want the back parts to be shown when
+         * alpha blending
+         */
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        /* TODO: sort materials to their own group for that specific program
+         * bind to the new program
+         */
+        Entity *player = nullptr;
+        player = entity;
+
+        /* programs used first will have higher priority being shown in the
+         * canvas
+         */
+        glBindVertexArray(vao);
+
+        /* TODO: remove this from here... this is just testing it out */
+        glm::mat4 position = glm::mat4();
+        position = glm::translate(position, player->position);
+
+        OpenGLCheckErrors();
+        OpenGLBeginUseProgram(program, textureID);
+
+        /* load uniform variable to shader program before drawing */
+        modelLoc = glGetUniformLocation(program, "model");
+        viewLoc = glGetUniformLocation(program, "view");
+        projectionLoc = glGetUniformLocation(program, "projection");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
+
+        OpenGLCheckErrors();
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    }
+
+#if 0
+    UniformBufferObject ubo = {};
+    if (gameMetadata->isVulkanActive)
+    {
+        ubo = {};
+        ubo.view = glm::mat4();
+        ubo.projection = glm::mat4();
+        ubo.model = glm::mat4();
+        VulkanUpdateUniformBuffer(vc, &ubo);
+    }
+#endif
+
+    DrawScene(
+        gameMetadata,
+        perFrameRenderGroup,
+        vc,
+        &g_vkBuffers,
+        g_camera,
+        g_projection,
+        &viewLoc,
+        &projectionLoc,
+        &textureID,
+        hitBoxes,
+        hurtBoxes);
+
+    DrawUI(
+        gameMetadata,
+        perFrameRenderGroup,
+        vc,
+        &g_vkBuffers,
+        g_camera,
+        g_projection,
+        &viewLoc,
+        &projectionLoc,
+        &textureID,
+        MSPerFrame,
+        FPS,
+        MCPF);
 
     EndRender(gameMetadata, vc);
     RenderCleanup(gameMetadata, vc, &g_vkBuffers);
-
 }
 
 void LoadStuff(GameMetadata *gameMetadata)

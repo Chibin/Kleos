@@ -1,5 +1,5 @@
-#ifndef __VULKAN__
-#define __VULKAN__
+#ifndef __VULKAN__H_
+#define __VULKAN__H_
 
 #pragma warning(push)
 #pragma warning(disable : 4201)

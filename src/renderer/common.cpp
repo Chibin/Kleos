@@ -241,4 +241,3 @@ void DrawRenderGroup(
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 }
-
