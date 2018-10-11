@@ -38,4 +38,23 @@ void UpdateGameTimestep(GameTimestep *gt)
     gt->deltaTime = gt->latestTime - gt->prevTime;
 }
 
+void CalculateFrameStatistics(
+        GameTimestep *gt,
+        f64 *MSPerFrame,
+        f64 *FPS,
+        f64 *MCPF)
+{
+    u64 endCounter = SDL_GetPerformanceCounter();
+    u64 counterElapsed = endCounter - gt->lastCounter;
+
+    *MSPerFrame = (((1000.0f * (real64)counterElapsed) / (real64)gt->perfCountFrequency));
+    *FPS = (real64)gt->perfCountFrequency / (real64)counterElapsed;
+    gt->lastCounter = endCounter;
+
+    u64 endCycleCount = __rdtsc();
+    u64 cyclesElapsed = endCycleCount - gt->lastCycleCount;
+    *MCPF = ((f64)cyclesElapsed / (1000.0f * 1000.0f));
+
+    gt->lastCycleCount = endCycleCount;
+}
 #endif

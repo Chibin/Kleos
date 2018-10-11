@@ -881,6 +881,8 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
             RenderGroup *perFrameRenderGroup, VulkanContext *vc)
 {
 
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+
     struct PushConstantMatrix
     {
         glm::mat4 view;
@@ -888,21 +890,12 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
     } pushConstants;
     pushConstants = {};
 
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-    GameTimestep *gt = gameMetadata->gameTimestep;
+    f64 MSPerFrame = 0;
+    f64 FPS = 0;
+    f64 MCPF = 0;
+    CalculateFrameStatistics(gameMetadata->gameTimestep, &MSPerFrame, &FPS, &MCPF);
 
-    u64 endCounter = SDL_GetPerformanceCounter();
-    u64 counterElapsed = endCounter - gt->lastCounter;
-
-    f64 MSPerFrame = (((1000.0f * (real64)counterElapsed) / (real64)gt->perfCountFrequency));
-    f64 FPS = (real64)gt->perfCountFrequency / (real64)counterElapsed;
-    gt->lastCounter = endCounter;
-
-    u64 endCycleCount = __rdtsc();
-    u64 cyclesElapsed = endCycleCount - gt->lastCycleCount;
-    f64 MCPF = ((f64)cyclesElapsed / (1000.0f * 1000.0f));
-
-    gt->lastCycleCount = endCycleCount;
+    GLuint modelLoc, viewLoc, projectionLoc;
 
     if (gameMetadata->isVulkanActive)
     {
@@ -911,23 +904,11 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         VulkanSetViewportAndScissor(vc);
     }
 
-    GLuint modelLoc, viewLoc, projectionLoc;
-
     if (gameMetadata->isOpenGLActive)
     {
-        /* TODO: Fix alpha blending... it's currently not true transparency.
-         * you need to disable this if you want the back parts to be shown when
-         * alpha blending
-         */
         glDisable(GL_CULL_FACE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        /* TODO: sort materials to their own group for that specific program
-         * bind to the new program
-         */
-        Entity *player = nullptr;
-        player = entity;
 
         /* programs used first will have higher priority being shown in the
          * canvas
