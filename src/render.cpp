@@ -1028,7 +1028,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
                 1,
                 &vc->secondDescSet,
                 0,
-                NULL);
+                nullptr);
 
         ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
         ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
@@ -1219,14 +1219,14 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     u32 bitmapHeight = archeBitmap->height;
 
     /* Replace with read file data */
-    FrameData frameData = {};
+    FrameCycle frameCycle = {};
 
-    LoadFrameData(&frameData, "./assets/texture_data/frames.txt");
+    LoadFrameData(&frameCycle, "./assets/texture_data/frames.txt");
 
     g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
     ZeroSize(g_spriteAnimation, sizeof(Animation2D));
     g_spriteAnimation->direction = LEFT;
-    g_spriteAnimation->totalFrames = frameData.frameCount;
+    g_spriteAnimation->totalFrames = frameCycle.frameCount;
     g_spriteAnimation->frameCoords =
         (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
     g_spriteAnimation->timePerFrame = 1000 * 0.75;
@@ -1237,10 +1237,10 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     {
         g_spriteAnimation->frameCoords[i] =
             RectUVCoords{
-                topRight    = PixelToUV(frameData.frames[i].pixel[0], bitmapWidth, bitmapHeight),
-                bottomRight = PixelToUV(frameData.frames[i].pixel[1], bitmapWidth, bitmapHeight),
-                bottomLeft  = PixelToUV(frameData.frames[i].pixel[2], bitmapWidth, bitmapHeight),
-                topLeft     = PixelToUV(frameData.frames[i].pixel[3], bitmapWidth, bitmapHeight)
+                topRight    = PixelToUV(frameCycle.frames[i].pixel[0], bitmapWidth, bitmapHeight),
+                bottomRight = PixelToUV(frameCycle.frames[i].pixel[1], bitmapWidth, bitmapHeight),
+                bottomLeft  = PixelToUV(frameCycle.frames[i].pixel[2], bitmapWidth, bitmapHeight),
+                topLeft     = PixelToUV(frameCycle.frames[i].pixel[3], bitmapWidth, bitmapHeight)
             };
     }
 }

@@ -4,7 +4,7 @@ struct PixelCoords{
     v2i pixel[4];
 };
 
-struct FrameData
+struct FrameCycle
 {
     char name[256];
     PixelCoords *frames;
@@ -100,7 +100,7 @@ memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to)
     return bytesRead;
 }
 
-void LoadFrameData(FrameData *fd, const char* file)
+void LoadFrameData(FrameCycle *fc, const char* file)
 {
     memory_index fileSize = 0;
     char *fileData = ReadFrameFile(file, &fileSize);
@@ -128,13 +128,13 @@ void LoadFrameData(FrameData *fd, const char* file)
                 counter += strlen(name);
                 tmp = fileData + counter;
 
-                memory_index bytesCopied = CopyLine(tmp, fd->name, sizeof(fd->name));
+                memory_index bytesCopied = CopyLine(tmp, fc->name, sizeof(fc->name));
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
                 fdrs = FRAME_COUNT;
 
-                printf("name :%s\n", fd->name);
+                printf("name :%s\n", fc->name);
                 break;
 
             }
@@ -147,22 +147,22 @@ void LoadFrameData(FrameData *fd, const char* file)
                 counter += strlen(frameCount);
                 tmp = fileData + counter;
 
-                memory_index bytesCopied = CopyLine(tmp, &fd->frameCount);
+                memory_index bytesCopied = CopyLine(tmp, &fc->frameCount);
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
-                fd->frames = (PixelCoords *)malloc(fd->frameCount * sizeof(PixelCoords));
-                memset(fd->frames, 0, fd->frameCount * sizeof(PixelCoords));
+                fc->frames = (PixelCoords *)malloc(fc->frameCount * sizeof(PixelCoords));
+                memset(fc->frames, 0, fc->frameCount * sizeof(PixelCoords));
 
                 fdrs = FRAMES;
 
-                printf("FRAME COUNT: %d\n", fd->frameCount);
+                printf("FRAME COUNT: %d\n", fc->frameCount);
                 break;
 
             }
             case FRAMES:
             {
-                for(u8 i = 0; i < fd->frameCount; i++)
+                for(u8 i = 0; i < fc->frameCount; i++)
                 {
                     char frameCounter[5] = {}; /* 3 digits for 2^8, 1 for color, 1 for \n */
                     SDL_uitoa(i, frameCounter, 10);
@@ -180,8 +180,8 @@ void LoadFrameData(FrameData *fd, const char* file)
 
                     for(u8 rectCorner = 0; rectCorner < NUM_OF_RECT_CORNER; rectCorner++)
                     {
-                        counter += CopyFramePixelCoordinatesFromLine(tmp, &fd->frames[i].pixel[rectCorner]);
-                        printf("x: %d, y: %d\n", fd->frames[i].pixel[rectCorner].x, fd->frames[i].pixel[rectCorner].y);
+                        counter += CopyFramePixelCoordinatesFromLine(tmp, &fc->frames[i].pixel[rectCorner]);
+                        printf("x: %d, y: %d\n", fc->frames[i].pixel[rectCorner].x, fc->frames[i].pixel[rectCorner].y);
                         tmp = fileData + counter;
                     }
                 }
