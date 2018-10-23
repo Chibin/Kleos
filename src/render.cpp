@@ -74,6 +74,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "particle.cpp"
 #include "render_group.h"
 #include "asset.cpp"
+#include "sort.cpp"
 
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"
@@ -398,6 +399,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             particle->rect.isScreenCoordinateSpace = false;
             particle->rect.bitmapID = 0;
             particle->rect.bitmap = bitmap;
+            particle->rect.renderLayer = BEHIND_PLAYER;
             particle->positionOffset = basePosition;
             SetRectPoints(&particle->rect, basePosition, width, height);
         }
@@ -727,18 +729,15 @@ void DrawScene(
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
 
-    for (memory_index i = 0; i < gameMetadata->particleSystem.particleCount; i++)
-    {
-        Particle *particle = &gameMetadata->particleSystem.particles[i]; // NOLINT
-        PushRenderGroupRectInfo(perFrameRenderGroup, &particle->rect);
-    }
-
     gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
                                                   gameMetadata->playerRect->bitmapID);
 
     PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
+
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    MergeSortRenderGroupRectInfo(perFrameRenderGroup, perFrameMemory);
 
     UpdateUBOandPushConstants(
             gameMetadata,
@@ -927,18 +926,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
     }
 
-#if 0
-    UniformBufferObject ubo = {};
-    if (gameMetadata->isVulkanActive)
-    {
-        ubo = {};
-        ubo.view = glm::mat4();
-        ubo.projection = glm::mat4();
-        ubo.model = glm::mat4();
-        VulkanUpdateUniformBuffer(vc, &ubo);
-    }
-#endif
-
+    /* Should I differentiate between scene and ui rendergroups? */
     DrawScene(
         gameMetadata,
         perFrameRenderGroup,
@@ -993,6 +981,7 @@ void LoadStuff(GameMetadata *gameMetadata)
                 CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
             AssociateEntity(r, rectEntity, true);
             r->bitmapID = 0;
+            r->renderLayer = FRONT_STATIC;
             PushBack(&(g_rectManager->Traversable), r);
         }
     }
@@ -1016,17 +1005,20 @@ void LoadStuff(GameMetadata *gameMetadata)
         {
             UpdateColors(collissionRect, v4{ 1.0f, 0.0f, 0.0f, 0.7f });
             collissionRect->type = HURTBOX;
+            collissionRect->renderLayer = DEBUG;
         }
         else if (i == 3)
         {
 
             collissionRect->type = HITBOX;
+            collissionRect->renderLayer = DEBUG;
             UpdateColors(collissionRect, v4{ 0.0f, 1.0f, 0.0f, 0.7f });
         }
         else
         {
 
             collissionRect->type = COLLISION;
+            collissionRect->renderLayer = FRONT_STATIC;
             UpdateColors(collissionRect, v4{ 0.0f, 0.0f, 1.0f, 0.7f });
         }
 

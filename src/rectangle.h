@@ -25,10 +25,12 @@ enum Direction
 enum RenderLayer
 {
     DEBUG = 0,
-    PLAYER = 1,
-    FRONT_STATIC = 2,
-    ITEMS = 3,
-    MOBS = 4,
+    FRONT_PLAYER,
+    PLAYER,
+    BEHIND_PLAYER,
+    FRONT_STATIC,
+    ITEMS,
+    MOBS,
 
     BACKGROUND = 1000,
 };
@@ -107,6 +109,8 @@ struct Rect
     int size;
     RectType type;
     uint32 ttl; /* time to live / duration */
+
+    RenderLayer renderLayer;
 };
 
 Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color, real32 width, real32 height);
