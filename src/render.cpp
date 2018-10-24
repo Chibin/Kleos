@@ -396,7 +396,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             base += 0.15f;
             v4 color = { 0.1f, 0.1f, 0.1f, 1 };
             particle->rect.color = color;
-            particle->rect.isScreenCoordinateSpace = false;
             particle->rect.bitmapID = 0;
             particle->rect.bitmap = bitmap;
             particle->rect.renderLayer = BEHIND_PLAYER;
@@ -737,7 +736,11 @@ void DrawScene(
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+#if 0
     MergeSortRenderGroupRectInfo(perFrameRenderGroup, perFrameMemory);
+#else
+    QuickSortRenderGroupRectInfo(perFrameRenderGroup);
+#endif
 
     UpdateUBOandPushConstants(
             gameMetadata,
@@ -801,7 +804,6 @@ void DrawUI(
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
-    statsRect->isScreenCoordinateSpace = true;
     statsRect->bitmap = &stringBitmap;
 
     perFrameRenderGroup->rectCount = 0;
@@ -981,7 +983,7 @@ void LoadStuff(GameMetadata *gameMetadata)
                 CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
             AssociateEntity(r, rectEntity, true);
             r->bitmapID = 0;
-            r->renderLayer = FRONT_STATIC;
+            r->renderLayer = BACKGROUND;
             PushBack(&(g_rectManager->Traversable), r);
         }
     }

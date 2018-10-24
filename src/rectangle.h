@@ -77,7 +77,6 @@ struct Rect
 
     memory_index bitmapID;
     Bitmap *bitmap;
-    b32 isScreenCoordinateSpace;
     v3 basePosition;
 
 #pragma warning(push)

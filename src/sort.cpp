@@ -1,3 +1,7 @@
+/*
+ * MERGE SORT
+ */
+
 void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp, memory_index left, memory_index mid, memory_index right);
 
 void SortRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp, memory_index left, memory_index right)
@@ -30,8 +34,8 @@ void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp,
     memory_index i = left;
     while(i <= right)
     {
-        Rect *leftRect = (Rect *)rectMemoryTemp->base+ iLeft;
-        Rect *rightRect = (Rect *)rectMemoryTemp->base+ iRight;
+        Rect *leftRect = (Rect *)rectMemoryTemp->base + iLeft;
+        Rect *rightRect = (Rect *)rectMemoryTemp->base + iRight;
         Rect *r = (Rect *)rg->rectMemory.base + i;
 
         if (leftRect->renderLayer < rightRect->renderLayer && iRight <= right)
@@ -57,7 +61,7 @@ void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp,
         i++;
     }
 
-#if 0
+#if 1
     /* debug purposes */
     if (left == 0)
     {
@@ -88,6 +92,88 @@ void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
     rectMemoryTemp.maxSize = rectMemoryBlockSize;
 
     SortRGRI(rg, &rectMemoryTemp, 0, rg->rectEntityCount);
+}
+
+
+/*
+ * QUICK SORT
+ */
+
+memory_index PartitionRGRI(RenderGroup *rg, memory_index left,  memory_index right)
+{
+
+    memory_index partitionIndex = (left + right) / 2;
+
+    while (left <= right)
+    {
+        Rect *leftRect = (Rect *)rg->rectMemory.base + left;
+        Rect *partRect = (Rect *)rg->rectMemory.base + partitionIndex;
+        Rect *rightRect = (Rect *)rg->rectMemory.base + right;
+
+        while(leftRect->renderLayer > partRect->renderLayer)
+        {
+            left++;
+            leftRect = (Rect *)rg->rectMemory.base + left;
+        }
+
+        while(rightRect->renderLayer < partRect->renderLayer)
+        {
+            right--;
+            rightRect = (Rect *)rg->rectMemory.base + right;
+        }
+
+        if (left <= right)
+        {
+            Rect tmp = *rightRect;
+            *rightRect = *leftRect;
+            *leftRect = tmp;
+
+            left++;
+            right--;
+
+            leftRect = (Rect *)rg->rectMemory.base + left;
+            rightRect = (Rect *)rg->rectMemory.base + right;
+        }
+    }
+
+    return left;
+}
+
+void QuickSortRGRI(RenderGroup *rg, memory_index left, memory_index right)
+{
+    memory_index index = PartitionRGRI(rg, left, right);
+
+    if (left < index - 1)
+    {
+        QuickSortRGRI(rg, left, index - 1);
+    }
+    if (index < right)
+    {
+        QuickSortRGRI(rg, index, right);
+    }
+}
+
+void QuickSortRenderGroupRectInfo(RenderGroup *rg)
+{
+    QuickSortRGRI(rg, 0, rg->rectEntityCount - 1);
+
+#if 1
+    /* debug purposes */
+    Rect *prevRect = nullptr;
+
+    for (memory_index i = 0; i < rg->rectEntityCount; i++)
+    {
+        Rect *r = (Rect *)rg->rectMemory.base + i;
+
+        if (prevRect)
+        {
+            ASSERT(prevRect->renderLayer >= r->renderLayer);
+        }
+        prevRect = r;
+    }
+
+#endif
+
 }
 
 void SortDrawEntities()
