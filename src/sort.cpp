@@ -60,27 +60,23 @@ void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp,
 
         i++;
     }
+}
 
-#if 1
-    /* debug purposes */
-    if (left == 0)
-    {
-        Rect *prevRect = nullptr;
+struct SortData
+{
+    RenderGroup *rg;
+    GameMemory *rectMemoryTemp;
+    memory_index left;
+    memory_index right;
+};
 
-        for (memory_index i = 0; i < right; i++)
-        {
-            Rect *r = (Rect *)rg->rectMemory.base + i;
+int ThreadSortRGRI(void *data)
+{
+    SortData *sortData = (SortData *)data;
 
-            if (prevRect)
-            {
-                ASSERT(prevRect->renderLayer >= r->renderLayer);
-            }
-            prevRect = r;
-        }
+    SortRGRI(sortData->rg, sortData->rectMemoryTemp, sortData->left, sortData->right);
 
-    }
-#endif
-
+    return 0;
 }
 
 void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
@@ -91,9 +87,63 @@ void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
     rectMemoryTemp.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
     rectMemoryTemp.maxSize = rectMemoryBlockSize;
 
+#if 1
     SortRGRI(rg, &rectMemoryTemp, 0, rg->rectEntityCount);
-}
+#else
 
+    SDL_Thread *leftThread;
+    SDL_Thread *rightThread;
+    int         threadReturnValue;
+    memory_index mid = (0 + rg->rectEntityCount) / 2;
+
+    SortData sortDataLeft = {};
+    sortDataLeft.rg = rg;
+    sortDataLeft.rectMemoryTemp = &rectMemoryTemp;
+    sortDataLeft.left = 0;
+    sortDataLeft.right = mid;
+
+    SortData sortDataRight = {};
+    sortDataRight.rg = rg;
+    sortDataRight.rectMemoryTemp = &rectMemoryTemp;
+    sortDataRight.left = mid + 1;
+    sortDataRight.right = rg->rectEntityCount;
+
+    leftThread = SDL_CreateThread(ThreadSortRGRI, "SortRGRI", (void *)&sortDataLeft);
+    rightThread = SDL_CreateThread(ThreadSortRGRI, "SortRGRI", (void *)&sortDataRight);
+
+    ASSERT(leftThread);
+    ASSERT(rightThread);
+
+    SDL_WaitThread(leftThread, &threadReturnValue);
+    ASSERT(threadReturnValue == 0);
+    SDL_WaitThread(rightThread, &threadReturnValue);
+    ASSERT(threadReturnValue == 0);
+
+    MergeRGRI(rg, &rectMemoryTemp, 0, mid, rg->rectEntityCount);
+#endif
+
+#if 1
+    /* debug purposes */
+    Rect *prevRect = nullptr;
+
+    for (memory_index i = 0; i < rg->rectEntityCount; i++)
+    {
+        Rect *r = (Rect *)rg->rectMemory.base + i;
+
+        if (prevRect)
+        {
+            ASSERT(prevRect->renderLayer >= r->renderLayer);
+        }
+        prevRect = r;
+    }
+
+#endif
+    /* TODO: Make sure that the threads are properly shut-down when the game
+     * closes.
+     * Right now, it will show as a crash once you close the game. It might be
+     * related to the thread not properly closing?*/
+
+}
 
 /*
  * QUICK SORT
@@ -157,7 +207,7 @@ void QuickSortRenderGroupRectInfo(RenderGroup *rg)
 {
     QuickSortRGRI(rg, 0, rg->rectEntityCount - 1);
 
-#if 1
+#if 0
     /* debug purposes */
     Rect *prevRect = nullptr;
 
