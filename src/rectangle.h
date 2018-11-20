@@ -61,6 +61,34 @@ struct DrawLayer
 
 };
 
+struct MinimalRectInfo
+{
+    v4 color;
+    f32 width;
+    f32 height;
+
+#pragma warning(push)
+#pragma warning(disable : 4201)
+    union {
+        struct
+        {
+            f32 maxX;
+            f32 maxY;
+        };
+        f32 max[2];
+    };
+
+    union {
+        struct
+        {
+            f32 minX;
+            f32 minY;
+        };
+        f32 min[2];
+    };
+#pragma warning(pop)
+};
+
 struct Rect
 {
     Entity *entity;

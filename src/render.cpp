@@ -736,8 +736,9 @@ void DrawScene(
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+
 #if 1
-    MergeSortRenderGroupRectInfo(perFrameRenderGroup, perFrameMemory);
+    Rect **sortedRectInfo = MergeSortRenderGroupRectInfo(perFrameRenderGroup, perFrameMemory);
 #else
     QuickSortRenderGroupRectInfo(perFrameRenderGroup);
 #endif
@@ -753,6 +754,7 @@ void DrawScene(
     DrawRenderGroup(
             gameMetadata,
             perFrameRenderGroup,
+            sortedRectInfo,
             vc,
             g_vkBuffers,
             g_camera,

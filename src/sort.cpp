@@ -2,22 +2,21 @@
  * MERGE SORT
  */
 
-void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp, memory_index left, memory_index mid, memory_index right);
+void MergeRGRI(Rect **result, Rect **rectMemoryTemp, memory_index left, memory_index mid, memory_index right);
 
-void SortRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp, memory_index left, memory_index right)
+void SortRGRI(Rect **result, Rect **rectMemoryTemp, memory_index left, memory_index right)
 {
     if ( left < right )
     {
         memory_index mid = (left + right) / 2;
 
-        SortRGRI(rg, rectMemoryTemp, left, mid);
-        SortRGRI(rg, rectMemoryTemp, mid + 1, right);
-        MergeRGRI(rg, rectMemoryTemp, left, mid, right);
+        SortRGRI(result, rectMemoryTemp, left, mid);
+        SortRGRI(result, rectMemoryTemp, mid + 1, right);
+        MergeRGRI(result, rectMemoryTemp, left, mid, right);
     }
 }
 
-void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp,
-        memory_index left, memory_index mid, memory_index right)
+void MergeRGRI(Rect **result, Rect **rectMemoryTemp, memory_index left, memory_index mid, memory_index right)
 {
     /* sorty by highest to lowest render layer */
 
@@ -26,31 +25,29 @@ void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp,
 
     for (memory_index i = left; i <= right; i++)
     {
-        Rect *r = (Rect *)rg->rectMemory.base + i;
-        Rect *temp = (Rect *)rectMemoryTemp->base + i;
-        *temp = *r;
+        rectMemoryTemp[i] = result[i];
     }
 
     memory_index i = left;
     while(i <= right)
     {
-        Rect *leftRect = (Rect *)rectMemoryTemp->base + iLeft;
-        Rect *rightRect = (Rect *)rectMemoryTemp->base + iRight;
-        Rect *r = (Rect *)rg->rectMemory.base + i;
+        Rect *leftRect = (Rect *)rectMemoryTemp[iLeft];
+        Rect *rightRect = (Rect *)rectMemoryTemp[iRight];
+        Rect *r = (Rect *)result[i];
 
-        if (leftRect->renderLayer < rightRect->renderLayer && iRight <= right)
+        if (iRight <= right && leftRect->renderLayer < rightRect->renderLayer)
         {
-            *r = *rightRect;
+            result[i] = rectMemoryTemp[iRight];
             iRight++;
         }
         else if( iLeft <= mid )
         {
-            *r = *leftRect;
+            result[i] = rectMemoryTemp[iLeft];
             iLeft++;
         }
         else if (iRight <= right)
         {
-            *r = *rightRect;
+            result[i] = rectMemoryTemp[iRight];
             iRight++;
         }
         else
@@ -64,8 +61,8 @@ void MergeRGRI(RenderGroup *rg, GameMemory *rectMemoryTemp,
 
 struct SortData
 {
-    RenderGroup *rg;
-    GameMemory *rectMemoryTemp;
+    Rect **result;
+    Rect **rectMemoryTemp;
     memory_index left;
     memory_index right;
 };
@@ -74,39 +71,45 @@ int ThreadSortRGRI(void *data)
 {
     SortData *sortData = (SortData *)data;
 
-    SortRGRI(sortData->rg, sortData->rectMemoryTemp, sortData->left, sortData->right);
+    /* TODO: FIX ME */
+    SortRGRI(sortData->result, sortData->rectMemoryTemp, sortData->left, sortData->right);
 
     return 0;
 }
 
-void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
+Rect **MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
 {
     /* Render Group Rect Info - RGRI*/
-    GameMemory rectMemoryTemp = {};
-    u32 rectMemoryBlockSize = sizeof(Rect) * SafeCastToU32(rg->rectEntityCount);
-    rectMemoryTemp.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
-    rectMemoryTemp.maxSize = rectMemoryBlockSize;
+    u32 rectMemoryBlockSize = sizeof(Rect *) * SafeCastToU32(rg->rectEntityCount);
+
+    Rect **ppRectMemoryTemp = (Rect **)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
+    Rect **ppOrderedMemory = (Rect **)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
+
+    for (memory_index i = 0; i < rg->rectEntityCount; i++)
+    {
+        ppOrderedMemory[i] = (Rect *)rg->rectMemory.base + i;
+        ASSERT(ppOrderedMemory[i]->bitmap != NULL);
+    }
 
 #if 1
-    SortRGRI(rg, &rectMemoryTemp, 0, rg->rectEntityCount);
+    SortRGRI(ppOrderedMemory, ppRectMemoryTemp, 0, rg->rectEntityCount - 1);
 #else
-
     SDL_Thread *leftThread;
     SDL_Thread *rightThread;
     int         threadReturnValue;
     memory_index mid = (0 + rg->rectEntityCount) / 2;
 
     SortData sortDataLeft = {};
-    sortDataLeft.rg = rg;
-    sortDataLeft.rectMemoryTemp = &rectMemoryTemp;
+    sortDataLeft.result = ppOrderedMemory;
+    sortDataLeft.rectMemoryTemp = ppRectMemoryTemp;
     sortDataLeft.left = 0;
     sortDataLeft.right = mid;
 
     SortData sortDataRight = {};
-    sortDataRight.rg = rg;
-    sortDataRight.rectMemoryTemp = &rectMemoryTemp;
+    sortDataRight.result = ppOrderedMemory;
+    sortDataRight.rectMemoryTemp = ppRectMemoryTemp;
     sortDataRight.left = mid + 1;
-    sortDataRight.right = rg->rectEntityCount;
+    sortDataRight.right = rg->rectEntityCount - 1;
 
     leftThread = SDL_CreateThread(ThreadSortRGRI, "SortRGRI", (void *)&sortDataLeft);
     rightThread = SDL_CreateThread(ThreadSortRGRI, "SortRGRI", (void *)&sortDataRight);
@@ -119,7 +122,7 @@ void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
     SDL_WaitThread(rightThread, &threadReturnValue);
     ASSERT(threadReturnValue == 0);
 
-    MergeRGRI(rg, &rectMemoryTemp, 0, mid, rg->rectEntityCount);
+    MergeRGRI(ppOrderedMemory, ppRectMemoryTemp, 0, mid, rg->rectEntityCount - 1);
 #endif
 
 #if 1
@@ -128,7 +131,7 @@ void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
 
     for (memory_index i = 0; i < rg->rectEntityCount; i++)
     {
-        Rect *r = (Rect *)rg->rectMemory.base + i;
+        Rect *r = (Rect *)ppOrderedMemory[i];
 
         if (prevRect)
         {
@@ -138,11 +141,7 @@ void MergeSortRenderGroupRectInfo(RenderGroup *rg, GameMemory *perFrameMemory)
     }
 
 #endif
-    /* TODO: Make sure that the threads are properly shut-down when the game
-     * closes.
-     * Right now, it will show as a crash once you close the game. It might be
-     * related to the thread not properly closing?*/
-
+    return ppOrderedMemory;
 }
 
 /*
@@ -221,7 +220,6 @@ void QuickSortRenderGroupRectInfo(RenderGroup *rg)
         }
         prevRect = r;
     }
-
 #endif
 
 }

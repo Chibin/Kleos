@@ -181,6 +181,71 @@ void RenderCleanup(
 void DrawRenderGroup(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
+        Rect **sortedRectInfo,
+        VulkanContext *vc,
+        VulkanBuffers *g_vkBuffers,
+        Camera *g_camera,
+        glm::mat4 *g_projection,
+        GLuint *textureID)
+{
+    Bitmap *bitmap = nullptr;
+    Bitmap *prevBitmap = nullptr;
+    TextureParam prevTextureParam = {};
+
+    for (memory_index i = 0; i < perFrameRenderGroup->rectEntityCount; i++)
+    {
+        Rect *rect = (Rect *)sortedRectInfo[i];
+
+        bitmap = rect->bitmap;
+        ASSERT(bitmap != nullptr);
+
+        TextureParam textureParam = bitmap->textureParam;
+
+        if ((bitmap != prevBitmap) ||
+            (textureParam != prevTextureParam))
+        {
+
+            Draw(
+                    gameMetadata,
+                    perFrameRenderGroup,
+                    vc,
+                    g_vkBuffers,
+                    g_camera,
+                    g_projection);
+
+            ClearUsedVertexRenderGroup(perFrameRenderGroup);
+
+            if (bitmap != prevBitmap)
+            {
+                UpdateSamplerImage(
+                        gameMetadata,
+                        vc,
+                        bitmap,
+                        &textureParam,
+                        textureID);
+            }
+
+            prevBitmap = bitmap;
+        }
+
+        PushRenderGroupRectVertex(perFrameRenderGroup, rect);
+        prevTextureParam = textureParam;
+    }
+
+    Draw(
+            gameMetadata,
+            perFrameRenderGroup,
+            vc,
+            g_vkBuffers,
+            g_camera,
+            g_projection);
+
+    ClearUsedVertexRenderGroup(perFrameRenderGroup);
+}
+
+void DrawRenderGroup(
+        GameMetadata *gameMetadata,
+        RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
         VulkanBuffers *g_vkBuffers,
         Camera *g_camera,
