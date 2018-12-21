@@ -195,7 +195,7 @@ void LoadFrameData(FrameCycle *fc, const char* file)
 
         }
 
-        printf("%d\n", fdrs);
+        printf("framedata read state: %d\n", fdrs);
     }
 
 }
