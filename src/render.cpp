@@ -208,7 +208,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->memoryProperties,
                     useStagingBuffer,
                     vc->textures,
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);;
+                    VK_IMAGE_LAYOUT_GENERAL);;
 
             stbi_image_free(pixels);
 
@@ -259,7 +259,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &vc->memoryProperties,
                     useStagingBuffer,
                     vc->playerTextures,
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    VK_IMAGE_LAYOUT_GENERAL);
 
             stbi_image_free(playerPixels);
 
