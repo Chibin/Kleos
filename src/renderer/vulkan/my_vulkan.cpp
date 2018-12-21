@@ -399,21 +399,21 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     PFN_vkAcquireNextImageKHR fpAcquireNextImageKHR;
     PFN_vkQueuePresentKHR fpQueuePresentKHR;
 
-	VkCommandPool cmdPool;
+    VkCommandPool cmdPool;
 
     uint32_t enabledLayerCount = 0;
     char *extensionNames[64];
-	char *deviceValidationLayers[64];
+    char *deviceValidationLayers[64];
 
     VkResult err;
     uint32_t deviceValidationLayerCount = 0;
     char **instanceValidationLayers = nullptr;
-	VkBool32 validationFound = 0;
-	bool useBreak = false;
+    VkBool32 validationFound = 0;
+    bool useBreak = false;
 
     uint32_t currentBufferIndex;
 
-	VkColorSpaceKHR colorSpace;
+    VkColorSpaceKHR colorSpace;
 
     VkCommandBuffer setupCmd = {}; // Command Buffer for initialization commands
     VkCommandBuffer drawCmd = {};  // Command Buffer for drawing commands
