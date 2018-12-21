@@ -39,7 +39,8 @@ bool WindowsSDLTTFSetup()
 
 bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
 {
-    _setOpenGLSettings();
+#if 0
+    //_setOpenGLSettings();
     /* create our opengl context and attach it to our window */
     *mainContext = SDL_GL_CreateContext(mainWindow);
 
@@ -71,6 +72,7 @@ bool WindowsOpenGLSetup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
     {
         printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
     }
+#endif
 
     return true;
 }

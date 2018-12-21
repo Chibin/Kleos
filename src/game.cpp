@@ -62,7 +62,7 @@ void MainGameLoop(SDL_Window *mainWindow, b32 isVulkanActive, RenderAPI *renderA
     while (continueRunning && !vc->quit)
     {
         continueRunning = ((renderAPI->updateAndRender)(&gameMetadata) != 0);
-        ProcessOpenGLErrors();
+        //ProcessOpenGLErrors();
 
         if (!gameMetadata.isVulkanActive)
         {

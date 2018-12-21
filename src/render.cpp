@@ -117,6 +117,7 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes,
             RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup);
 void LoadStuff(GameMetadata *gameMetadata);
+inline void LoadShaders(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc);
 
@@ -447,6 +448,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         {
             gameMetadata->initOpenGL = true;
 
+            LoadShaders(gameMetadata);
+
             /*  Each vertex attribute takes its data from memory managed by a
              *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
              *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
@@ -479,8 +482,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // NOLINT
     }
 
-    ASSERT(gameMetadata->program);
-    ASSERT(gameMetadata->debugProgram);
+    if (gameMetadata->isOpenGLActive)
+    {
+        ASSERT(gameMetadata->program);
+        ASSERT(gameMetadata->debugProgram);
+    }
 
     RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
@@ -1053,7 +1059,6 @@ inline void LoadShaders(GameMetadata *gameMetadata)
 
 inline void LoadAssets(GameMetadata *gameMetadata)
 {
-    LoadShaders(gameMetadata);
 
     static memory_index g_bitmapID = 0;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
@@ -1063,7 +1068,10 @@ inline void LoadAssets(GameMetadata *gameMetadata)
               g_bitmapID++, "./materials/textures/awesomeface.png");
     PushBitmap(&gameMetadata->sentinelNode, awesomefaceBitmap);
 
-    gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
+    if (gameMetadata->isOpenGLActive)
+    {
+        gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
+    }
 
     auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(newBitmap, TextureParam{ GL_NEAREST, GL_NEAREST },
