@@ -31,3 +31,4 @@ compile_commands.json
 *.plist
 src/assets/
 src/materials/
+src/dummy.dir/
