@@ -54,7 +54,7 @@ b32 VerifyStringAndGotoNextLine(char *p, const char *string)
     return true;
 }
 
-memory_index CopyLine(const char *from, char *to, memory_index bufferSize)
+memory_index CopyLine(const char *from, char *to, memory_index bufferSize, b32 isNewlineOnly)
 {
     memory_index counter = 0;
     while(counter < bufferSize && from != nullptr && *from != '\n')
@@ -68,18 +68,23 @@ memory_index CopyLine(const char *from, char *to, memory_index bufferSize)
         to[counter++] = *from;
         from++;
     }
+    if (isNewlineOnly)
+    {
+        return counter + strlen("\n");
+    }
+
     return counter + strlen("\r\n");
 }
 
-memory_index CopyLine(const char *from, u8 *to)
+memory_index CopyLine(const char *from, u8 *to, b32 isNewlineOnly)
 {
     char tmpBuffer[MAX_NUM_CHARS];
-    memory_index bytesCopied = CopyLine(from, tmpBuffer, sizeof(tmpBuffer));
+    memory_index bytesCopied = CopyLine(from, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
     *to = SDL_atoi(tmpBuffer);
     return bytesCopied;
 }
 
-memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to)
+memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to, b32 isNewlineOnly)
 {
     memory_index bytesRead = 0;
     char tmpBuffer[MAX_NUM_CHARS];
@@ -94,7 +99,7 @@ memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to)
 
     memset(tmpBuffer, 0, sizeof(tmpBuffer));
 
-    bytesRead += CopyLine(from + bytesRead, tmpBuffer, sizeof(tmpBuffer));
+    bytesRead += CopyLine(from + bytesRead, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
     to->y = SDL_atoi(tmpBuffer);
 
     return bytesRead;
@@ -116,6 +121,7 @@ void LoadFrameData(FrameCycle *fc, const char* file)
      */
     char *tmp = fileData;
 
+    b32 isNewlineOnly = false;
     while(counter < fileSize)
     {
         switch(fdrs)
@@ -124,11 +130,16 @@ void LoadFrameData(FrameCycle *fc, const char* file)
             {
 
                 char *name = "name:\r\n";
-                ASSERT( VerifyStringAndGotoNextLine(tmp, name) );
+                if (VerifyStringAndGotoNextLine(tmp, name) == false)
+                {
+                    name = "name:\n";
+                    ASSERT(VerifyStringAndGotoNextLine(tmp, name));
+                    isNewlineOnly = true;
+                }
                 counter += strlen(name);
                 tmp = fileData + counter;
 
-                memory_index bytesCopied = CopyLine(tmp, fc->name, sizeof(fc->name));
+                memory_index bytesCopied = CopyLine(tmp, fc->name, sizeof(fc->name), isNewlineOnly);
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
@@ -142,12 +153,17 @@ void LoadFrameData(FrameCycle *fc, const char* file)
             {
 
                 char *frameCount = "frame count:\r\n";
+                if (VerifyStringAndGotoNextLine(tmp, frameCount) == false)
+                {
+                    frameCount = "frame count:\n";
+                    ASSERT(VerifyStringAndGotoNextLine(tmp, frameCount));
+                    isNewlineOnly = true;
+                }
 
-                ASSERT( VerifyStringAndGotoNextLine(tmp, frameCount) );
                 counter += strlen(frameCount);
                 tmp = fileData + counter;
 
-                memory_index bytesCopied = CopyLine(tmp, &fc->frameCount);
+                memory_index bytesCopied = CopyLine(tmp, &fc->frameCount, isNewlineOnly);
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
@@ -170,17 +186,24 @@ void LoadFrameData(FrameCycle *fc, const char* file)
                     memory_index len = strlen(frameCounter);
                     ASSERT(len != 0);
                     frameCounter[len + 0] = ':';
-                    frameCounter[len + 1] = '\r';
-                    frameCounter[len + 2] = '\n';
+                    if (isNewlineOnly)
+                    {
+                        frameCounter[len + 1] = '\n';
+                    }
+                    else
+                    {
+                        frameCounter[len + 1] = '\r';
+                        frameCounter[len + 2] = '\n';
+                    }
 
                     printf("frame counter loop: %s\n", frameCounter);
-                    
+
                     counter = counter + strlen(frameCounter);
                     tmp = fileData + counter;
 
                     for(u8 rectCorner = 0; rectCorner < NUM_OF_RECT_CORNER; rectCorner++)
                     {
-                        counter += CopyFramePixelCoordinatesFromLine(tmp, &fc->frames[i].pixel[rectCorner]);
+                        counter += CopyFramePixelCoordinatesFromLine(tmp, &fc->frames[i].pixel[rectCorner], isNewlineOnly);
                         printf("x: %d, y: %d\n", fc->frames[i].pixel[rectCorner].x, fc->frames[i].pixel[rectCorner].y);
                         tmp = fileData + counter;
                     }
