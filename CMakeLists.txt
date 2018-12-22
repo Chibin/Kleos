@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8.11)
 
-project (jobless)
+project (kleos)
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
