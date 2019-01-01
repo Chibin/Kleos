@@ -892,13 +892,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
-    struct PushConstantMatrix
-    {
-        glm::mat4 view;
-        glm::mat4 proj;
-    } pushConstants;
-    pushConstants = {};
-
     f64 MSPerFrame = 0;
     f64 FPS = 0;
     f64 MCPF = 0;
