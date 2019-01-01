@@ -361,7 +361,6 @@ void VulkanUpdateUniformBuffer(VulkanContext *vc, UniformBufferObject *ubo)
 
 }
 
-#include "./vulkan2.cpp"
 #include "./instance.cpp"
 #include "./surface.cpp"
 #include "./extensions.cpp"
