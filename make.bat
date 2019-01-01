@@ -17,7 +17,7 @@ set VULKAN_LIB=%VULKAN%/Lib
 
 cmake -G "Visual Studio 15 2017 Win64" ^
 	-D CMAKE_PREFIX_PATH="%GLEW_INCLUDE%;%SDL2_INCLUDE%;%SDL2_TTF_INCLUDE%;%VULKAN_INCLUDE%" ^
-	-D CMAKE_LIBRARY_PATH="%GLEW_LIB%;%SDL2_LIB%;%SDL2_TTF_LIB%" .
+	-D CMAKE_LIBRARY_PATH="%GLEW_LIB%;%SDL2_LIB%;%SDL2_TTF_LIB%;%VULKAN_LIB%" .
 devenv src/main.vcxproj /build
 
 if NOT %errorlevel% == 0 goto :error
