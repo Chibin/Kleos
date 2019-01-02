@@ -10,6 +10,23 @@ struct stats
     int movementSpeed;
 };
 
+struct FrameData
+{
+    u32 duration;
+    v2 dim;
+    /* This is relative to your model not the world*/
+    v3 pos;
+
+    FrameData *next;
+};
+
+struct FrameState
+{
+    u32 timePassedCurrentFrame;
+    FrameData *startFrame;
+    FrameData *currentFrame;
+};
+
 /* TODO: how do we treat dynamically moving entities vs static ones? */
 struct Entity
 {
@@ -27,6 +44,7 @@ struct Entity
     Vertex *data;
 
     b32 willAttack;
+    FrameState frameState;
 
     /* TODO: entity may or may not have stats ...
      * how do we deal with this?

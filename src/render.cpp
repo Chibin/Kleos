@@ -59,6 +59,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "bitmap.cpp"
 #include "camera.cpp"
 #include "entity.cpp"
+#include "frame.cpp"
 #include "entity_manager.cpp"
 #include "font.cpp"
 #include "game_time.cpp"
@@ -521,6 +522,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup, bool isPlayer = false)
 {
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     /*
      * Attack animation startup
@@ -598,13 +600,31 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     if (e->willAttack)
     {
-        v3 startingPosition = v3{ e->position.x, e->position.y, e->position.z };
-        startingPosition += v3{ -2, 0, 0 };
-        f32 rectWidth = 0.35f;
-        f32 rectHeight = 0.175f;
-        // GenerateAttackFrameRectPosition(rect);
-        Rect *attackHitBox = CreateRectangle(perFrameMemory, startingPosition, COLOR_RED, rectWidth, rectHeight);
-        PushBack(hitBoxes, attackHitBox);
+        if (e->frameState.startFrame == NULL)
+        {
+            e->frameState.startFrame =
+                (FrameData *)AllocateMemory(reservedMemory, sizeof(FrameData));
+
+            e->frameState.startFrame->duration = 50;
+            e->frameState.startFrame->dim = v2{0.35f, 0.175f};
+            e->frameState.startFrame->pos = v3{-2, 0, 0};
+            e->frameState.startFrame->next = NULL;
+
+            e->frameState.currentFrame = e->frameState.startFrame;
+        }
+
+        //AttackInfo attackInfo = GetAttackFrameInfo();
+        if (UpdateFrameState(&e->frameState, gt->deltaTime))
+        {
+            Rect *attackHitBox = CreateFrameRect(perFrameMemory, &e->frameState,
+                    v3{ e->position.x, e->position.y, e->position.z},
+                    COLOR_RED);
+            PushBack(hitBoxes, attackHitBox);
+        }
+        else
+        {
+            e->willAttack = false;
+        }
     }
 
     for (int i = 0; i < hitBoxes->size; i++)

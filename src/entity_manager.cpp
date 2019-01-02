@@ -44,7 +44,7 @@ EntityManager *CreateEntityManger(GameMemory *gm)
 
     em->size = 0;
     em->entityIDs = nullptr;
-    em->totalAllocatedSpace = 10000000; /* arbitrary amount */
+    em->totalAllocatedSpace = 1000000; /* arbitrary amount */
 
     /* TODO: not sure if we should zero the values */
     em->entities =
