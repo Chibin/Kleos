@@ -6,14 +6,25 @@ struct PixelCoords{
 
 struct FrameCycle
 {
-    char name[256];
+    char name[32];
     PixelCoords *frames;
     u8 frameCount;
+
+    RectUVCoords *frameCoords;
+};
+
+struct FrameAnimation
+{
+    char animationName[256];
+    u8 animationCount;
+    FrameCycle *frameCycles;
 };
 
 enum FrameDataReadState
 {
     NAME,
+    ANIMATION_COUNT,
+    FRAME_STATE_NAME,
     FRAME_COUNT,
     FRAMES,
 };
@@ -39,7 +50,6 @@ char *ReadFrameFile(const char *file, memory_index *o_fileSize)
 
 b32 VerifyStringAndGotoNextLine(char *p, const char *string)
 {
-    // test
     while(string != nullptr && *string != '\0')
     {
         if (p == nullptr || *string != *p)
@@ -105,7 +115,7 @@ memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to, b32 isNewlin
     return bytesRead;
 }
 
-void LoadFrameData(FrameCycle *fc, const char* file)
+void LoadFrameData(FrameAnimation *fa, const char* file)
 {
     memory_index fileSize = 0;
     char *fileData = ReadFrameFile(file, &fileSize);
@@ -120,8 +130,9 @@ void LoadFrameData(FrameCycle *fc, const char* file)
      * https://stackoverflow.com/questions/15433188/r-n-r-n-what-is-the-difference-between-them
      */
     char *tmp = fileData;
-
     b32 isNewlineOnly = false;
+    u8 animationStateCount = 0;
+
     while(counter < fileSize)
     {
         switch(fdrs)
@@ -139,18 +150,60 @@ void LoadFrameData(FrameCycle *fc, const char* file)
                 counter += strlen(name);
                 tmp = fileData + counter;
 
-                memory_index bytesCopied = CopyLine(tmp, fc->name, sizeof(fc->name), isNewlineOnly);
+                memory_index bytesCopied =
+                    CopyLine(tmp, fa->animationName, sizeof(fa->animationName), isNewlineOnly);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                fdrs = ANIMATION_COUNT;
+
+                printf("name :%s\n", fa->animationName);
+                break;
+
+            }
+            case ANIMATION_COUNT:
+            {
+                char *animationCount = "animation count:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, animationCount));
+
+                counter += strlen(animationCount);
+                tmp = fileData + counter;
+
+                memory_index bytesCopied = CopyLine(tmp, &fa->animationCount, true);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                fa->frameCycles = (FrameCycle *)malloc(fa->animationCount * sizeof(FrameCycle));
+                memset(fa->frameCycles, 0, fa->animationCount * sizeof(FrameCycle));
+
+                fdrs = FRAME_STATE_NAME;
+                printf("animation count: %d\n", fa->animationCount);
+                break;
+            }
+            case FRAME_STATE_NAME:
+            {
+                ASSERT(animationStateCount <= fa->animationCount);
+                FrameCycle *fc = &fa->frameCycles[animationStateCount];
+
+                char *name = "frame name:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name));
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                memory_index bytesCopied =
+                    CopyLine(tmp, fc->name, sizeof(fc->name), true);
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
                 fdrs = FRAME_COUNT;
+                printf("frame name: %s\n", fc->name);
 
-                printf("name :%s\n", fc->name);
                 break;
-
             }
             case FRAME_COUNT:
             {
+                FrameCycle *fc = &fa->frameCycles[animationStateCount];
 
                 char *frameCount = "frame count:\r\n";
                 if (VerifyStringAndGotoNextLine(tmp, frameCount) == false)
@@ -178,6 +231,8 @@ void LoadFrameData(FrameCycle *fc, const char* file)
             }
             case FRAMES:
             {
+                FrameCycle *fc = &fa->frameCycles[animationStateCount];
+
                 for(u8 i = 0; i < fc->frameCount; i++)
                 {
                     char frameCounter[5] = {}; /* 3 digits for 2^8, 1 for color, 1 for \n */
@@ -209,7 +264,16 @@ void LoadFrameData(FrameCycle *fc, const char* file)
                     }
                 }
 
-                fdrs = NAME;
+                if (animationStateCount < fa->animationCount)
+                {
+                    fdrs = FRAME_STATE_NAME;
+                    animationStateCount++;
+                }
+                else
+                {
+                    fdrs = NAME;
+                    animationStateCount = 0;
+                }
                 break;
             }
             default:

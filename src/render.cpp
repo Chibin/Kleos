@@ -15,7 +15,7 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4201)
-#define GLM_SWIZZLE
+#define GLM_FORCE_SWIZZLE
 #define GLM_SWIZZLE_XYZW
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -133,6 +133,7 @@ EntityDynamicArray *g_eda = nullptr;
 static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
 static Animation2D *g_spriteAnimation = nullptr;
+static Animation2D *g_spriteAnimations = nullptr;
 static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 
@@ -600,17 +601,23 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     if (e->willAttack)
     {
+        /* This is related to hit boxes of the frames */
         if (e->frameState.startFrame == NULL)
         {
             e->frameState.startFrame =
                 (FrameData *)AllocateMemory(reservedMemory, sizeof(FrameData));
 
-            e->frameState.startFrame->duration = 50;
+            e->frameState.startFrame->duration = 170;
             e->frameState.startFrame->dim = v2{0.35f, 0.175f};
             e->frameState.startFrame->pos = v3{-2, 0, 0};
             e->frameState.startFrame->next = NULL;
 
             e->frameState.currentFrame = e->frameState.startFrame;
+        }
+
+        if (e->frameState.timePassedCurrentFrame == 0)
+        {
+            g_spriteAnimation = &g_spriteAnimations[0];
         }
 
         //AttackInfo attackInfo = GetAttackFrameInfo();
@@ -623,8 +630,13 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         }
         else
         {
-            e->willAttack = false;
+                e->willAttack = false;
         }
+    }
+
+    if (g_spriteAnimation->currentFrameIndex == 0 && e->willAttack == false)
+    {
+        g_spriteAnimation = &g_spriteAnimations[1];
     }
 
     for (int i = 0; i < hitBoxes->size; i++)
@@ -661,8 +673,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         UpdatePosition(gameMetadata->playerRect, v3{ e->position.x, e->position.y, e->position.z });
 
         UpdateCurrentFrame(g_spriteAnimation, 17.6f);
-        UpdateFrameDirection(g_spriteAnimation, gameMetadata->playerRect->frameDirection);
         UpdateUV(g_rectManager->player, *g_spriteAnimation->currentFrame);
+        UpdateFrameDirection(g_spriteAnimation, gameMetadata->playerRect->frameDirection);
     }
 
     /* Apply "friction" */
@@ -1100,30 +1112,46 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     u32 bitmapHeight = archeBitmap->height;
 
     /* Replace with read file data */
-    FrameCycle frameCycle = {};
+    FrameAnimation frameAnimations = {};
 
-    LoadFrameData(&frameCycle, "./assets/texture_data/frames.txt");
+    LoadFrameData(&frameAnimations, "./assets/texture_data/frames.txt");
     /* TODO: free the frames if we don't need it anymore */
 
-    g_spriteAnimation = (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
-    ZeroSize(g_spriteAnimation, sizeof(Animation2D));
-    g_spriteAnimation->direction = LEFT;
-    g_spriteAnimation->totalFrames = frameCycle.frameCount;
-    g_spriteAnimation->frameCoords =
-        (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * g_spriteAnimation->totalFrames);
-    g_spriteAnimation->timePerFrame = 1000 * 0.75;
+    g_spriteAnimations =
+        (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D) * frameAnimations.animationCount);
+    ZeroSize(g_spriteAnimations, sizeof(Animation2D) * frameAnimations.animationCount);
 
-    /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
-    v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
-    for(memory_index i = 0; i < g_spriteAnimation->totalFrames; i++)
+    for (memory_index animCount = 0; animCount < frameAnimations.animationCount; animCount ++)
     {
-        g_spriteAnimation->frameCoords[i] =
-            RectUVCoords{
-                topRight    = PixelToUV(frameCycle.frames[i].pixel[0], bitmapWidth, bitmapHeight),
-                bottomRight = PixelToUV(frameCycle.frames[i].pixel[1], bitmapWidth, bitmapHeight),
-                bottomLeft  = PixelToUV(frameCycle.frames[i].pixel[2], bitmapWidth, bitmapHeight),
-                topLeft     = PixelToUV(frameCycle.frames[i].pixel[3], bitmapWidth, bitmapHeight)
-            };
+
+        Animation2D *spriteAnim = &g_spriteAnimations[animCount];
+        spriteAnim->direction = LEFT;
+        spriteAnim->totalFrames = frameAnimations.frameCycles[animCount].frameCount;
+        spriteAnim->frameCoords =
+            (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * spriteAnim->totalFrames);
+        if (animCount == 0)
+        {
+            spriteAnim->timePerFrame = 1000 * 0.25;
+        }
+        else
+        {
+            spriteAnim->timePerFrame = 1000 * 0.75;
+        }
+
+        /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
+        v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
+        for(memory_index i = 0; i < spriteAnim->totalFrames; i++)
+        {
+            spriteAnim->frameCoords[i] =
+                RectUVCoords{
+                    topRight    = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[0], bitmapWidth, bitmapHeight),
+                    bottomRight = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[1], bitmapWidth, bitmapHeight),
+                    bottomLeft  = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[2], bitmapWidth, bitmapHeight),
+                    topLeft     = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[3], bitmapWidth, bitmapHeight)
+                };
+        }
     }
+
+    g_spriteAnimation = &g_spriteAnimations[0];
 }
 #endif
