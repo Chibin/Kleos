@@ -199,8 +199,8 @@ inline void FlipYAxis(RectUVCoords *uv)
 
 inline void FlipYAxisOnAllFrames(Animation2D *a)
 {
-    FlipYAxis(a->frameCoords + 0);
-    FlipYAxis(a->frameCoords + 1);
+    memory_index i = a->totalFrames;
+    while(i--) FlipYAxis(a->frameCoords + i);
 }
 
 inline v2 PixelToUV(v2 pixel, u32 width, u32 height)
@@ -239,6 +239,7 @@ inline void UpdateCurrentFrame(Animation2D *a, f32 timeElapsed)
         /* This could be replaced with a function later on */
         a->currentFrameIndex++;
         memory_index nextFrameOffset = a->currentFrameIndex % a->totalFrames;
+        a->currentFrameIndex = nextFrameOffset;
         a->currentFrame = a->frameCoords + nextFrameOffset;
         ASSERT(a->currentFrame <= a->frameCoords + a->totalFrames);
         a->frameTTL = a->timePerFrame;
