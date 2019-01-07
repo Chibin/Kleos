@@ -599,6 +599,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     e->position.y += e->velocity.y * dt;
     e->position.x += e->velocity.x * dt;
 
+    /* TODO: can't let the player spam attack while we're still in an attack animation */
     if (e->willAttack)
     {
         /* This is related to hit boxes of the frames */
@@ -623,7 +624,12 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         //AttackInfo attackInfo = GetAttackFrameInfo();
         if (UpdateFrameState(&e->frameState, gt->deltaTime))
         {
-            Rect *attackHitBox = CreateFrameRect(perFrameMemory, &e->frameState,
+            /* TODO: The position that's passed needs to be the center of the
+             * entity. Otherwise, it's hard to make the frame distance
+             * symetrical when swapping between both directions
+             */
+            Rect *attackHitBox = CreateFrameRect(perFrameMemory,
+                    &e->frameState,
                     v3{ e->position.x, e->position.y, e->position.z},
                     COLOR_RED);
             PushBack(hitBoxes, attackHitBox);
@@ -1131,7 +1137,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
             (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * spriteAnim->totalFrames);
         if (animCount == 0)
         {
-            spriteAnim->timePerFrame = 1000 * 0.25;
+            spriteAnim->timePerFrame = 150;
         }
         else
         {
