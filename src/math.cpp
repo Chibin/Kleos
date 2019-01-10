@@ -1,5 +1,34 @@
 #include "math.h"
 
+inline v2 operator-(v2 A, v2 B) //NOLINT
+{
+
+    A.x -= B.x;
+    A.y -= B.y;
+
+    return A;
+}
+
+inline v2 operator*(v2 A, f32 B) //NOLINT
+{
+
+    A.x *= B;
+    A.y *= B;
+
+    return A;
+}
+
+inline v2 operator*(f32 A, v2 B) //NOLINT
+{
+
+    B.x *= A;
+    B.y *= A;
+
+    return B;
+}
+
+
+
 inline v3 operator+(v3 A, v3 B) //NOLINT
 {
 
