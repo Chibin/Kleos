@@ -50,6 +50,94 @@ void ProcessInputUp(SDL_Keycode sym)
     }
 }
 
+void ProcessMouseButtonReleased(u8 button)
+{
+    switch (button)
+    {
+        case SDL_BUTTON_LEFT:
+            ASSERT(!"LEFT RELEASE");
+            break;
+        case SDL_BUTTON_RIGHT:
+            ASSERT(!"right release");
+            break;
+        case SDL_BUTTON_MIDDLE:
+            ASSERT(!"middle release");
+            break;
+        default:
+            ASSERT(!"I shouldn't get here");
+            break;
+    }
+}
+
+void ProcessMouseButtonPressed(u8 button)
+{
+    switch (button)
+    {
+        case SDL_BUTTON_LEFT:
+            ASSERT(!"LEFT PRESSED\n");
+            break;
+        case SDL_BUTTON_RIGHT:
+            ASSERT(!"right pressed");
+            break;
+        case SDL_BUTTON_MIDDLE:
+            ASSERT(!"middle pressed");
+            break;
+        default:
+            ASSERT(!"I shouldn't get here");
+            break;
+    }
+}
+
+void ProcessMouseButton(const SDL_MouseButtonEvent &mbe)
+{
+    if (mbe.state == SDL_RELEASED)
+    {
+        ProcessMouseButtonReleased(mbe.button);
+    }
+    else if (mbe.state == SDL_PRESSED)
+    {
+        ProcessMouseButtonPressed(mbe.button);
+    }
+}
+
+#define SCREEN_WIDTH 1366
+#define SCREEN_HEIGHT 768
+
+v3 ProcessMouseMotion(const SDL_MouseMotionEvent &mme, Camera *camera)
+{
+    printf("X %d, Y %d\n", mme.x, mme.y);
+    v2 normalizedMME = {mme.x/(f32)SCREEN_WIDTH, mme.y/(f32)SCREEN_HEIGHT};
+
+    //v2 worldCoord = GetCenterOfWorldCoordinatesOnScreen();
+
+    /* TODO: Translate to world coordinates.
+     * Probably doable with the camera?
+     */
+    //v2 pos = TranslateToWorldCoordinates(v2{x, y});
+    v3 worldCoord = {camera->pos.x, camera->pos.y, camera->pos.z};
+
+    if (mme.x < (float)SCREEN_WIDTH/2.0f)
+    {
+        worldCoord.x = worldCoord.x - 1 + normalizedMME.x;
+    }
+    else
+    {
+        worldCoord.x = worldCoord.x - 1 + normalizedMME.x;
+    }
+
+    if (mme.y < (float)SCREEN_HEIGHT/2.0f)
+    {
+        worldCoord.y = worldCoord.y + 1 - normalizedMME.y;
+
+    }
+    else
+    {
+        worldCoord.y = worldCoord.y + 1 - normalizedMME.y;
+    }
+
+    return worldCoord;
+}
+
 void ProcessMouseInput(const SDL_Event &event, Camera *camera)
 {
     if (event.wheel.y == 1) /* scroll up */

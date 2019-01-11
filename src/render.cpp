@@ -130,6 +130,7 @@ EntityManager *g_entityManager = nullptr;
 Entity *g_player = nullptr;
 RectManager *g_rectManager = nullptr;
 EntityDynamicArray *g_eda = nullptr;
+v3 g_mousePoint;
 static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
 static Animation2D *g_spriteAnimation = nullptr;
@@ -426,8 +427,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         case SDL_QUIT:
             return false;
             break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            ProcessMouseButton(event.button);
         case SDL_MOUSEWHEEL:
             ProcessMouseInput(event, g_camera);
+            break;
+        case SDL_MOUSEMOTION:
+            g_mousePoint = ProcessMouseMotion(event.motion, g_camera);
             break;
         case SDL_KEYDOWN:
             ProcessInputDown(
