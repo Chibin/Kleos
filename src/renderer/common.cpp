@@ -56,7 +56,7 @@ void UpdateUBOandPushConstants(
         glm::mat4 correction = glm::mat4(1.0);
         correction[1][1] = -1;
         correction[2][2] = 0.5;
-        correction[2][3] = 0.5;
+        correction[3][2] = 0.5;
 
         pushConstants.proj = correction * (*g_projection);
         pushConstants.view = g_camera->view;
