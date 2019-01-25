@@ -16,6 +16,12 @@ inline Camera *CreateCamera(GameMemory *gm, v3 pos, v3 target, v3 up)
     // Head is up (set to 0,-1,0 to look upside-down)
     camera->up = glm::vec3(up.x, up.y, up.z);
 
+    /*
+     * v3 Right, v3 Up, v3 forward, v3 position
+     * View matrix:
+     * [ R U F P ]
+     * [ 0 0 0 1 ]
+     */
     camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
     return camera;
 }
