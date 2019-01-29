@@ -549,15 +549,12 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
     //      rayDirection))
+    v2 center = {0.5f * gameMetadata->playerRect->width, 0.5f * gameMetadata->playerRect->height};
     Rect nextUpdate = *gameMetadata->playerRect;
-    nextUpdate.min[0] = e->position.x + e->velocity.x * dt;
-    nextUpdate.max[0] =
-        e->position.x + nextUpdate.width + e->velocity.x * dt;
-    nextUpdate.min[1] =
-        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
-    nextUpdate.max[1] =
-        nextUpdate.height +
-        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt;
+    nextUpdate.min = v2{e->position.x + e->velocity.x * dt,
+        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt} - center;
+    nextUpdate.max = v2{e->position.x + e->velocity.x * dt,
+        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt} + center;
 
     for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
     {
@@ -573,14 +570,14 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
         /* This would be nice to be put into the screen instead of the console
          */
-        printf("rect X- min: %f max: %f\n", rect->minX, rect->maxX);
-        printf("rect Y- min: %f max: %f\n", rect->minY, rect->maxY);
+        printf("rect X- min: %f max: %f\n", rect->min.x, rect->max.x);
+        printf("rect Y- min: %f max: %f\n", rect->min.y, rect->max.y);
 
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* how to differentiate between x and y axis? */
             printf("I hit something!!!!!!!\n");
-            e->position.y = rect->maxY;
+            e->position.y = rect->max.y + gameMetadata->playerRect->height * 0.5f;
             e->velocity.y = 0;
             e->acceleration.y = 0;
             e->position.x += e->velocity.x * dt;
@@ -705,7 +702,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         particle->acc.y = gravity * 2;
         particle->vel.x = 0;
         UpdateParticlePosition(particle, dt);
-        if (particle->positionOffset.y <= gameMetadata->playerRect->minY)
+        if (particle->positionOffset.y <= gameMetadata->playerRect->min.y)
         {
             particle->positionOffset.y = newPosition.y;
             particle->acc.y = 0;
@@ -853,7 +850,7 @@ void DrawUI(
     f32 rectHeight = stringBitmap.height / screenHeight * scaleFactor;
 
     /* This is in raw OpenGL coordinates */
-    v3 startingPosition = v3{ -1, 1 - rectHeight, 0 };
+    v3 startingPosition = v3{ -1 + rectWidth * 0.5f, 1 - rectHeight * 0.5f, 0 };
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);

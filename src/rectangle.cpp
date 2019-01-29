@@ -4,8 +4,16 @@
 
 inline void SetRectPoints(Rect *rect, v3 basePosition, f32 width, f32 height)
 {
+    v2 center = {0.5f * width, 0.5f * height};
+#if 0
     v2 min = { basePosition.x, basePosition.y };
     v2 max = { basePosition.x + width, basePosition.y + height };
+#else
+    v2 basePositionXY = { basePosition.x, basePosition.y };
+    v2 min = basePositionXY - center;
+    v2 max = basePositionXY + center;
+
+#endif
     rect->basePosition = basePosition;
     rect->width = width;
     rect->height = height;
@@ -24,10 +32,8 @@ inline void SetRectPoints(Rect *rect, v3 basePosition, f32 width, f32 height)
     rect->bottomLeft = v3{ min.x, max.y, 0 };
 #endif
 
-    rect->minX = min.x;
-    rect->minY = min.y;
-    rect->maxX = max.x;
-    rect->maxY = max.y;
+    rect->min = min;
+    rect->max = max;
 }
 
 void SetRect(Rect *rect, v3 basePosition, v4 color,
@@ -133,8 +139,18 @@ void PushRectInfo(GameMemory *gm, Rect *rect)
 
 inline void UpdatePosition(Rect *r, v3 newPosition)
 {
+    v2 center = 0.5f * v2{r->width, r->height};
+
+#if 0
     v2 min = { newPosition.x, newPosition.y };
     v2 max = { newPosition.x + r->width, newPosition.y + r->height };
+#else
+    v2 basePositionXY = { newPosition.x, newPosition.y };
+    v2 min = basePositionXY - center;
+    v2 max = basePositionXY + center;
+#endif
+
+    //r->basePosition = newPosition;
 
 #if 1
     /* This is for clockwise */

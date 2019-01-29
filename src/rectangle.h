@@ -4,6 +4,7 @@
 #include "bitmap.h"
 #include "entity.h"
 #include "game_memory.h"
+#include "math.h"
 
 #define RECT_SIZE 36
 #define NUM_OF_RECT_CORNER 4
@@ -67,26 +68,8 @@ struct MinimalRectInfo
     f32 width;
     f32 height;
 
-#pragma warning(push)
-#pragma warning(disable : 4201)
-    union {
-        struct
-        {
-            f32 maxX;
-            f32 maxY;
-        };
-        f32 max[2];
-    };
-
-    union {
-        struct
-        {
-            f32 minX;
-            f32 minY;
-        };
-        f32 min[2];
-    };
-#pragma warning(pop)
+    v2 max;
+    v2 min;
 };
 
 struct Rect
@@ -107,26 +90,8 @@ struct Rect
     Bitmap *bitmap;
     v3 basePosition;
 
-#pragma warning(push)
-#pragma warning(disable : 4201)
-    union {
-        struct
-        {
-            real32 maxX;
-            real32 maxY;
-        };
-        real32 max[2];
-    };
-
-    union {
-        struct
-        {
-            real32 minX;
-            real32 minY;
-        };
-        real32 min[2];
-    };
-#pragma warning(pop)
+    v2 min;
+    v2 max;
 
     Animation2D *sprites;
     u32 totalSprites;
