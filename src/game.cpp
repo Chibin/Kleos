@@ -41,9 +41,14 @@ void MainGameLoop(SDL_Window *mainWindow, b32 isVulkanActive, RenderAPI *renderA
     gameMetadata.screenResolution = v2{ SCREEN_WIDTH, SCREEN_HEIGHT };
     gameMetadata.initFromGameUpdateAndRender = false;
 
-    gameMetadata.sentinelNode = {};
-    gameMetadata.sentinelNode.next = &gameMetadata.sentinelNode;
-    gameMetadata.sentinelNode.prev = &gameMetadata.sentinelNode;
+    gameMetadata.bitmapSentinelNode = {};
+    gameMetadata.bitmapSentinelNode.next = &gameMetadata.bitmapSentinelNode;
+    gameMetadata.bitmapSentinelNode.prev = &gameMetadata.bitmapSentinelNode;
+
+    gameMetadata.frameAnimationSentinelNode = {};
+    gameMetadata.frameAnimationSentinelNode.next = &gameMetadata.frameAnimationSentinelNode;
+    gameMetadata.frameAnimationSentinelNode.prev = &gameMetadata.frameAnimationSentinelNode;
+
     gameMetadata.program = 0;
     gameMetadata.debugProgram = 0;
 

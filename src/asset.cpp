@@ -257,3 +257,28 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
     }
 
 }
+
+/*
+ * ANIMATION
+ */
+
+void AddFrameAnimationNode(FrameAnimation *oldNode, FrameAnimation *newNode)
+{
+    newNode->next = oldNode->next;
+    newNode->prev = oldNode;
+    oldNode->next->prev = newNode;
+    oldNode->next = newNode;
+}
+
+FrameAnimation *GetFrameAnimation(FrameAnimation *sentinelNode, const char* name)
+{
+    for (FrameAnimation *node = sentinelNode->next; node != sentinelNode; node = node->next)
+    {
+        if (strcmp(node->animationName, name) == 0)
+        {
+            return node;
+        }
+    }
+
+    return nullptr;
+}

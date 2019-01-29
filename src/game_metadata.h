@@ -6,6 +6,8 @@
 #include "particle.h"
 #include "renderer/vulkan/vulkan.h"
 
+#include "asset.h"
+
 struct GameMetadata
 {
     u32 totalMemoryBlockSize;
@@ -18,8 +20,10 @@ struct GameMetadata
     GameMemory temporaryMemory;
     GameTimestep *gameTimestep;
 
-    Bitmap sentinelNode;
+    Bitmap bitmapSentinelNode;
     Bitmap whiteBitmap;
+
+    FrameAnimation frameAnimationSentinelNode;
 
     GLuint vaoID;
     GLuint eboID;

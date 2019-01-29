@@ -384,7 +384,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         f32 base = -1.01f;
         f32 width = 0.05f;
         f32 height = 0.05f;
-        Bitmap *bitmap = FindBitmap(&gameMetadata->sentinelNode, 0);
+        Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, 0);
         gameMetadata->particleSystem.particleCount = 1000;
         gameMetadata->particleSystem.particles =
             (Particle *)AllocateMemory(reservedMemory,
@@ -747,7 +747,7 @@ void DrawScene(
     for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
     {
         Rect *rect = g_rectManager->Traversable.rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
@@ -755,7 +755,7 @@ void DrawScene(
     for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
     {
         Rect *rect = g_rectManager->NonTraversable.rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
@@ -763,7 +763,7 @@ void DrawScene(
     for (memory_index i = 0; i < hitBoxes->size; i++)
     {
         Rect *rect = hitBoxes->rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
@@ -771,12 +771,12 @@ void DrawScene(
     for (memory_index i = 0; i < hurtBoxes->size; i++)
     {
         Rect *rect = hurtBoxes->rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->sentinelNode, rect->bitmapID);
+        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
 
-    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->sentinelNode,
+    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode,
                                                   gameMetadata->playerRect->bitmapID);
 
     PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
@@ -1101,7 +1101,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     auto *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(awesomefaceBitmap, TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
-    PushBitmap(&gameMetadata->sentinelNode, awesomefaceBitmap);
+    PushBitmap(&gameMetadata->bitmapSentinelNode, awesomefaceBitmap);
 
     if (gameMetadata->isOpenGLActive)
     {
@@ -1111,9 +1111,9 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(newBitmap, TextureParam{ GL_NEAREST, GL_NEAREST },
               g_bitmapID++, "./materials/textures/arche.png");
-    PushBitmap(&gameMetadata->sentinelNode, newBitmap);
+    PushBitmap(&gameMetadata->bitmapSentinelNode, newBitmap);
 
-    Bitmap *archeBitmap = FindBitmap(&gameMetadata->sentinelNode, newBitmap->bitmapID);
+    Bitmap *archeBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
 
     gameMetadata->playerRect->bitmapID = archeBitmap->bitmapID;
@@ -1122,21 +1122,28 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     u32 bitmapHeight = archeBitmap->height;
 
     /* Replace with read file data */
-    FrameAnimation frameAnimations = {};
+    FrameAnimation *frameAnimations =
+        (FrameAnimation *)AllocateMemory(reservedMemory, sizeof(FrameAnimation));
+    ZeroSize(frameAnimations, sizeof(FrameAnimation));
 
-    LoadFrameData(&frameAnimations, "./assets/texture_data/frames.txt");
+    LoadFrameData(frameAnimations, "./assets/texture_data/frames.txt");
     /* TODO: free the frames if we don't need it anymore */
 
     g_spriteAnimations =
-        (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D) * frameAnimations.animationCount);
-    ZeroSize(g_spriteAnimations, sizeof(Animation2D) * frameAnimations.animationCount);
+        (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D) * frameAnimations->animationCount);
+    ZeroSize(g_spriteAnimations, sizeof(Animation2D) * frameAnimations->animationCount);
 
-    for (memory_index animCount = 0; animCount < frameAnimations.animationCount; animCount ++)
+    AddFrameAnimationNode(&gameMetadata->frameAnimationSentinelNode, frameAnimations);
+
+    FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
+    ASSERT(fa != NULL);
+
+    for (memory_index animCount = 0; animCount < fa->animationCount; animCount ++)
     {
 
         Animation2D *spriteAnim = &g_spriteAnimations[animCount];
         spriteAnim->direction = LEFT;
-        spriteAnim->totalFrames = frameAnimations.frameCycles[animCount].frameCount;
+        spriteAnim->totalFrames = fa->frameCycles[animCount].frameCount;
         spriteAnim->frameCoords =
             (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * spriteAnim->totalFrames);
         if (animCount == 0)
@@ -1154,10 +1161,10 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         {
             spriteAnim->frameCoords[i] =
                 RectUVCoords{
-                    topRight    = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[0], bitmapWidth, bitmapHeight),
-                    bottomRight = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[1], bitmapWidth, bitmapHeight),
-                    bottomLeft  = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[2], bitmapWidth, bitmapHeight),
-                    topLeft     = PixelToUV(frameAnimations.frameCycles[animCount].frames[i].pixel[3], bitmapWidth, bitmapHeight)
+                    topRight    = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[0], bitmapWidth, bitmapHeight),
+                    bottomRight = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[1], bitmapWidth, bitmapHeight),
+                    bottomLeft  = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[2], bitmapWidth, bitmapHeight),
+                    topLeft     = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[3], bitmapWidth, bitmapHeight)
                 };
         }
     }
