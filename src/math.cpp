@@ -1,10 +1,52 @@
 #include "math.h"
 
+/*
+ * V2
+ */
+
+inline v2 operator-(v2 A) //NOLINT
+{
+
+    v2 result;
+    result.x = -A.x;
+    result.y = -A.y;
+
+    return result;
+}
+
 inline v2 operator-(v2 A, v2 B) //NOLINT
+{
+    v2 result;
+    result.x = A.x - B.x;
+    result.y = A.y - B.y;
+
+    return result;
+}
+
+inline v2 &operator-=(v2 &A, v2 B)
 {
 
     A.x -= B.x;
     A.y -= B.y;
+
+    return A;
+}
+
+inline v2 operator+(v2 A, v2 B) //NOLINT
+{
+
+    v2 result;
+    result.x = A.x + B.x;
+    result.y = A.y + B.y;
+
+    return result;
+}
+
+inline v2 &operator+=(v2 &A, v2 B)
+{
+
+    A.x += B.x;
+    A.y += B.y;
 
     return A;
 }
@@ -27,7 +69,9 @@ inline v2 operator*(f32 A, v2 B) //NOLINT
     return B;
 }
 
-
+/*
+ * V3
+ */
 
 inline v3 operator+(v3 A, v3 B) //NOLINT
 {
@@ -68,6 +112,10 @@ inline v3 &operator-=(v3 &A, v3 B)
 
     return A;
 }
+
+/*
+ * V4
+ */
 
 inline v4 operator+(v4 A, v4 B)
 {

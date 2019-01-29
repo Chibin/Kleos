@@ -135,4 +135,11 @@ void ZeroSize(void *_data, memory_index size);
 u32 SafeCastToU32(memory_index x);
 u8 SafeCastToU8(f32 num);
 s32 *SafeCastU32ToS32(u32 *u32Pointer);
+inline v2 operator-(v2 A, v2 B);
+inline v2 operator+(v2 A, v2 B);
+inline v2 operator*(v2 A, f32 B);
+inline v2 operator*(f32 A, v2 B);
+inline v2 &operator-=(v2 &A, v2 B);
+inline v2 &operator+=(v2 &A, v2 B);
+
 #endif
