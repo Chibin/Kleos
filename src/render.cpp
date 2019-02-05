@@ -620,7 +620,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
             e->frameState.currentFrame = e->frameState.startFrame;
 
             /* TODO: This should be somehwere else */
-            e->frameState.transform = glm::mat4(2.0f);
+            e->frameState.transform = glm::mat4(-2.0f);
             e->frameState.transform[3][3] = 1.0f;
         }
 
