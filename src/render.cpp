@@ -614,10 +614,14 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
             e->frameState.startFrame->duration = 170;
             e->frameState.startFrame->dim = v2{0.35f, 0.175f};
-            e->frameState.startFrame->pos = v3{-2, 0, 0};
+            e->frameState.startFrame->pos = v3{1.5, 0, 0};
             e->frameState.startFrame->next = NULL;
 
             e->frameState.currentFrame = e->frameState.startFrame;
+
+            /* TODO: This should be somehwere else */
+            e->frameState.transform = glm::mat4(2.0f);
+            e->frameState.transform[3][3] = 1.0f;
         }
 
         if (e->frameState.timePassedCurrentFrame == 0)
@@ -671,10 +675,18 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         if (e->velocity.x > 0)
         {
             gameMetadata->playerRect->frameDirection = RIGHT;
+            gameMetadata->playerRect->entity->frameState.transform[0][0] =
+                 abs(gameMetadata->playerRect->entity->frameState.transform[0][0]);
+            gameMetadata->playerRect->entity->frameState.transform[1][1] =
+                 abs(gameMetadata->playerRect->entity->frameState.transform[1][1]);
         }
         else if (e->velocity.x < 0)
         {
             gameMetadata->playerRect->frameDirection = LEFT;
+            gameMetadata->playerRect->entity->frameState.transform[0][0] =
+                -1 * abs(gameMetadata->playerRect->entity->frameState.transform[0][0]);
+            gameMetadata->playerRect->entity->frameState.transform[1][1] =
+                -1 * abs(gameMetadata->playerRect->entity->frameState.transform[1][1]);
         }
         /* else don't update */
 

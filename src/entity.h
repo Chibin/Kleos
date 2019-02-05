@@ -23,6 +23,8 @@ struct FrameData
 struct FrameState
 {
     u32 timePassedCurrentFrame;
+    glm::mat4 transform;
+
     FrameData *startFrame;
     FrameData *currentFrame;
 };

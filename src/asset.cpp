@@ -260,6 +260,7 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
 
 /*
  * ANIMATION
+ * TODO: This needs to change to a hash map if it gets too big
  */
 
 void AddFrameAnimationNode(FrameAnimation *oldNode, FrameAnimation *newNode)
