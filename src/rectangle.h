@@ -106,6 +106,7 @@ struct Rect
 };
 
 Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color, real32 width, real32 height);
+Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color, v2 rectDim);
 void CreateVertices(Rect *rect);
 void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable);
 inline void UpdateColors(Rect *r, v4 color);
