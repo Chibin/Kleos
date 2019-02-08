@@ -626,8 +626,10 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
         if (e->frameState.timePassedCurrentFrame == 0)
         {
-            FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
-            g_spriteAnimation = fa->frameCycles[0].animationInfo;
+            g_spriteAnimation =
+                GetSpriteAnimationInfo(
+                        GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
+                        "ATTACK");
         }
 
         //AttackInfo attackInfo = GetAttackFrameInfo();
@@ -651,8 +653,10 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     if (g_spriteAnimation->currentFrameIndex == 0 && e->willAttack == false)
     {
-        FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
-        g_spriteAnimation = fa->frameCycles[1].animationInfo;
+        g_spriteAnimation =
+            GetSpriteAnimationInfo(
+                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
+                    "IDLE");
     }
 
     for (int i = 0; i < hitBoxes->size; i++)
@@ -1143,10 +1147,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     LoadFrameData(frameAnimations, "./assets/texture_data/frames.txt");
     /* TODO: free the frames if we don't need it anymore */
 
-    g_spriteAnimations =
-        (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D) * frameAnimations->animationCount);
-    ZeroSize(g_spriteAnimations, sizeof(Animation2D) * frameAnimations->animationCount);
-
     AddFrameAnimationNode(&gameMetadata->frameAnimationSentinelNode, frameAnimations);
 
     FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
@@ -1192,8 +1192,10 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         }
     }
 
-    fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
-    g_spriteAnimation = fa->frameCycles[0].animationInfo;
+    g_spriteAnimation =
+        GetSpriteAnimationInfo(
+                GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
+                "IDLE");
 
 }
 #endif

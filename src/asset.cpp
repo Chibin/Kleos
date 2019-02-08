@@ -283,3 +283,18 @@ FrameAnimation *GetFrameAnimation(FrameAnimation *sentinelNode, const char* name
 
     return nullptr;
 }
+
+Animation2D *GetSpriteAnimationInfo(FrameAnimation *fa, const char *name)
+{
+    for (memory_index i = 0; i < fa->animationCount; i++)
+    {
+        if (strcmp(fa->frameCycles[i].name, name) == 0)
+        {
+            return fa->frameCycles[i].animationInfo;
+        }
+    }
+
+    ASSERT(!"I shouldn't get here");
+
+    return nullptr;
+}
