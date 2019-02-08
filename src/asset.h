@@ -15,8 +15,19 @@ struct FrameCycle
     u8 frameCount;
 
     RectUVCoords *frameCoords;
+
+    Animation2D *animationInfo;
 };
 
+/* XXX: This is probably the incorrect name.
+ * It's close to a sprite animation, where all the sprite cycles reside on each
+ * FrameAnimation/SpriteAnimation.
+ * A single Frame Animation can have one or more frame cycles.
+ * Frame cycle being -> attack frame cycle
+ *                   -> idle frame cycle
+ *                   -> walk frame cycle
+ *                   -> etc frame cycle
+ */
 struct FrameAnimation
 {
     char animationName[256];

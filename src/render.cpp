@@ -619,14 +619,15 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
             e->frameState.currentFrame = e->frameState.startFrame;
 
-            /* TODO: This should be somehwere else */
+            /* TODO: This should be somewhere else */
             e->frameState.transform = glm::mat4(-2.0f);
             e->frameState.transform[3][3] = 1.0f;
         }
 
         if (e->frameState.timePassedCurrentFrame == 0)
         {
-            g_spriteAnimation = &g_spriteAnimations[0];
+            FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
+            g_spriteAnimation = fa->frameCycles[0].animationInfo;
         }
 
         //AttackInfo attackInfo = GetAttackFrameInfo();
@@ -644,13 +645,14 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         }
         else
         {
-                e->willAttack = false;
+            e->willAttack = false;
         }
     }
 
     if (g_spriteAnimation->currentFrameIndex == 0 && e->willAttack == false)
     {
-        g_spriteAnimation = &g_spriteAnimations[1];
+        FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
+        g_spriteAnimation = fa->frameCycles[1].animationInfo;
     }
 
     for (int i = 0; i < hitBoxes->size; i++)
@@ -1153,7 +1155,16 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     for (memory_index animCount = 0; animCount < fa->animationCount; animCount ++)
     {
 
-        Animation2D *spriteAnim = &g_spriteAnimations[animCount];
+        /* TODO: Have a way to find the correct animation information based on name? */
+        ASSERT(fa->frameCycles[animCount].animationInfo == NULL);
+        if (fa->frameCycles[animCount].animationInfo == nullptr)
+        {
+            fa->frameCycles[animCount].animationInfo =
+                (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
+            ZeroSize(fa->frameCycles[animCount].animationInfo, sizeof(Animation2D));
+        }
+
+        Animation2D *spriteAnim = fa->frameCycles[animCount].animationInfo;
         spriteAnim->direction = LEFT;
         spriteAnim->totalFrames = fa->frameCycles[animCount].frameCount;
         spriteAnim->frameCoords =
@@ -1181,6 +1192,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         }
     }
 
-    g_spriteAnimation = &g_spriteAnimations[0];
+    fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
+    g_spriteAnimation = fa->frameCycles[0].animationInfo;
+
 }
 #endif
