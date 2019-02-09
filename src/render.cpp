@@ -1136,6 +1136,10 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
     gameMetadata->playerRect->bitmapID = archeBitmap->bitmapID;
 
+    /* XXX: There's a loose coupling between frame animation and bitmap width
+     * and height. We need the width and height to make a conversion to pixel
+     * to UV coordinates
+     */
     u32 bitmapWidth = archeBitmap->width;
     u32 bitmapHeight = archeBitmap->height;
 
@@ -1166,21 +1170,22 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
         Animation2D *spriteAnim = fa->frameCycles[animCount].animationInfo;
         spriteAnim->direction = LEFT;
-        spriteAnim->totalFrames = fa->frameCycles[animCount].frameCount;
+        u32 totalFrames = fa->frameCycles[animCount].frameCount;
+        spriteAnim->totalFrames = totalFrames;
         spriteAnim->frameCoords =
-            (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * spriteAnim->totalFrames);
-        if (animCount == 0)
+            (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * totalFrames);
+        if (strcmp(fa->frameCycles[animCount].name, "ATTACK") == 0)
         {
             spriteAnim->timePerFrame = 150;
         }
-        else
+        else if (strcmp(fa->frameCycles[animCount].name, "IDLE") == 0)
         {
             spriteAnim->timePerFrame = 1000 * 0.75;
         }
 
         /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
         v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
-        for(memory_index i = 0; i < spriteAnim->totalFrames; i++)
+        for(memory_index i = 0; i < totalFrames; i++)
         {
             spriteAnim->frameCoords[i] =
                 RectUVCoords{
