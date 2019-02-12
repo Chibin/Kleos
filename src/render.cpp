@@ -1202,5 +1202,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
                 GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
                 "IDLE");
 
+    MapData *md = LoadMap("./assets/map_data/first_map.txt");
 }
 #endif

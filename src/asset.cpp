@@ -1,6 +1,6 @@
 #include "asset.h"
 
-char *ReadFrameFile(const char *file, memory_index *o_fileSize)
+char *ReadFile(const char *file, memory_index *o_fileSize)
 {
     SDL_RWops *rw = SDL_RWFromFile(file,"r");
     u64 fileSize = 0;
@@ -65,6 +65,15 @@ memory_index CopyLine(const char *from, u8 *to, b32 isNewlineOnly)
     return bytesCopied;
 }
 
+memory_index CopyLine(const char *from, u32 *to, b32 isNewlineOnly)
+{
+    char tmpBuffer[MAX_NUM_CHARS];
+    memory_index bytesCopied = CopyLine(from, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
+    *to = SDL_atoi(tmpBuffer);
+    return bytesCopied;
+}
+
+
 memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to, b32 isNewlineOnly)
 {
     memory_index bytesRead = 0;
@@ -89,7 +98,7 @@ memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to, b32 isNewlin
 void LoadFrameData(FrameAnimation *fa, const char* file)
 {
     memory_index fileSize = 0;
-    char *fileData = ReadFrameFile(file, &fileSize);
+    char *fileData = ReadFile(file, &fileSize);
     memory_index counter = 0;
     FrameDataReadState fdrs = NAME;
     u8 frameCount = 0;
@@ -256,6 +265,8 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
         printf("framedata read state: %d\n", fdrs);
     }
 
+    free(fileData);
+
 }
 
 /*
@@ -297,4 +308,257 @@ Animation2D *GetSpriteAnimationInfo(FrameAnimation *fa, const char *name)
     ASSERT(!"I shouldn't get here");
 
     return nullptr;
+}
+
+struct MapData
+{
+    char name[16];
+    char textureName[16];
+    RectUVCoords uvCoords;
+    v2 dim;
+    u32 count;
+    v2 *basePoints;
+};
+
+enum MapDataReadState
+{
+    MAP_NAME,
+    MAP_TEXTURE_NAME,
+    MAP_UV_COORDINATES,
+    MAP_RECT_HEIGHT,
+    MAP_RECT_WIDTH,
+    MAP_OBJECT_COUNT,
+    MAP_BASE_POINTS,
+};
+
+/* MAP asset reader */
+MapData *LoadMap(const char *file)
+{
+    memory_index fileSize = 0;
+    char *fileData = ReadFile(file, &fileSize);
+    ASSERT(fileData != nullptr);
+
+    memory_index counter = 0;
+    MapDataReadState fdrs = MAP_NAME;
+
+    char *tmp = fileData;
+    b32 isNewlineOnly = true;
+
+    MapData *md = (MapData *)malloc(sizeof(MapData));
+    ZeroSize(md, sizeof(MapData));
+
+    while(counter < fileSize)
+    {
+        switch(fdrs)
+        {
+            case MAP_NAME:
+            {
+
+                char *name = "name:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                memory_index bytesCopied =
+                    CopyLine(tmp, md->name, sizeof(md->name), isNewlineOnly);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                fdrs = MAP_TEXTURE_NAME;
+
+                printf("name: %s\n", md->name);
+                break;
+            }
+            case MAP_TEXTURE_NAME:
+            {
+                char *name = "texture:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                memory_index bytesCopied =
+                    CopyLine(tmp, md->textureName, sizeof(md->textureName), isNewlineOnly);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                fdrs = MAP_UV_COORDINATES;
+
+                printf("texture name: %s\n", md->textureName);
+                break;
+            }
+            case MAP_UV_COORDINATES:
+            {
+                char *name = "uv coordinates:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                char *openBracket = "[\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, openBracket) == true);
+                counter += strlen(openBracket);
+
+                for(memory_index i = 0; i < 8; i += 2)
+                {
+                    tmp = fileData + counter;
+
+                    char tmpBuffer[8];
+                    char *pch = strchr(tmp, ',');
+                    memory_index bytesRead = 0;
+                    memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
+                    md->uvCoords.UV[SafeCastToU32(i/2)].x = f32(atof(tmpBuffer));
+
+                    bytesRead = (memory_index)(pch - tmp);
+                    ASSERT(*(tmp + bytesRead + 1) == ' ');
+                    bytesRead += 2; /* skip the space character */
+
+                    counter += bytesRead;
+
+                    tmp = fileData + counter;
+                    memset(tmpBuffer, 0, sizeof(tmpBuffer));
+                    bytesRead = 0;
+                    pch = strchr(tmp, ',');
+                    memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
+                    md->uvCoords.UV[SafeCastToU32(i/2)].y = f32(atof(tmpBuffer));
+                    bytesRead += (memory_index)(pch - tmp);
+                    bytesRead += strlen(",\n"); /* ,\n skip these characters */
+
+                    counter += bytesRead;
+                }
+
+                tmp = fileData + counter;
+
+                char *closeBracket = "]\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, closeBracket) == true);
+                counter += strlen(closeBracket);
+                tmp = fileData + counter;
+
+                fdrs = MAP_RECT_WIDTH;
+                break;
+            }
+            case MAP_RECT_WIDTH:
+            {
+                char *name = "width:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                char tmpBuffer[256];
+                memory_index bytesCopied =
+                    CopyLine(tmp, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                md->dim.x = (f32)atof(tmpBuffer);
+                ASSERT(md->dim.x != 0.0);
+
+                fdrs = MAP_RECT_HEIGHT;
+                break;
+            }
+            case MAP_RECT_HEIGHT:
+            {
+                char *name = "height:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                char tmpBuffer[256];
+                memory_index bytesCopied =
+                    CopyLine(tmp, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                md->dim.y = (f32)atof(tmpBuffer);
+                ASSERT(md->dim.y != 0.0);
+
+                fdrs = MAP_OBJECT_COUNT;
+                break;
+            }
+            case MAP_OBJECT_COUNT:
+            {
+                char *name = "object count:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                char tmpBuffer[256];
+                memory_index bytesCopied =
+                    CopyLine(tmp, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
+                counter = counter + bytesCopied;
+                tmp = fileData + counter;
+
+                md->count = SDL_atoi(tmpBuffer);
+                ASSERT(md->count != 0);
+
+                fdrs = MAP_BASE_POINTS;
+                break;
+            }
+            case MAP_BASE_POINTS:
+            {
+                const char *name = "points:\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
+
+                counter += strlen(name);
+                tmp = fileData + counter;
+
+                char *openBracket = "[\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, openBracket) == true);
+                counter += strlen(openBracket);
+
+                md->basePoints = (v2 *)malloc(sizeof(v2) * md->count);
+                for(memory_index i = 0; i < md->count; i++)
+                {
+                    tmp = fileData + counter;
+
+                    char tmpBuffer[8];
+                    char *pch = strchr(tmp, ',');
+                    memory_index bytesRead = 0;
+                    memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
+                    md->basePoints[i].x = (f32)atof(tmpBuffer);
+
+                    bytesRead = (memory_index)(pch - tmp);
+                    ASSERT(*(tmp + bytesRead + 1) == ' ');
+                    bytesRead += 2; /* skip the space character */
+
+                    counter += bytesRead;
+
+                    tmp = fileData + counter;
+                    memset(tmpBuffer, 0, sizeof(tmpBuffer));
+                    bytesRead = 0;
+                    pch = strchr(tmp, ',');
+                    memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
+                    md->basePoints[i].y = (f32)atof(tmpBuffer);
+                    bytesRead += (memory_index)(pch - tmp);
+                    bytesRead += strlen(",\n"); /* ,\n skip these characters */
+
+                    counter += bytesRead;
+
+                }
+
+                tmp = fileData + counter;
+
+                char *closeBracket = "]\n";
+                ASSERT(VerifyStringAndGotoNextLine(tmp, closeBracket) == true);
+                counter += strlen(closeBracket);
+                tmp = fileData + counter;
+
+                fdrs = MAP_NAME;
+                counter = fileSize;
+                break;
+            }
+            default:
+            {
+                ASSERT(!"SOMETHING BAD HAPPNED");
+                break;
+            }
+        }
+    }
+
+    free(fileData);
+
+    return md;
 }

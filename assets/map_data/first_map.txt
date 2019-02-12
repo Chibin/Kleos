@@ -1,0 +1,25 @@
+name:
+firstMap
+texture:
+box
+uv coordinates:
+[
+1, 1,
+1, 0,
+0, 0,
+0, 1,
+]
+width:
+5
+height:
+1
+object count:
+5
+points:
+[
+0, 0,
+5, 0,
+10, 0,
+15, 0,
+20, 0,
+]
