@@ -1048,46 +1048,6 @@ void LoadStuff(GameMetadata *gameMetadata)
             PushBack(&(g_rectManager->Traversable), r);
         }
     }
-
-    /* Let's add some non-traversable entity */
-    for (int i = 0; i < 10; i++)
-    {
-        v3 startingPosition = { -1 + 4 * (real32)i, 0, 0 };
-
-        Entity *collisionEntity =
-            AddNewEntity(reservedMemory, g_entityManager, startingPosition);
-        ASSERT(collisionEntity != nullptr);
-        collisionEntity->isTraversable = false;
-        collisionEntity->isPlayer = false;
-
-        Rect *collissionRect =
-            CreateRectangle(reservedMemory, startingPosition, color, 3, 5);
-        AssociateEntity(collissionRect, collisionEntity, false);
-
-        if (i == 2)
-        {
-            UpdateColors(collissionRect, v4{ 1.0f, 0.0f, 0.0f, 0.7f });
-            collissionRect->type = HURTBOX;
-            collissionRect->renderLayer = DEBUG;
-        }
-        else if (i == 3)
-        {
-
-            collissionRect->type = HITBOX;
-            collissionRect->renderLayer = DEBUG;
-            UpdateColors(collissionRect, v4{ 0.0f, 1.0f, 0.0f, 0.7f });
-        }
-        else
-        {
-
-            collissionRect->type = COLLISION;
-            collissionRect->renderLayer = FRONT_STATIC;
-            UpdateColors(collissionRect, v4{ 0.0f, 0.0f, 1.0f, 0.7f });
-        }
-
-        collissionRect->bitmapID = 0;
-        PushBack(&(g_rectManager->NonTraversable), collissionRect);
-    }
 }
 
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
@@ -1202,6 +1162,35 @@ inline void LoadAssets(GameMetadata *gameMetadata)
                 GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
                 "IDLE");
 
-    MapData *md = LoadMap("./assets/map_data/first_map.txt");
+    MapData *rootMDNode = LoadAssetMap("./assets/map_data/first_map.txt");
+    ASSERT(rootMDNode->next != nullptr);
+
+    for(MapData *currentNode = rootMDNode->next; currentNode != nullptr; currentNode = currentNode->next)
+    {
+        v4 color = { 0.1f, 0.1f, 0.1f, 1.0f };
+        for (memory_index i = 0; i < currentNode->count; i++)
+        {
+
+            v3 startingPosition = V3(currentNode->basePoints[i], 0);
+
+            Entity *collisionEntity =
+                AddNewEntity(reservedMemory, g_entityManager, startingPosition);
+            ASSERT(collisionEntity != nullptr);
+            collisionEntity->isTraversable = false;
+            collisionEntity->isPlayer = false;
+
+            Rect *collissionRect =
+                CreateRectangle(reservedMemory, startingPosition, color, currentNode->dim);
+            AssociateEntity(collissionRect, collisionEntity, false);
+
+
+            collissionRect->type = COLLISION;
+            collissionRect->renderLayer = FRONT_STATIC;
+            UpdateColors(collissionRect, v4{ 0.0f, 0.0f, 1.0f, 0.7f });
+
+            collissionRect->bitmapID = 0;
+            PushBack(&(g_rectManager->NonTraversable), collissionRect);
+        }
+    }
 }
 #endif

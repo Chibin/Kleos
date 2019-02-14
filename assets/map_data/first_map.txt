@@ -12,7 +12,7 @@ uv coordinates:
 width:
 5
 height:
-1
+5
 object count:
 5
 points:
@@ -22,4 +22,29 @@ points:
 10, 0,
 15, 0,
 20, 0,
+]
+name:
+firstMap
+texture:
+box
+uv coordinates:
+[
+1, 1,
+1, 0,
+0, 0,
+0, 1,
+]
+width:
+5
+height:
+1
+object count:
+5
+points:
+[
+25, 5,
+30, 5,
+35, 5,
+40, 5,
+45, 5,
 ]

@@ -318,6 +318,8 @@ struct MapData
     v2 dim;
     u32 count;
     v2 *basePoints;
+
+    MapData *next;
 };
 
 enum MapDataReadState
@@ -332,7 +334,7 @@ enum MapDataReadState
 };
 
 /* MAP asset reader */
-MapData *LoadMap(const char *file)
+MapData *LoadAssetMap(const char *file)
 {
     memory_index fileSize = 0;
     char *fileData = ReadFile(file, &fileSize);
@@ -344,8 +346,11 @@ MapData *LoadMap(const char *file)
     char *tmp = fileData;
     b32 isNewlineOnly = true;
 
-    MapData *md = (MapData *)malloc(sizeof(MapData));
-    ZeroSize(md, sizeof(MapData));
+    MapData *rootMDNode = (MapData *)malloc(sizeof(MapData));
+    ZeroSize(rootMDNode, sizeof(MapData));
+
+    MapData *currentNode = nullptr;
+    currentNode = rootMDNode;
 
     while(counter < fileSize)
     {
@@ -357,17 +362,23 @@ MapData *LoadMap(const char *file)
                 char *name = "name:\n";
                 ASSERT(VerifyStringAndGotoNextLine(tmp, name) == true);
 
+                MapData *newNode = (MapData *)malloc(sizeof(MapData));
+                ZeroSize(newNode, sizeof(MapData));
+
+                currentNode->next = newNode;
+                currentNode = newNode;
+
                 counter += strlen(name);
                 tmp = fileData + counter;
 
                 memory_index bytesCopied =
-                    CopyLine(tmp, md->name, sizeof(md->name), isNewlineOnly);
+                    CopyLine(tmp, currentNode->name, sizeof(currentNode->name), isNewlineOnly);
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
                 fdrs = MAP_TEXTURE_NAME;
 
-                printf("name: %s\n", md->name);
+                printf("name: %s\n", currentNode->name);
                 break;
             }
             case MAP_TEXTURE_NAME:
@@ -379,13 +390,13 @@ MapData *LoadMap(const char *file)
                 tmp = fileData + counter;
 
                 memory_index bytesCopied =
-                    CopyLine(tmp, md->textureName, sizeof(md->textureName), isNewlineOnly);
+                    CopyLine(tmp, currentNode->textureName, sizeof(currentNode->textureName), isNewlineOnly);
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
                 fdrs = MAP_UV_COORDINATES;
 
-                printf("texture name: %s\n", md->textureName);
+                printf("texture name: %s\n", currentNode->textureName);
                 break;
             }
             case MAP_UV_COORDINATES:
@@ -407,7 +418,7 @@ MapData *LoadMap(const char *file)
                     char *pch = strchr(tmp, ',');
                     memory_index bytesRead = 0;
                     memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
-                    md->uvCoords.UV[SafeCastToU32(i/2)].x = f32(atof(tmpBuffer));
+                    currentNode->uvCoords.UV[SafeCastToU32(i/2)].x = f32(atof(tmpBuffer));
 
                     bytesRead = (memory_index)(pch - tmp);
                     ASSERT(*(tmp + bytesRead + 1) == ' ');
@@ -420,7 +431,7 @@ MapData *LoadMap(const char *file)
                     bytesRead = 0;
                     pch = strchr(tmp, ',');
                     memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
-                    md->uvCoords.UV[SafeCastToU32(i/2)].y = f32(atof(tmpBuffer));
+                    currentNode->uvCoords.UV[SafeCastToU32(i/2)].y = f32(atof(tmpBuffer));
                     bytesRead += (memory_index)(pch - tmp);
                     bytesRead += strlen(",\n"); /* ,\n skip these characters */
 
@@ -451,8 +462,8 @@ MapData *LoadMap(const char *file)
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
-                md->dim.x = (f32)atof(tmpBuffer);
-                ASSERT(md->dim.x != 0.0);
+                currentNode->dim.x = (f32)atof(tmpBuffer);
+                ASSERT(currentNode->dim.x != 0.0);
 
                 fdrs = MAP_RECT_HEIGHT;
                 break;
@@ -471,8 +482,8 @@ MapData *LoadMap(const char *file)
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
-                md->dim.y = (f32)atof(tmpBuffer);
-                ASSERT(md->dim.y != 0.0);
+                currentNode->dim.y = (f32)atof(tmpBuffer);
+                ASSERT(currentNode->dim.y != 0.0);
 
                 fdrs = MAP_OBJECT_COUNT;
                 break;
@@ -491,8 +502,8 @@ MapData *LoadMap(const char *file)
                 counter = counter + bytesCopied;
                 tmp = fileData + counter;
 
-                md->count = SDL_atoi(tmpBuffer);
-                ASSERT(md->count != 0);
+                currentNode->count = SDL_atoi(tmpBuffer);
+                ASSERT(currentNode->count != 0);
 
                 fdrs = MAP_BASE_POINTS;
                 break;
@@ -509,8 +520,8 @@ MapData *LoadMap(const char *file)
                 ASSERT(VerifyStringAndGotoNextLine(tmp, openBracket) == true);
                 counter += strlen(openBracket);
 
-                md->basePoints = (v2 *)malloc(sizeof(v2) * md->count);
-                for(memory_index i = 0; i < md->count; i++)
+                currentNode->basePoints = (v2 *)malloc(sizeof(v2) * currentNode->count);
+                for(memory_index i = 0; i < currentNode->count; i++)
                 {
                     tmp = fileData + counter;
 
@@ -518,7 +529,7 @@ MapData *LoadMap(const char *file)
                     char *pch = strchr(tmp, ',');
                     memory_index bytesRead = 0;
                     memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
-                    md->basePoints[i].x = (f32)atof(tmpBuffer);
+                    currentNode->basePoints[i].x = (f32)atof(tmpBuffer);
 
                     bytesRead = (memory_index)(pch - tmp);
                     ASSERT(*(tmp + bytesRead + 1) == ' ');
@@ -531,7 +542,7 @@ MapData *LoadMap(const char *file)
                     bytesRead = 0;
                     pch = strchr(tmp, ',');
                     memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
-                    md->basePoints[i].y = (f32)atof(tmpBuffer);
+                    currentNode->basePoints[i].y = (f32)atof(tmpBuffer);
                     bytesRead += (memory_index)(pch - tmp);
                     bytesRead += strlen(",\n"); /* ,\n skip these characters */
 
@@ -547,7 +558,6 @@ MapData *LoadMap(const char *file)
                 tmp = fileData + counter;
 
                 fdrs = MAP_NAME;
-                counter = fileSize;
                 break;
             }
             default:
@@ -560,5 +570,5 @@ MapData *LoadMap(const char *file)
 
     free(fileData);
 
-    return md;
+    return rootMDNode;
 }
