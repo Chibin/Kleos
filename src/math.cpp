@@ -113,6 +113,11 @@ inline v3 &operator-=(v3 &A, v3 B)
     return A;
 }
 
+v3 V3(v2 A, f32 B)
+{
+    return v3{A.x, A.y, B};
+}
+
 /*
  * V4
  */
