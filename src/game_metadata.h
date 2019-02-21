@@ -3,6 +3,7 @@
 #define __GAME_METADATA__
 
 #include "bitmap.h"
+#include "hashtable.h"
 #include "particle.h"
 #include "renderer/vulkan/vulkan.h"
 
@@ -22,6 +23,8 @@ struct GameMetadata
 
     Bitmap bitmapSentinelNode;
     Bitmap whiteBitmap;
+
+    BitmapDescriptorMap bitmapToDescriptorSetMap;
 
     FrameAnimation frameAnimationSentinelNode;
 

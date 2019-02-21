@@ -93,49 +93,19 @@ void UpdateSamplerImage(
 
     if (gameMetadata->isVulkanActive)
     {
-        /* Ideally, this should be done with a mapping of the bitmap to
-         * descriptor layout
-         */
-        if (gameMetadata->playerRect->bitmap == bitmap)
-        {
-            vkCmdBindDescriptorSets(
-                    vc->drawCmd,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    vc->pipelineLayout,
-                    0,
-                    1,
-                    &vc->playerDescSet,
-                    0,
-                    NULL);
-        }
-        else if (&gameMetadata->whiteBitmap == bitmap)
-        {
-            /* TODO: add descriptor set for whitebitmap */
-        }
-        else if (bitmap->bitmapID != 0)
-        {
-            vkCmdBindDescriptorSets(
-                    vc->drawCmd,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    vc->pipelineLayout,
-                    0,
-                    1,
-                    &vc->secondDescSet,
-                    0,
-                    nullptr);
-        }
-        else
-        {
-            vkCmdBindDescriptorSets(
-                    vc->drawCmd,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    vc->pipelineLayout,
-                    0,
-                    1,
-                    &vc->descSet,
-                    0,
-                    NULL);
-        }
+        VkDescriptorSet *descSet =
+            GetHashValue(&gameMetadata->bitmapToDescriptorSetMap, bitmap);
+        ASSERT(descSet != NULL);
+
+        vkCmdBindDescriptorSets(
+                vc->drawCmd,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                vc->pipelineLayout,
+                0,
+                1,
+                descSet,
+                0,
+                nullptr);
     }
 }
 

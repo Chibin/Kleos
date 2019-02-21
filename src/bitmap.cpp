@@ -21,6 +21,21 @@ inline Bitmap *FindBitmap(Bitmap *sentinelNode, memory_index bitmapID)
         }
     }
 
+    ASSERT(!"FOUND NOTHING");
+    return nullptr;
+}
+
+inline Bitmap *FindBitmap(Bitmap *sentinelNode, const char *bitmapName)
+{
+    for (Bitmap *node = sentinelNode->next; node != sentinelNode; node = node->next)
+    {
+        if (strcmp(node->name, bitmapName) == 0)
+        {
+            return node;
+        }
+    }
+
+    ASSERT(!"FOUND NOTHING");
     return nullptr;
 }
 
@@ -52,10 +67,11 @@ inline void ImageToBitmap(Bitmap *bitmap, const char *ImageName)
     ASSERT(componentsPerPixel == 4);
 }
 
-inline void SetBitmap(Bitmap *bitmap, TextureParam textureParam, memory_index bitmapID, const char *imgPath)
+inline void SetBitmap(Bitmap *bitmap, const char *name, TextureParam textureParam, memory_index bitmapID, const char *imgPath)
 {
     ZeroSize(bitmap, sizeof(Bitmap));
     ImageToBitmap(bitmap, imgPath);
+    snprintf(bitmap->name, sizeof(bitmap->name), "%s", name);
     bitmap->textureParam = textureParam;
     bitmap->bitmapID = bitmapID;
 }

@@ -77,8 +77,11 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "asset.cpp"
 #include "sort.cpp"
 
+#include "hashtable.cpp"
+
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"
+
 
 #define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
@@ -184,8 +187,18 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_vkBuffers.count = 0;
         g_vkBuffers.maxNum = 100;
 
+        Bitmap stringBitmap = {};
         if (gameMetadata->isVulkanActive)
         {
+
+            memset(&gameMetadata->bitmapToDescriptorSetMap, 0, sizeof(BitmapDescriptorMap));
+#if 1
+            for (memory_index i = 0; i < MAX_HASH; i++)
+            {
+                ASSERT(gameMetadata->bitmapToDescriptorSetMap.hashTable[i] == nullptr);
+            }
+#endif
+            // BitmapDescriptorMap bitmapToDescriptorSetMap  = CreateNewHashMap();
             bool useStagingBuffer = false;
             stbi_set_flip_vertically_on_load(1);
 
@@ -216,7 +229,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             stbi_image_free(pixels);
 
-            Bitmap stringBitmap = {};
+            //
+            // bitmap
+            // descriptor set
+            //
+
+            stringBitmap = {};
+            stringBitmap.bitmapID = 99; // Arbitrary number
             char buffer[256];
             /* Hack: There's a bunch of blank spaces at the end to accomodate
              * the amout of extra characters for later images.
@@ -267,6 +286,30 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             stbi_image_free(playerPixels);
 
+            stbi_uc *boxPixels = stbi_load( "./materials/textures/container.png",
+                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            vc->boxTextures[0].texWidth = texWidth;
+            vc->boxTextures[0].texHeight = texHeight;
+            /* stbi does not do padding, so the pitch is the component times
+             * the width of the image. The component is 4 because of STBI_rgb_alpha.
+             */
+            vc->boxTextures[0].texPitch = texWidth * 4;
+            vc->boxTextures[0].dataSize = texWidth * texHeight * 4;
+            vc->boxTextures[0].data = boxPixels;
+
+            VulkanPrepareTexture(vc,
+                    &vc->gpu,
+                    &vc->device,
+                    &vc->setupCmd,
+                    &vc->cmdPool,
+                    &vc->queue,
+                    &vc->memoryProperties,
+                    useStagingBuffer,
+                    vc->boxTextures,
+                    VK_IMAGE_LAYOUT_GENERAL);
+
+            stbi_image_free(boxPixels);
+
             /* Creating pipeline layout, descriptor pool, and render pass can be done
              * indenpendently
              */
@@ -294,6 +337,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     vc,
                     &vc->playerDescSet,
                     vc->playerTextures,
+                    DEMO_TEXTURE_COUNT,
+                    &vc->uniformData,
+                    &vc->uniformDataFragment);
+
+            VulkanSetDescriptorSet(
+                    vc,
+                    &vc->boxDescSet,
+                    vc->boxTextures,
                     DEMO_TEXTURE_COUNT,
                     &vc->uniformData,
                     &vc->uniformDataFragment);
@@ -366,6 +417,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
         gameMetadata->whiteBitmap.format = GL_RGBA;
+        gameMetadata->whiteBitmap.bitmapID = 998;
         gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
         gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
         for (memory_index i = 0; i < 1 * 1; i++)
@@ -376,6 +428,35 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         LoadAssets(gameMetadata);
 
+        if (gameMetadata->isVulkanActive)
+        {
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    FindBitmap(&gameMetadata->bitmapSentinelNode, "box"),
+                    &vc->boxDescSet);
+
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    FindBitmap(&gameMetadata->bitmapSentinelNode, "arche"),
+                    &vc->playerDescSet);
+
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface"),
+                    &vc->descSet);
+
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    &gameMetadata->whiteBitmap,
+                    &vc->secondDescSet);
+
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    &stringBitmap,
+                    &vc->secondDescSet);
+        }
+
+
         LoadStuff(gameMetadata);
 
         gameMetadata->initFromGameUpdateAndRender = true;
@@ -384,7 +465,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         f32 base = -1.01f;
         f32 width = 0.05f;
         f32 height = 0.05f;
-        Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, 0);
+#if 1
+        Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, (memory_index)0);
+#else
+        Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
+#endif
         gameMetadata->particleSystem.particleCount = 1000;
         gameMetadata->particleSystem.particles =
             (Particle *)AllocateMemory(reservedMemory,
@@ -1043,7 +1128,7 @@ void LoadStuff(GameMetadata *gameMetadata)
             Rect *r =
                 CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
             AssociateEntity(r, rectEntity, true);
-            r->bitmapID = 0;
+            r->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface")->bitmapID;
             r->renderLayer = BACKGROUND;
             PushBack(&(g_rectManager->Traversable), r);
         }
@@ -1077,7 +1162,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     auto *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(awesomefaceBitmap, TextureParam{ GL_LINEAR, GL_LINEAR },
+    SetBitmap(awesomefaceBitmap, "awesomeface", TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
     PushBitmap(&gameMetadata->bitmapSentinelNode, awesomefaceBitmap);
 
@@ -1087,9 +1172,14 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     }
 
     auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(newBitmap, TextureParam{ GL_NEAREST, GL_NEAREST },
+    SetBitmap(newBitmap, "arche", TextureParam{ GL_NEAREST, GL_NEAREST },
               g_bitmapID++, "./materials/textures/arche.png");
     PushBitmap(&gameMetadata->bitmapSentinelNode, newBitmap);
+
+    auto *boxBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    SetBitmap(boxBitmap, "box", TextureParam{ GL_LINEAR, GL_LINEAR },
+              g_bitmapID++, "./materials/textures/container.png");
+    PushBitmap(&gameMetadata->bitmapSentinelNode, boxBitmap);
 
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
@@ -1188,7 +1278,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
             collissionRect->renderLayer = FRONT_STATIC;
             UpdateColors(collissionRect, v4{ 0.0f, 0.0f, 1.0f, 0.7f });
 
-            collissionRect->bitmapID = 0;
+            Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
+            collissionRect->bitmapID = bitmap->bitmapID;
             PushBack(&(g_rectManager->NonTraversable), collissionRect);
         }
     }

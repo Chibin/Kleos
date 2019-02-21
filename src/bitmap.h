@@ -27,6 +27,7 @@ enum ImageType
 
 struct Bitmap
 {
+    char name[16];
     u32 width;
     u32 height;
     u32 pitch;
