@@ -7,6 +7,13 @@ struct Movement {
     glm::vec3 acceleration;
 };
 
+enum MovementType
+{
+    X_MOVEMENT,
+    Y_MOVEMENT,
+    XY_MOVEMENT
+};
+
 struct NPC
 {
     /* movement -/+ dim == min / max */
@@ -16,9 +23,12 @@ struct NPC
 
     Animation2D *spriteAnimation;
     FrameState frameState;
-    Direction frameDirection;
 
     RenderLayer renderLayer;
+
+    MovementType movementType;
+
+    Direction direction;
 };
 
 Rect *CreateMinimalRectInfo(GameMemory *gm, NPC *npc)
@@ -42,16 +52,6 @@ Animation2D *CreateCopyOfSpriteAnimationInfo(GameMemory *gm, Animation2D *sprite
     Animation2D *spriteCopy = (Animation2D *)AllocateMemory(gm, sizeof(Animation2D));
     memset(spriteCopy, 0, sizeof(Animation2D));
 
-    /*
-       RectUVCoords *frameCoords;
-       u32 totalFrames;
-       f32 timePerFrame;
-       f32 frameTTL;
-       RectUVCoords *currentFrame;
-       memory_index currentFrameIndex;
-       Direction direction;
-    */
-
     spriteCopy->frameCoords = CopyUVCoords(gm, spriteSource->frameCoords, spriteSource->totalFrames);
     spriteCopy->totalFrames = spriteSource->totalFrames;
     spriteCopy->timePerFrame = spriteSource->timePerFrame;
@@ -65,7 +65,7 @@ void UpdateNPCAnimation(NPC *npc, Rect *r)
 {
     UpdateCurrentFrame(npc->spriteAnimation, 17.6f);
     UpdateUV(r, *npc->spriteAnimation->currentFrame);
-    UpdateFrameDirection(npc->spriteAnimation, npc->frameDirection);
+    UpdateFrameDirection(npc->spriteAnimation, npc->direction);
 }
 
 void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
@@ -117,5 +117,68 @@ void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gra
     npc->movement.position.y += npc->movement.velocity.y * dt;
     npc->movement.position.x += npc->movement.velocity.x * dt;
 
+    /* Apply "friction" */
+    npc->movement.velocity.x = 0;
+}
+
+void NPCMoveRight(NPC *npc)
+{
+    npc->movement.velocity += 0.5f;
+}
+
+void NPCMoveLeft(NPC *npc)
+{
+    npc->movement.velocity -= 0.5f;
+}
+
+void NPCMoveX(NPC *npc)
+{
+    switch(npc->spriteAnimation->direction)
+    {
+        case RIGHT:
+        {
+            NPCMoveRight(npc);
+            break;
+        }
+        case LEFT:
+        {
+            NPCMoveLeft(npc);
+            break;
+        }
+        default:
+            ASSERT(!"I SHOULDN'T GET HERE");
+    }
+}
+
+void NPCMove(NPC *npc)
+{
+    /* This is where the NPC will decide where to move.
+     * For now, let's make the NPC move left and right.*/
+
+    // Check desired location
+    switch (npc->movementType)
+    {
+        case X_MOVEMENT:
+            NPCMoveX(npc);
+            //or
+            //NPCMoveRight(npc);
+            break;
+        case Y_MOVEMENT:
+            break;
+        case XY_MOVEMENT:
+            break;
+        default:
+            ASSERT(!"I SHOULDN'T GET HERE");
+    }
+    //NPCMoveRight(npc);
+    /*
+    NPCMoveUp();
+    NPCMoveDown();
+    */
+}
+
+void UpdateNPCMovement(NPC *npc)
+{
+    NPCMove(npc);
 }
 #endif

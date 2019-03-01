@@ -834,6 +834,8 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
+    UpdateNPCMovement(g_enemyNPC);
+
     /* Update entities */
     UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
 }
@@ -1156,8 +1158,10 @@ void LoadStuff(GameMetadata *gameMetadata)
                     GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
                     "IDLE")
         );
-    g_enemyNPC->frameDirection = RIGHT;
+    g_enemyNPC->spriteAnimation->direction = LEFT;
+    g_enemyNPC->direction = RIGHT;
     g_enemyNPC->renderLayer = BEHIND_PLAYER;
+    g_enemyNPC->movementType = X_MOVEMENT;
 }
 
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
