@@ -140,6 +140,7 @@ static Animation2D *g_spriteAnimation = nullptr;
 static Animation2D *g_spriteAnimations = nullptr;
 static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
+static memory_index g_bitmapID = 0;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -374,7 +375,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
 
-        v3 cameraPos = { 0, 0, 5 };
+        v3 cameraPos = { 0, 0, 10 };
         // and looks at the origin
         v3 cameraTarget = { 0, 0, 0 };
         // Head is up (set to 0,-1,0 to look upside-down)
@@ -417,7 +418,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
         gameMetadata->whiteBitmap.format = GL_RGBA;
-        gameMetadata->whiteBitmap.bitmapID = 998;
+        gameMetadata->whiteBitmap.bitmapID = 998; // XXX: needs to be changed somewhere
         gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
         gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
         for (memory_index i = 0; i < 1 * 1; i++)
@@ -1158,7 +1159,6 @@ inline void LoadShaders(GameMetadata *gameMetadata)
 inline void LoadAssets(GameMetadata *gameMetadata)
 {
 
-    static memory_index g_bitmapID = 0;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     auto *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
