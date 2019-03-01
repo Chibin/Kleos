@@ -94,7 +94,6 @@ struct Rect
     v2 max;
 
     Animation2D *sprites;
-    u32 totalSprites;
     Direction frameDirection;
 
     bool isTextureUpsideDown;
