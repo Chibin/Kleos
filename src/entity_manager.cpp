@@ -44,7 +44,7 @@ EntityManager *CreateEntityManger(GameMemory *gm)
 
     em->size = 0;
     em->entityIDs = nullptr;
-    em->totalAllocatedSpace = 1000000; /* arbitrary amount */
+    em->totalAllocatedSpace = 100; /* arbitrary amount */
 
     /* TODO: not sure if we should zero the values */
     em->entities =
@@ -64,7 +64,7 @@ EntityManager *CreateEntityManger(GameMemory *gm)
 Entity *AddNewEntity(GameMemory *gm, EntityManager *em, v3 position = v3{ 0, 0, 0 })
 {
     /* Creates a new entity that's zeroed out */
-    if (em->totalAllocatedSpace < em->size)
+    if (em->totalAllocatedSpace <= em->size)
     {
         _allocateMoreMemory(gm, em);
     }
@@ -97,6 +97,17 @@ int Append(GameMemory *gm, EntityManager *em, Entity *entity)
     return em->size - 1;
 }
 
+void _freeMemory(EntityManager *em)
+{
+    /* TODO: This is a bit complicated since everything is done as a stack...
+     * We can't retrieve back the "Freed" memory becausee it's going to be in
+     * the middle of the stack.
+     * This would count as a memory leak, unless we make our memory management
+     * better.
+     */
+     //free(em->entities); // we can't do this! and should be done through our memory manager.
+}
+
 /* helper functions */
 void _allocateMoreMemory(GameMemory *gm, EntityManager *em)
 {
@@ -105,20 +116,20 @@ void _allocateMoreMemory(GameMemory *gm, EntityManager *em)
      * deleting.
      */
 
-    unsigned int newTotalAllocatedSpace =
+    u32 newTotalAllocatedSpace =
         em->totalAllocatedSpace + FLOOR(em->totalAllocatedSpace * 0.25);
 
     auto *entities =
         static_cast<Entity *>(AllocateMemory(gm, (sizeof(Entity) * newTotalAllocatedSpace)));
-    memset(entities, 0, sizeof(Entity) * newTotalAllocatedSpace);
 
-    memcpy(entities, em->entities, sizeof(Entity) * em->totalAllocatedSpace);
-    free(em->entities);
-
-    if ((entities == nullptr) || (em->entities == nullptr))
+    if (entities == nullptr)
     {
         PAUSE_HERE("Something bad happend! %s:%d\n", __func__, __LINE__);
     }
+
+    memcpy(entities, em->entities, sizeof(Entity) * em->totalAllocatedSpace);
+    /* TODO: Free memory */
+    _freeMemory(em);
 
     em->totalAllocatedSpace = newTotalAllocatedSpace;
     em->entities = entities;
