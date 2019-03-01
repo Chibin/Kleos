@@ -65,10 +65,15 @@ typedef intptr_t smm;
 union v2 {
     struct
     {
-        real32 x;
-        real32 y;
+        f32 x;
+        f32 y;
     };
-    real32 v[2];
+    struct
+    {
+        f32 width;
+        f32 height;
+    };
+    f32 v[2];
 };
 
 struct v2i
@@ -87,37 +92,37 @@ struct v2i
 union v3 {
     struct
     {
-        real32 x;
-        real32 y;
-        real32 z;
+        f32 x;
+        f32 y;
+        f32 z;
     };
 
     struct
     {
-        real32 r;
-        real32 g;
-        real32 b;
+        f32 r;
+        f32 g;
+        f32 b;
     };
-    real32 v[3];
+    f32 v[3];
 };
 
 union v4 {
     struct
     {
-        real32 x;
-        real32 y;
-        real32 z;
-        real32 w;
+        f32 x;
+        f32 y;
+        f32 z;
+        f32 w;
     };
 
     struct
     {
-        real32 r;
-        real32 g;
-        real32 b;
-        real32 a;
+        f32 r;
+        f32 g;
+        f32 b;
+        f32 a;
     };
-    real32 v[4];
+    f32 v[4];
 };
 
 union m4 {
@@ -128,7 +133,7 @@ union m4 {
         union v4 a3;
         union v4 a4;
     };
-    real32 v[16];
+    f32 v[16];
 };
 
 void ZeroSize(void *_data, memory_index size);

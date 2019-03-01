@@ -37,12 +37,12 @@ struct Entity
     glm::vec3 position;
     glm::vec3 velocity;
     glm::vec3 acceleration;
-    real32 width;
-    real32 height;
+    f32 width;
+    f32 height;
 
     int type;
-    real32 minX;
-    real32 maxX;
+    f32 minX;
+    f32 maxX;
     Vertex *data;
 
     b32 willAttack;
