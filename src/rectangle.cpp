@@ -66,6 +66,16 @@ Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color, v2 rectDim)
     return CreateRectangle(gm, basePosition, color, rectDim.x, rectDim.y);
 }
 
+Rect *CreateRectangle(GameMemory *gm, glm::vec3 basePosition, v4 color, v2 rectDim)
+{
+    return CreateRectangle(
+            gm,
+            v3{basePosition.x, basePosition.y, basePosition.z},
+            color,
+            rectDim.x,
+            rectDim.y);
+}
+
 void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable)
 {
     rect->entity = entity;
