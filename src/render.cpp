@@ -82,13 +82,6 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"
 
-
-#define UPDATEANDRENDER(name) \
-    bool name(GameMetadata *gameMetadata)
-#define RENDER(name)                                                    \
-    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, \
-              GLuint debugProgram, Entity *entity)
-
 #define COLOR_WHITE \
     v4              \
     {               \
@@ -114,6 +107,14 @@ inline void *RequestToReservedMemory(memory_index size)
     {               \
         0, 0, 0, 1  \
     }
+
+#include "npc.cpp"
+
+#define UPDATEANDRENDER(name) \
+    bool name(GameMetadata *gameMetadata)
+#define RENDER(name)                                                    \
+    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, \
+              GLuint debugProgram, Entity *entity)
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
             GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
@@ -141,6 +142,7 @@ static Animation2D *g_spriteAnimations = nullptr;
 static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
+static NPC *g_enemyNPC = nullptr;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -885,9 +887,12 @@ void DrawScene(
 
     PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
 
-    ClearUsedVertexRenderGroup(perFrameRenderGroup);
-
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    Rect *minimalRect = CreateMinimalRectInfo(perFrameMemory, g_enemyNPC);
+    UpdateNPCAnimation(g_enemyNPC, minimalRect);
+    PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect);
+
+    ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
 #if 1
     Rect **sortedRectInfo = MergeSortRenderGroupRectInfo(perFrameRenderGroup, perFrameMemory);
@@ -1134,6 +1139,23 @@ void LoadStuff(GameMetadata *gameMetadata)
             PushBack(&(g_rectManager->Traversable), r);
         }
     }
+
+    /* Spawn new enemty */
+    g_enemyNPC = (NPC *)AllocateMemory(reservedMemory, sizeof(NPC));
+    memset(g_enemyNPC, 0, sizeof(NPC));
+
+    g_enemyNPC->dim.height = 1.0f;
+    g_enemyNPC->dim.width = 1.5f;
+    g_enemyNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "arche");
+    g_enemyNPC->spriteAnimation =
+        CreateCopyOfSpriteAnimationInfo(
+                reservedMemory,
+                GetSpriteAnimationInfo(
+                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
+                    "IDLE")
+        );
+    g_enemyNPC->frameDirection = RIGHT;
+
 }
 
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
