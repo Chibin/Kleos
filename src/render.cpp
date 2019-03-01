@@ -691,6 +691,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     e->position.y += e->velocity.y * dt;
     e->position.x += e->velocity.x * dt;
 
+    UpdatePositionBasedOnCollission(g_enemyNPC, g_rectManager, gravity, dt);
+
     /* TODO: can't let the player spam attack while we're still in an attack animation */
     if (e->willAttack)
     {
@@ -1155,7 +1157,7 @@ void LoadStuff(GameMetadata *gameMetadata)
                     "IDLE")
         );
     g_enemyNPC->frameDirection = RIGHT;
-
+    g_enemyNPC->renderLayer = BEHIND_PLAYER;
 }
 
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
