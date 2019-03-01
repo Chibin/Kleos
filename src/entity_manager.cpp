@@ -18,9 +18,9 @@ struct EntityManager
      * How about static interactable entities?
      */
     Entity *entities;
-    unsigned int size;
+    u32 size;
 
-    unsigned int totalAllocatedSpace;
+    u32 totalAllocatedSpace;
 
     /* A dictionary/collection of all the entity types?
      * or
@@ -29,7 +29,7 @@ struct EntityManager
      */
 
     /* not sure how to properly use this yet */
-    unsigned int *entityIDs;
+    u32 *entityIDs;
 };
 
 void _allocateMoreMemory(GameMemory *gm, EntityManager *em);
