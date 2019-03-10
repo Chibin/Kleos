@@ -14,6 +14,13 @@ enum MovementType
     XY_MOVEMENT
 };
 
+enum MovementPattern
+{
+    WAYPOINT,
+    UNI_DIRECTIONAL,
+    BI_DIRECTIONAL,
+};
+
 struct NPC
 {
     /* movement -/+ dim == min / max */
@@ -27,6 +34,7 @@ struct NPC
     RenderLayer renderLayer;
 
     MovementType movementType;
+    MovementPattern movementPattern;
 
     Direction direction;
 };
@@ -123,26 +131,129 @@ void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gra
 
 void NPCMoveRight(NPC *npc)
 {
-    npc->movement.velocity += 0.5f;
+    npc->direction = RIGHT;
+    npc->movement.velocity.x += 1.0f;
 }
 
 void NPCMoveLeft(NPC *npc)
 {
-    npc->movement.velocity -= 0.5f;
+    npc->direction = LEFT;
+    npc->movement.velocity.x -= 1.0f;
 }
 
-void NPCMoveX(NPC *npc)
+b32 CanMoveTheSameDirection(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
 {
-    switch(npc->spriteAnimation->direction)
+    v2 center = {0.5f * npc->dim.width, 0.5f * npc->dim.height};
+    /* We only need the min and max from the rect to test for AABB, so we can be a bit reckless here. */
+    Rect nextUpdate = {};
+    nextUpdate.min = v2{npc->movement.position.x + npc->movement.velocity.x * dt,
+        npc->movement.position.y + npc->movement.velocity.y * dt + 0.5f * npc->movement.acceleration.y * dt * dt} - center;
+    nextUpdate.max = v2{npc->movement.position.x + npc->movement.velocity.x * dt,
+        npc->movement.position.y + npc->movement.velocity.y * dt + 0.5f * npc->movement.acceleration.y * dt * dt} + center;
+
+    switch(npc->direction)
     {
+        case LEFT:
+            /* XXX: make it such that the NPC turns early*/
+            nextUpdate.max.x = 0.01f + nextUpdate.min.x;
+            for (int i = 0; i < rectManager->NonTraversable.size; i++)
+            {
+                if(TestAABBAABB(rectManager->NonTraversable.rects[i], &nextUpdate))
+                {
+                    return true;
+                }
+            }
+            break;
         case RIGHT:
-        {
+            /* XXX: Hack to make it such that the nextUpdate rect will be a
+             * small sliver of the actual rect width.
+             * This will make the NPC turn earlier instad of hitting the edge
+             * of the platform with the last pixel.
+             */
+            nextUpdate.min.x = nextUpdate.max.x - 0.01f;
+            for (int i = 0; i < rectManager->NonTraversable.size; i++)
+            {
+                if(TestAABBAABB(rectManager->NonTraversable.rects[i], &nextUpdate))
+                {
+                    return true;
+                }
+            }
+            break;
+        default:
+            ASSERT(!"I SHOUDLN'T GET HERE");
+    }
+
+    return false;
+}
+
+void SwitchDirection(NPC *npc)
+{
+    switch(npc->direction)
+    {
+        case LEFT:
+            npc->direction = RIGHT;
+            break;
+        case RIGHT:
+            npc->direction = LEFT;
+            break;
+        default:
+            ASSERT(!"I shoudln't get here");
+            break;
+    }
+}
+
+void MoveUniDirectional(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+{
+    switch(npc->direction)
+    {
+        case LEFT:
+            if (CanMoveTheSameDirection(npc, rectManager, gravity, dt) == false)
+            {
+                npc->direction = RIGHT;
+            }
+            break;
+        case RIGHT:
+            if (CanMoveTheSameDirection(npc, rectManager, gravity, dt) == false)
+            {
+                npc->direction = LEFT;
+            }
+            break;
+        default:
+            ASSERT(!"I shoudln't get here");
+            break;
+    }
+
+    switch(npc->direction)
+    {
+        case LEFT:
+            NPCMoveLeft(npc);
+            break;
+        case RIGHT:
             NPCMoveRight(npc);
             break;
-        }
-        case LEFT:
+        default:
+            ASSERT(!"I shoudln't get here");
+            break;
+    }
+}
+
+void MoveBiDirectional(NPC *npc)
+{
+
+}
+
+void NPCMoveX(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+{
+    switch(npc->movementPattern)
+    {
+        case UNI_DIRECTIONAL:
         {
-            NPCMoveLeft(npc);
+            MoveUniDirectional(npc, rectManager, gravity, dt);
+            break;
+        }
+        case BI_DIRECTIONAL:
+        {
+            MoveBiDirectional(npc);
             break;
         }
         default:
@@ -150,7 +261,7 @@ void NPCMoveX(NPC *npc)
     }
 }
 
-void NPCMove(NPC *npc)
+void NPCMove(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
 {
     /* This is where the NPC will decide where to move.
      * For now, let's make the NPC move left and right.*/
@@ -159,7 +270,7 @@ void NPCMove(NPC *npc)
     switch (npc->movementType)
     {
         case X_MOVEMENT:
-            NPCMoveX(npc);
+            NPCMoveX(npc, rectManager, gravity, dt);
             //or
             //NPCMoveRight(npc);
             break;
@@ -177,8 +288,8 @@ void NPCMove(NPC *npc)
     */
 }
 
-void UpdateNPCMovement(NPC *npc)
+void UpdateNPCMovement(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
 {
-    NPCMove(npc);
+    NPCMove(npc, rectManager, gravity, dt);
 }
 #endif

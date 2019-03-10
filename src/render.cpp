@@ -834,7 +834,8 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
-    UpdateNPCMovement(g_enemyNPC);
+    const GLfloat gravity = -9.81f;
+    UpdateNPCMovement(g_enemyNPC, g_rectManager, gravity, gameTimestep->dt);
 
     /* Update entities */
     UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
@@ -1159,9 +1160,10 @@ void LoadStuff(GameMetadata *gameMetadata)
                     "IDLE")
         );
     g_enemyNPC->spriteAnimation->direction = LEFT;
-    g_enemyNPC->direction = RIGHT;
+    g_enemyNPC->direction = LEFT;
     g_enemyNPC->renderLayer = BEHIND_PLAYER;
     g_enemyNPC->movementType = X_MOVEMENT;
+    g_enemyNPC->movementPattern = UNI_DIRECTIONAL;
 }
 
 inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
