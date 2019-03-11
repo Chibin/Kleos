@@ -1,6 +1,7 @@
 #ifndef __RENDER__
 #define __RENDER__
 
+#include "define.h"
 #include <stddef.h> /* offsetof */
 #include <stdio.h>
 #include <stdlib.h> /* abs */

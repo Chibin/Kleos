@@ -1,3 +1,4 @@
+#include "define.h"
 #include "game_memory.h"
 #include "logger.h"
 #include "rectangle.h"
@@ -45,8 +46,10 @@ RectManager *CreateRectManager(GameMemory *gm)
 {
     RectManager *rm = nullptr;
     rm = static_cast<RectManager *>(AllocateMemory(gm, (sizeof(RectManager))));
-    rm->rda[0] = *CreateRectDynamicArray(gm);
-    rm->rda[1] = *CreateRectDynamicArray(gm);
+    for (memory_index i = 0; i < ARRAY_SIZE(rm->rda); i++)
+    {
+        rm->rda[i] = *CreateRectDynamicArray(gm);
+    }
     return rm;
 }
 
