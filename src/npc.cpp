@@ -158,7 +158,7 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
     {
         case LEFT:
             /* XXX: make it such that the NPC turns early*/
-            nextUpdate->max.x = 0.5f + nextUpdate->min.x;
+            nextUpdate->max.x = 0.01f + nextUpdate->min.x;
             AddDebugRect(gameMetadata, nextUpdate);
 
             for (int i = 0; i < rectManager->NonTraversable.size; i++)
@@ -175,7 +175,7 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
              * This will make the NPC turn earlier instad of hitting the edge
              * of the platform with the last pixel.
              */
-            nextUpdate->min.x = nextUpdate->max.x - 0.5f;
+            nextUpdate->min.x = nextUpdate->max.x - 0.01f;
             AddDebugRect(gameMetadata, nextUpdate);
 
             for (int i = 0; i < rectManager->NonTraversable.size; i++)

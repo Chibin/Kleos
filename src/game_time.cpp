@@ -26,6 +26,7 @@ void ResetGameTimestep(GameTimestep *gt)
     gt->latestTime = now;
     gt->deltaTime = 0;
     gt->dt = 0;
+    gt->isPaused = false;
 
     gt->perfCountFrequency = SDL_GetPerformanceFrequency();
     gt->lastCounter = SDL_GetPerformanceCounter();
