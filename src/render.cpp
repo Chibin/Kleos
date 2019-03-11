@@ -109,6 +109,7 @@ inline void *RequestToReservedMemory(memory_index size)
         0, 0, 0, 1  \
     }
 
+#include "random.cpp"
 #include "npc.cpp"
 
 #define UPDATEANDRENDER(name) \
@@ -630,6 +631,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     perFrameRenderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
     perFrameRenderGroup.rectMemory.maxSize = rectMemoryBlockSize;
 
+    gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory);
+
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
     Render(gameMetadata,
            gameMetadata->vaoID,
@@ -866,7 +869,7 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     UpdateGameTimestep(gameTimestep);
 
     const GLfloat gravity = -9.81f;
-    UpdateNPCMovement(g_enemyNPC, g_rectManager, gravity, gameTimestep->dt);
+    UpdateNPCMovement(g_enemyNPC, gameMetadata, g_rectManager, gravity, gameTimestep->dt);
 
     /* Update entities */
     UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
@@ -914,6 +917,13 @@ void DrawScene(
     {
         Rect *rect = hurtBoxes->rects[i];
         rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
+        ASSERT(rect->bitmap);
+        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
+    }
+
+    for (memory_index i = 0; i < gameMetadata->rdaDebug->size; i++)
+    {
+        Rect *rect = gameMetadata->rdaDebug->rects[i];
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }

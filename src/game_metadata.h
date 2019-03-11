@@ -46,6 +46,8 @@ struct GameMetadata
     b32 isVulkanActive;
     b32 isOpenGLActive;
     b32 initOpenGL;
+
+    struct RectDynamicArray *rdaDebug;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

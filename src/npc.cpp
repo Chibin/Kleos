@@ -141,24 +141,29 @@ void NPCMoveLeft(NPC *npc)
     npc->movement.velocity.x -= 1.0f;
 }
 
-b32 CanMoveTheSameDirection(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *rectManager, f32 gravity, f32 dt)
 {
     v2 center = {0.5f * npc->dim.width, 0.5f * npc->dim.height};
     /* We only need the min and max from the rect to test for AABB, so we can be a bit reckless here. */
-    Rect nextUpdate = {};
-    nextUpdate.min = v2{npc->movement.position.x + npc->movement.velocity.x * dt,
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    Rect *nextUpdate = (Rect *)AllocateMemory(perFrameMemory, sizeof(Rect));
+    memset(nextUpdate, 0, sizeof(Rect));
+
+    nextUpdate->min = v2{npc->movement.position.x + npc->movement.velocity.x * dt,
         npc->movement.position.y + npc->movement.velocity.y * dt + 0.5f * npc->movement.acceleration.y * dt * dt} - center;
-    nextUpdate.max = v2{npc->movement.position.x + npc->movement.velocity.x * dt,
+    nextUpdate->max = v2{npc->movement.position.x + npc->movement.velocity.x * dt,
         npc->movement.position.y + npc->movement.velocity.y * dt + 0.5f * npc->movement.acceleration.y * dt * dt} + center;
 
     switch(npc->direction)
     {
         case LEFT:
             /* XXX: make it such that the NPC turns early*/
-            nextUpdate.max.x = 0.01f + nextUpdate.min.x;
+            nextUpdate->max.x = 0.5f + nextUpdate->min.x;
+            AddDebugRect(gameMetadata, nextUpdate);
+
             for (int i = 0; i < rectManager->NonTraversable.size; i++)
             {
-                if(TestAABBAABB(rectManager->NonTraversable.rects[i], &nextUpdate))
+                if(TestAABBAABB(rectManager->NonTraversable.rects[i], nextUpdate))
                 {
                     return true;
                 }
@@ -170,10 +175,12 @@ b32 CanMoveTheSameDirection(NPC *npc, RectManager *rectManager, f32 gravity, f32
              * This will make the NPC turn earlier instad of hitting the edge
              * of the platform with the last pixel.
              */
-            nextUpdate.min.x = nextUpdate.max.x - 0.01f;
+            nextUpdate->min.x = nextUpdate->max.x - 0.5f;
+            AddDebugRect(gameMetadata, nextUpdate);
+
             for (int i = 0; i < rectManager->NonTraversable.size; i++)
             {
-                if(TestAABBAABB(rectManager->NonTraversable.rects[i], &nextUpdate))
+                if(TestAABBAABB(rectManager->NonTraversable.rects[i], nextUpdate))
                 {
                     return true;
                 }
@@ -202,18 +209,18 @@ void SwitchDirection(NPC *npc)
     }
 }
 
-void MoveUniDirectional(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+void MoveUniDirectional(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
 {
     switch(npc->direction)
     {
         case LEFT:
-            if (CanMoveTheSameDirection(npc, rectManager, gravity, dt) == false)
+            if (CanMoveTheSameDirection(npc, gm, rectManager, gravity, dt) == false)
             {
                 npc->direction = RIGHT;
             }
             break;
         case RIGHT:
-            if (CanMoveTheSameDirection(npc, rectManager, gravity, dt) == false)
+            if (CanMoveTheSameDirection(npc, gm, rectManager, gravity, dt) == false)
             {
                 npc->direction = LEFT;
             }
@@ -242,13 +249,13 @@ void MoveBiDirectional(NPC *npc)
 
 }
 
-void NPCMoveX(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+void NPCMoveX(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
 {
     switch(npc->movementPattern)
     {
         case UNI_DIRECTIONAL:
         {
-            MoveUniDirectional(npc, rectManager, gravity, dt);
+            MoveUniDirectional(npc, gm, rectManager, gravity, dt);
             break;
         }
         case BI_DIRECTIONAL:
@@ -261,7 +268,7 @@ void NPCMoveX(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
     }
 }
 
-void NPCMove(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+void NPCMove(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
 {
     /* This is where the NPC will decide where to move.
      * For now, let's make the NPC move left and right.*/
@@ -270,7 +277,7 @@ void NPCMove(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
     switch (npc->movementType)
     {
         case X_MOVEMENT:
-            NPCMoveX(npc, rectManager, gravity, dt);
+            NPCMoveX(npc, gm, rectManager, gravity, dt);
             //or
             //NPCMoveRight(npc);
             break;
@@ -288,8 +295,8 @@ void NPCMove(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
     */
 }
 
-void UpdateNPCMovement(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+void UpdateNPCMovement(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
 {
-    NPCMove(npc, rectManager, gravity, dt);
+    NPCMove(npc, gm, rectManager, gravity, dt);
 }
 #endif
