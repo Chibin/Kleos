@@ -87,6 +87,24 @@ inline v2 operator-(v2 A, f32 B) //NOLINT
     return A;
 }
 
+inline v2 operator/(v2 A, f32 B) //NOLINT
+{
+
+    A.x /= B;
+    A.y /= B;
+
+    return A;
+}
+
+inline v2 operator/(f32 A, v2 B) //NOLINT
+{
+
+    B.x /= A;
+    B.y /= A;
+
+    return B;
+}
+
 /*
  * V3
  */
