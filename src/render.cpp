@@ -182,6 +182,20 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
+
+        gameMetadata->whiteBitmap.width = 1;
+        gameMetadata->whiteBitmap.height = 1;
+        gameMetadata->whiteBitmap.format = GL_RGBA;
+        gameMetadata->whiteBitmap.bitmapID = 998; // XXX: needs to be changed somewhere
+        gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
+        gameMetadata->whiteBitmap.data =
+            (u8 *)AllocateMemory(reservedMemory, gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * sizeof(u32));
+        for (memory_index i = 0; i < gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height; i++)
+        {
+            /* alpha -> blue -> green -> red: 1 byte each */
+            *((u32 *)gameMetadata->whiteBitmap.data + i) = 0x33333333;
+        }
+
         TTF_Font *font = OpenFont();
         ASSERT(font != nullptr);
         gameMetadata->font = font;
@@ -313,6 +327,26 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             stbi_image_free(boxPixels);
 
+            vc->whiteTextures[0].texWidth = gameMetadata->whiteBitmap.width;
+            vc->whiteTextures[0].texHeight = gameMetadata->whiteBitmap.height;
+            /* stbi does not do padding, so the pitch is the component times
+             * the width of the image. The component is 4 because of STBI_rgb_alpha.
+             */
+            vc->whiteTextures[0].texPitch = gameMetadata->whiteBitmap.width * 4;
+            vc->whiteTextures[0].dataSize = gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * 4;
+            vc->whiteTextures[0].data = gameMetadata->whiteBitmap.data;
+
+            VulkanPrepareTexture(vc,
+                    &vc->gpu,
+                    &vc->device,
+                    &vc->setupCmd,
+                    &vc->cmdPool,
+                    &vc->queue,
+                    &vc->memoryProperties,
+                    useStagingBuffer,
+                    vc->whiteTextures,
+                    VK_IMAGE_LAYOUT_GENERAL);
+
             /* Creating pipeline layout, descriptor pool, and render pass can be done
              * indenpendently
              */
@@ -348,6 +382,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     vc,
                     &vc->boxDescSet,
                     vc->boxTextures,
+                    DEMO_TEXTURE_COUNT,
+                    &vc->uniformData,
+                    &vc->uniformDataFragment);
+
+            VulkanSetDescriptorSet(
+                    vc,
+                    &vc->whiteDescSet,
+                    vc->whiteTextures,
                     DEMO_TEXTURE_COUNT,
                     &vc->uniformData,
                     &vc->uniformDataFragment);
@@ -417,18 +459,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->playerRect->type = REGULAR;
         gameMetadata->playerRect->frameDirection = LEFT;
 
-        gameMetadata->whiteBitmap.width = 1;
-        gameMetadata->whiteBitmap.height = 1;
-        gameMetadata->whiteBitmap.format = GL_RGBA;
-        gameMetadata->whiteBitmap.bitmapID = 998; // XXX: needs to be changed somewhere
-        gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
-        gameMetadata->whiteBitmap.data = (u8 *)AllocateMemory(reservedMemory, 1 * 1 * sizeof(u32));
-        for (memory_index i = 0; i < 1 * 1; i++)
-        {
-            /* alpha -> blue -> green -> red: 1 byte each */
-            *((u32 *)gameMetadata->whiteBitmap.data + i) = 0x33000000;
-        }
-
         LoadAssets(gameMetadata);
 
         if (gameMetadata->isVulkanActive)
@@ -451,7 +481,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
                     &gameMetadata->whiteBitmap,
-                    &vc->secondDescSet);
+                    &vc->whiteDescSet);
 
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
@@ -968,6 +998,11 @@ void DrawUI(
 
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
+
+    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+    statsRect->bitmap = &gameMetadata->whiteBitmap;
+    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+
     statsRect->bitmap = &stringBitmap;
 
     perFrameRenderGroup->rectCount = 0;
@@ -1024,10 +1059,6 @@ void DrawUI(
         SetOpenGLDrawToScreenCoordinate(*viewLoc, *projectionLoc);
     }
 
-    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
-
-    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-    statsRect->bitmap = &gameMetadata->whiteBitmap;
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
     DrawRenderGroup(

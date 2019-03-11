@@ -124,6 +124,7 @@ struct VulkanContext
     VkDescriptorSet secondDescSet;
     VkDescriptorSet playerDescSet;
     VkDescriptorSet boxDescSet;
+    VkDescriptorSet whiteDescSet;
     VkDescriptorSetLayout descLayout;
 
     PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback;
@@ -162,6 +163,7 @@ struct VulkanContext
     TextureObject UITextures[DEMO_TEXTURE_COUNT];
     TextureObject playerTextures[DEMO_TEXTURE_COUNT];
     TextureObject boxTextures[DEMO_TEXTURE_COUNT];
+    TextureObject whiteTextures[DEMO_TEXTURE_COUNT];
 
     uint32_t swapchainImageCount;
 
