@@ -44,8 +44,12 @@ struct GameTimestep
     u64 counterElapsed;
 
     u64 lastCycleCount;
+
+    b32 isPaused;
 };
 
-void PauseGameTimestep();
+void PauseGameTimestep(GameTimestep *gt);
+void UnpauseGameTimeStep(GameTimestep *gt);
 void ResetGameTimestep(GameTimestep *gt);
 void UpdateGameTimestep(GameTimestep *gt);
+b32 IsGamePaused(GameTimestep *gt);

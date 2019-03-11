@@ -5,15 +5,27 @@
 static bool g_canJump = true;
 static bool g_canAttack = true;
 
-void ToggleBetweenVulkanAndOpenGL(GameMetadata *gameMetadata)
+void ToggleBetweenVulkanAndOpenGL(GameMetadata *gm)
 {
-    gameMetadata->isVulkanActive = !gameMetadata->isVulkanActive;
-    gameMetadata->isOpenGLActive = !gameMetadata->isVulkanActive;
+    gm->isVulkanActive = !gm->isVulkanActive;
+    gm->isOpenGLActive = !gm->isVulkanActive;
+}
+
+void TogglePauseGame(GameMetadata *gm)
+{
+    if (IsGamePaused(gm->gameTimestep))
+    {
+        UnpauseGameTimeStep(gm->gameTimestep);
+    }
+    else
+    {
+        PauseGameTimestep(gm->gameTimestep);
+    }
 }
 
 void ProcessInputDown(
         SDL_Keycode sym,
-        GameMetadata *gameMetadata,
+        GameMetadata *gm,
         b32 *continueRunning)
 {
     switch (sym)
@@ -22,7 +34,10 @@ void ProcessInputDown(
         *continueRunning = false;
         break;
     case  SDLK_1:
-        ToggleBetweenVulkanAndOpenGL(gameMetadata);
+        ToggleBetweenVulkanAndOpenGL(gm);
+        break;
+    case SDLK_p:
+        TogglePauseGame(gm);
         break;
     default:
         /* TODO: differentiate different types of input

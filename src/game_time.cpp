@@ -4,8 +4,19 @@
 #include "game_time.h"
 #include "sdl_common.h"
 
-void PauseGameTimestep()
+b32 IsGamePaused(GameTimestep *gt)
 {
+    return gt->isPaused;
+}
+
+void UnpauseGameTimeStep(GameTimestep *gt)
+{
+    gt->isPaused = false;
+}
+
+void PauseGameTimestep(GameTimestep *gt)
+{
+    gt->isPaused = true;
 }
 
 void ResetGameTimestep(GameTimestep *gt)
@@ -23,6 +34,13 @@ void ResetGameTimestep(GameTimestep *gt)
 
 void UpdateGameTimestep(GameTimestep *gt)
 {
+    if (IsGamePaused(gt))
+    {
+        gt->deltaTime = 0;
+        gt->dt = 0;
+        return;
+    }
+
     gt->prevTime = gt->latestTime;
     gt->latestTime = SDL_GetTicks();
 
