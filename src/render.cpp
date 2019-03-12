@@ -671,38 +671,34 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
     //      rayDirection))
-    v2 center = {0.5f * gameMetadata->playerRect->width, 0.5f * gameMetadata->playerRect->height};
+    v2 center = 0.5f * v2{gameMetadata->playerRect->width, gameMetadata->playerRect->height};
     Rect nextUpdate = *gameMetadata->playerRect;
-    nextUpdate.min = v2{e->position.x + e->velocity.x * dt,
-        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt} - center;
-    nextUpdate.max = v2{e->position.x + e->velocity.x * dt,
-        e->position.y + e->velocity.y * dt + 0.5f * e->acceleration.y * dt * dt} + center;
+    nextUpdate.min = V2(e->position) + V2(e->velocity) * dt + 0.5f * V2(e->acceleration) * dt * dt - center;
+    nextUpdate.max = V2(e->position) + V2(e->velocity) * dt + 0.5f * V2(e->acceleration) * dt * dt + center;
+
+    /* XXX: If we're on the ground we should always reset the accelration to the force of gravity. */
+    e->acceleration.y += gravity;
 
     for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
     {
         /* This will need to happen for all AABB checks */
         Rect *rect = g_rectManager->NonTraversable.rects[i];
 
+#if 0
         real32 dX = e->velocity.x * dt;
         real32 dY = e->velocity.y + (gravity + e->acceleration.y) * dt;
 
         glm::vec3 rayDirection = { dX, dY, 0 };
         rayDirection = glm::normalize(rayDirection);
         rayDirection = glm::vec3(1 / rayDirection.x, 1 / rayDirection.y, 0);
-
-        /* This would be nice to be put into the screen instead of the console
-         */
-        printf("rect X- min: %f max: %f\n", rect->min.x, rect->max.x);
-        printf("rect Y- min: %f max: %f\n", rect->min.y, rect->max.y);
+#endif
 
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* how to differentiate between x and y axis? */
-            printf("I hit something!!!!!!!\n");
             e->position.y = rect->max.y + gameMetadata->playerRect->height * 0.5f;
             e->velocity.y = 0;
-            e->acceleration.y = 0;
-            e->position.x += e->velocity.x * dt;
+            e->acceleration.y = gravity;
         }
         else
         {
@@ -720,10 +716,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     /* TODO: There is a bug here. We're not properly updating the position
      * based on the collisions
      */
-    e->acceleration.y += gravity;
-    e->velocity.y += e->acceleration.y * dt;
-    e->position.y += e->velocity.y * dt;
-    e->position.x += e->velocity.x * dt;
+    e->position += e->velocity * dt + 0.5f * e->acceleration * dt * dt;
+    e->velocity.y += e->acceleration.y *dt;
 
     UpdatePositionBasedOnCollission(g_enemyNPC, g_rectManager, gravity, dt);
 

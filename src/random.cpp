@@ -1,3 +1,12 @@
+v2 V2(glm::vec3 A)
+{
+    v2 result;
+    result.x = A.x;
+    result.y = A.y;
+    return result;
+
+}
+
 Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 {
     v2 dim = max - min;

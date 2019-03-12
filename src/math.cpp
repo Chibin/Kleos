@@ -42,6 +42,16 @@ inline v2 operator+(v2 A, v2 B) //NOLINT
     return result;
 }
 
+inline v2 operator+(v2 A, f32 B) //NOLINT
+{
+
+    v2 result;
+    result.x = A.x + B;
+    result.y = A.y + B;
+
+    return result;
+}
+
 inline v2 &operator+=(v2 &A, v2 B)
 {
 
@@ -269,7 +279,6 @@ u8 SafeCastToU8(f32 num)
 
 s32 *SafeCastU32ToS32(u32 *u32Pointer)
 {
-
     ASSERT(*u32Pointer <= INT32_MAX); // NOLINT
     return (s32 *)u32Pointer;
 }
