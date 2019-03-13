@@ -7,6 +7,16 @@ v2 V2(glm::vec3 A)
 
 }
 
+v3 V3(glm::vec3 A)
+{
+    v3 result;
+    result.x = A.x;
+    result.y = A.y;
+    result.z = A.z;
+    return result;
+
+}
+
 Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 {
     v2 dim = max - min;
@@ -27,3 +37,16 @@ void AddDebugRect(GameMetadata *gm, Rect *rect)
 
     PushBack(gm->rdaDebug, newRect);
 }
+
+void AddDebugRect(GameMetadata *gm, FrameState *frameState, v3 position, v4 color)
+{
+    GameMemory *perFrameMemory = &gm->temporaryMemory;
+    Rect *newRect = CreateFrameRect(perFrameMemory, frameState, position, color);
+
+    newRect->bitmap = &gm->whiteBitmap;
+    newRect->bitmapID = gm->whiteBitmap.bitmapID;
+    newRect->renderLayer = DEBUG;
+
+    PushBack(gm->rdaDebug, newRect);
+}
+

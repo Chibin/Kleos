@@ -8,6 +8,7 @@ struct RectDynamicArray
 {
     int size;
     int allocatedSize; /*not in bytes but amount of entities */
+
     Rect **rects;
 };
 

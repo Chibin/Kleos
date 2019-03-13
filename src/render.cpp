@@ -542,7 +542,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 #else
         Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
 #endif
-        gameMetadata->particleSystem.particleCount = 1000;
+        gameMetadata->particleSystem.particleCount = 10;
         gameMetadata->particleSystem.particles =
             (Particle *)AllocateMemory(reservedMemory,
                                        gameMetadata->particleSystem.particleCount * sizeof(Particle));
@@ -801,11 +801,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
              * entity. Otherwise, it's hard to make the frame distance
              * symetrical when swapping between both directions
              */
-            Rect *attackHitBox = CreateFrameRect(perFrameMemory,
-                    &e->frameState,
-                    v3{ e->position.x, e->position.y, e->position.z},
-                    COLOR_RED);
-            PushBack(hitBoxes, attackHitBox);
+            AddDebugRect(gameMetadata, &e->frameState, V3(e->position), COLOR_RED);
         }
         else
         {
