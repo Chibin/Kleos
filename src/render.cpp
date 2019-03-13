@@ -740,6 +740,13 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
             /* TODO: This should be somewhere else */
             e->frameState.transform = glm::mat4(-2.0f);
             e->frameState.transform[3][3] = 1.0f;
+
+            if (gameMetadata->playerRect->frameDirection == RIGHT)
+            {
+                e->frameState.transform[0][0] = abs(e->frameState.transform[0][0]);
+                e->frameState.transform[1][1] = abs(e->frameState.transform[1][1]);
+            }
+
         }
 
         if (e->frameState.timePassedCurrentFrame == 0)
