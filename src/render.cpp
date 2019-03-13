@@ -329,6 +329,30 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             stbi_image_free(boxPixels);
 
+            stbi_uc *pshroomPixels = stbi_load( "./materials/textures/pshroom.png",
+                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            vc->pshroomTextures[0].texWidth = texWidth;
+            vc->pshroomTextures[0].texHeight = texHeight;
+            /* stbi does not do padding, so the pitch is the component times
+             * the width of the image. The component is 4 because of STBI_rgb_alpha.
+             */
+            vc->pshroomTextures[0].texPitch = texWidth * 4;
+            vc->pshroomTextures[0].dataSize = texWidth * texHeight * 4;
+            vc->pshroomTextures[0].data = pshroomPixels;
+
+            VulkanPrepareTexture(vc,
+                    &vc->gpu,
+                    &vc->device,
+                    &vc->setupCmd,
+                    &vc->cmdPool,
+                    &vc->queue,
+                    &vc->memoryProperties,
+                    useStagingBuffer,
+                    vc->pshroomTextures,
+                    VK_IMAGE_LAYOUT_GENERAL);
+
+            stbi_image_free(pshroomPixels);
+
             vc->whiteTextures[0].texWidth = gameMetadata->whiteBitmap.width;
             vc->whiteTextures[0].texHeight = gameMetadata->whiteBitmap.height;
             /* stbi does not do padding, so the pitch is the component times
@@ -384,6 +408,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     vc,
                     &vc->boxDescSet,
                     vc->boxTextures,
+                    DEMO_TEXTURE_COUNT,
+                    &vc->uniformData,
+                    &vc->uniformDataFragment);
+
+            VulkanSetDescriptorSet(
+                    vc,
+                    &vc->pshroomDescSet,
+                    vc->pshroomTextures,
                     DEMO_TEXTURE_COUNT,
                     &vc->uniformData,
                     &vc->uniformDataFragment);
@@ -469,6 +501,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     &gameMetadata->bitmapToDescriptorSetMap,
                     FindBitmap(&gameMetadata->bitmapSentinelNode, "box"),
                     &vc->boxDescSet);
+
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom"),
+                    &vc->pshroomDescSet);
 
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
@@ -1194,12 +1231,12 @@ void LoadStuff(GameMetadata *gameMetadata)
 
     g_enemyNPC->dim.height = 1.0f;
     g_enemyNPC->dim.width = 1.5f;
-    g_enemyNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "arche");
+    g_enemyNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
     g_enemyNPC->spriteAnimation =
         CreateCopyOfSpriteAnimationInfo(
                 reservedMemory,
                 GetSpriteAnimationInfo(
-                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
+                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom"),
                     "IDLE")
         );
     g_enemyNPC->spriteAnimation->direction = LEFT;
@@ -1254,6 +1291,11 @@ inline void LoadAssets(GameMetadata *gameMetadata)
               g_bitmapID++, "./materials/textures/container.png");
     PushBitmap(&gameMetadata->bitmapSentinelNode, boxBitmap);
 
+    auto *pshroomBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    SetBitmap(pshroomBitmap, "pshroom", TextureParam{ GL_LINEAR, GL_LINEAR },
+              g_bitmapID++, "./materials/textures/pshroom.png");
+    PushBitmap(&gameMetadata->bitmapSentinelNode, pshroomBitmap);
+
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
 
@@ -1266,18 +1308,57 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     u32 bitmapWidth = archeBitmap->width;
     u32 bitmapHeight = archeBitmap->height;
 
-    /* Replace with read file data */
-    FrameAnimation *frameAnimations =
-        (FrameAnimation *)AllocateMemory(reservedMemory, sizeof(FrameAnimation));
-    ZeroSize(frameAnimations, sizeof(FrameAnimation));
-
-    LoadFrameData(frameAnimations, "./assets/texture_data/frames.txt");
-    /* TODO: free the frames if we don't need it anymore */
-
-    AddFrameAnimationNode(&gameMetadata->frameAnimationSentinelNode, frameAnimations);
+    LoadFrameData(gameMetadata, "./assets/texture_data/frames.txt");
 
     FrameAnimation *fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png");
     ASSERT(fa != NULL);
+
+    for (memory_index animCount = 0; animCount < fa->animationCount; animCount ++)
+    {
+
+        /* TODO: Have a way to find the correct animation information based on name? */
+        ASSERT(fa->frameCycles[animCount].animationInfo == NULL);
+        if (fa->frameCycles[animCount].animationInfo == nullptr)
+        {
+            fa->frameCycles[animCount].animationInfo =
+                (Animation2D *)AllocateMemory(reservedMemory, sizeof(Animation2D));
+            ZeroSize(fa->frameCycles[animCount].animationInfo, sizeof(Animation2D));
+        }
+
+        Animation2D *spriteAnim = fa->frameCycles[animCount].animationInfo;
+        spriteAnim->direction = LEFT;
+        u32 totalFrames = fa->frameCycles[animCount].frameCount;
+        spriteAnim->totalFrames = totalFrames;
+        spriteAnim->frameCoords =
+            (RectUVCoords *)AllocateMemory(reservedMemory, sizeof(RectUVCoords) * totalFrames);
+        if (strcmp(fa->frameCycles[animCount].name, "ATTACK") == 0)
+        {
+            spriteAnim->timePerFrame = 150;
+        }
+        else if (strcmp(fa->frameCycles[animCount].name, "IDLE") == 0)
+        {
+            spriteAnim->timePerFrame = 1000 * 0.75;
+        }
+
+        /* TODO: Need to figure out how to use compound literals with specific assignment in windows */
+        v2 topRight = {}, bottomRight = {}, bottomLeft = {}, topLeft = {};
+        for(memory_index i = 0; i < totalFrames; i++)
+        {
+            spriteAnim->frameCoords[i] =
+                RectUVCoords{
+                    topRight    = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[0], bitmapWidth, bitmapHeight),
+                    bottomRight = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[1], bitmapWidth, bitmapHeight),
+                    bottomLeft  = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[2], bitmapWidth, bitmapHeight),
+                    topLeft     = PixelToUV(fa->frameCycles[animCount].frames[i].pixel[3], bitmapWidth, bitmapHeight)
+                };
+        }
+    }
+
+    fa = GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom");
+    ASSERT(fa != NULL);
+    Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
+    bitmapWidth = bitmap->width;
+    bitmapHeight = bitmap->height;
 
     for (memory_index animCount = 0; animCount < fa->animationCount; animCount ++)
     {

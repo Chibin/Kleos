@@ -47,4 +47,6 @@ enum FrameDataReadState
     FRAMES,
 };
 
+void AddFrameAnimationNode(FrameAnimation *oldNode, FrameAnimation *newNode);
+
 #endif

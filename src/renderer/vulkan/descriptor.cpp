@@ -80,7 +80,7 @@ void VulkanPrepareDescriptorPool(VulkanContext *vc)
          * allocate? Each descriptor set we allocate will have the
          * type count? So, 1 uniform buffer, and 1 sampler.
          */
-        /*.maxSets =*/          5,
+        /*.maxSets =*/          6,
         /*.poolSizeCount =*/    2,
         /*.pPoolSizes =*/       &typeCount[0],
     };

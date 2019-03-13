@@ -95,13 +95,14 @@ memory_index CopyFramePixelCoordinatesFromLine(char *from, v2i *to, b32 isNewlin
     return bytesRead;
 }
 
-void LoadFrameData(FrameAnimation *fa, const char* file)
+void LoadFrameData(GameMetadata *gameMetadata, const char* file)
 {
     memory_index fileSize = 0;
     char *fileData = ReadFile(file, &fileSize);
     memory_index counter = 0;
     FrameDataReadState fdrs = NAME;
     u8 frameCount = 0;
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     /* All 3 of them represent the end of a line. But...
      * \r (Carriage Return) - moves the cursor to the beginning of the line without advancing to the next line
@@ -113,13 +114,13 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
     b32 isNewlineOnly = false;
     u8 animationStateCount = 0;
 
+    FrameAnimation *fa = nullptr;
     while(counter < fileSize)
     {
         switch(fdrs)
         {
             case NAME:
             {
-
                 char *name = "name:\r\n";
                 if (VerifyStringAndGotoNextLine(tmp, name) == false)
                 {
@@ -127,6 +128,10 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
                     ASSERT(VerifyStringAndGotoNextLine(tmp, name));
                     isNewlineOnly = true;
                 }
+
+                fa = (FrameAnimation *)AllocateMemory(reservedMemory, sizeof(FrameAnimation));
+                ZeroSize(fa, sizeof(FrameAnimation));
+
                 counter += strlen(name);
                 tmp = fileData + counter;
 
@@ -162,7 +167,7 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
             }
             case FRAME_STATE_NAME:
             {
-                ASSERT(animationStateCount <= fa->animationCount);
+                ASSERT(animationStateCount < fa->animationCount);
                 FrameCycle *fc = &fa->frameCycles[animationStateCount];
 
                 char *name = "frame name:\n";
@@ -244,7 +249,7 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
                     }
                 }
 
-                if (animationStateCount < fa->animationCount)
+                if (animationStateCount < fa->animationCount - 1)
                 {
                     fdrs = FRAME_STATE_NAME;
                     animationStateCount++;
@@ -253,6 +258,7 @@ void LoadFrameData(FrameAnimation *fa, const char* file)
                 {
                     fdrs = NAME;
                     animationStateCount = 0;
+                    AddFrameAnimationNode(&gameMetadata->frameAnimationSentinelNode, fa);
                 }
                 break;
             }
