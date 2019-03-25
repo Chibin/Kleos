@@ -70,8 +70,15 @@ void VulkanPreparePipeline(VulkanContext *vc, u32 stride)
     dynamicStateEnables[dynamicState.dynamicStateCount++] = VK_DYNAMIC_STATE_SCISSOR;
 
     VkPipelineColorBlendAttachmentState attState[1] = {};
-    attState[0].colorWriteMask = 0xf;
-    attState[0].blendEnable = VK_FALSE;
+    attState[0].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    attState[0].blendEnable = VK_TRUE;
+    attState[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    attState[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    attState[0].colorBlendOp = VK_BLEND_OP_ADD;
+    attState[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    attState[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    attState[0].alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo cb = {};
     cb.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -235,8 +242,15 @@ void VulkanPrepare2ndPipeline(VulkanContext *vc, u32 stride)
     dynamicStateEnables[dynamicState.dynamicStateCount++] = VK_DYNAMIC_STATE_SCISSOR;
 
     VkPipelineColorBlendAttachmentState attState[1] = {};
-    attState[0].colorWriteMask = 0xf;
-    attState[0].blendEnable = VK_FALSE;
+    attState[0].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    attState[0].blendEnable = VK_TRUE;
+    attState[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    attState[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    attState[0].colorBlendOp = VK_BLEND_OP_ADD;
+    attState[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    attState[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    attState[0].alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo cb = {};
     cb.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

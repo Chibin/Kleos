@@ -12,10 +12,18 @@ layout (location = 0) out vec4 color;
 
 void main()
 {
-    color = texture(tex, TexCoord) * vColor;
     if (texture(tex, TexCoord).a < 0.01)
     {
         discard;
+    }
+
+    if (vColor != vec4(1,1,1,1))
+    {
+        color = mix(texture(tex, TexCoord), vColor, 0.5f);
+    }
+    else
+    {
+        color = texture(tex, TexCoord);
     }
 }
 
