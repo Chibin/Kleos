@@ -5,6 +5,60 @@
 
 #include "bitmap.h"
 #include "rectangle.h"
+#include "scene_node.h"
+
+struct AABB
+{
+    v2 center;
+    f32 radius;
+};
+
+struct MinMax
+{
+    v2 min;
+    v2 max;
+};
+
+inline void GetMinMax(v2 center, f32 radius, v2 *o_min, v2 *o_max)
+{
+    *o_min = center - radius;
+    *o_max = center + radius;
+}
+
+void GetMinMax(v2 center, f32 radius, MinMax *o_minMax)
+{
+    GetMinMax(center, radius, &o_minMax->min, &o_minMax->max);
+}
+
+inline void GetMinMax(AABB *aabb, MinMax *o_minMax)
+{
+    GetMinMax(aabb->center, aabb->radius, o_minMax);
+}
+
+inline void GetMinMax(Rect *rect, MinMax *o_minMax)
+{
+    o_minMax->min = rect->min;
+    o_minMax->max = rect->max;
+}
+
+void GetMinMax(SceneNode *sn, MinMax *o_minMax)
+{
+    GetMinMax(sn->rect, o_minMax);
+}
+
+b32 ContainsPoint(AABB *aabb, v2 p)
+{
+    MinMax minMax = {};
+    GetMinMax(aabb, &minMax);
+
+    if(minMax.min.x <= p.x && p.x <= minMax.max.x &&
+       minMax.min.y <= p.y && p.y <= minMax.max.y)
+    {
+        return true;
+    }
+
+    return false;
+}
 
 /* RayCast Intersection */
 bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)
@@ -28,7 +82,7 @@ bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)
     return tmax > MAX(tmin, 0.0);
 }
 
-b32 TestAABBAABB(Rect *a, Rect *b)
+b32 TestAABBAABB(MinMax *a, MinMax *b)
 {
     if (a->max.v[0] < b->min.v[0] || a->min.v[0] > b->max.v[0])
     {
@@ -41,4 +95,25 @@ b32 TestAABBAABB(Rect *a, Rect *b)
 
     return true;
 }
+
+b32 TestAABBAABB(Rect *a, Rect *b)
+{
+    MinMax aMinMax = {};
+    MinMax bMinMax = {};
+    GetMinMax(a, &aMinMax);
+    GetMinMax(b, &bMinMax);
+
+    return TestAABBAABB(&aMinMax, &bMinMax);
+}
+
+b32 TestAABBAABB(SceneNode *sn, AABB *range)
+{
+    MinMax rangeMinMax = {};
+    MinMax snMinMax = {};
+    GetMinMax(range, &rangeMinMax);
+    GetMinMax(sn, &snMinMax);
+
+    return TestAABBAABB(&snMinMax, &rangeMinMax);
+}
+
 #endif

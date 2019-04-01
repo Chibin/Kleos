@@ -27,7 +27,7 @@ void MainGameLoop(SDL_Window *mainWindow, b32 isVulkanActive, RenderAPI *renderA
     gameMetadata.maxBlockSize = GIGABYTE(1);
     gameMetadata.base = (u8 *)malloc(gameMetadata.maxBlockSize);
 
-    u32 tempSize = MEGABYTE(20);
+    u32 tempSize = MEGABYTE(50);
     gameMetadata.temporaryMemory.base = (u8 *)AllocateMemory(&gameMetadata, tempSize);
     gameMetadata.temporaryMemory.maxSize = tempSize;
 

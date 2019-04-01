@@ -668,7 +668,24 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     perFrameRenderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
     perFrameRenderGroup.rectMemory.maxSize = rectMemoryBlockSize;
 
-    gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory);
+    gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
+
+    SceneManager *sm = (SceneManager *)AllocateMemory(perFrameMemory, sizeof(SceneManager));
+    memset(sm, 0, sizeof(SceneManager));
+    sm->perFrameMemory = perFrameMemory;
+    CreateScenePartition(sm, &g_rectManager->NonTraversable);
+
+    AABB range = {};
+    range.radius = 5.0f;
+    AddDebugRect(gameMetadata, &range, COLOR_GREEN);
+
+    ArrayList *al = GetRectsWithInRange(sm, &range);
+    for(memory_index i = 0; i < al->size; i++)
+    {
+        /* TODO: need to make this look easier to read. This looks questionable. */
+        SceneNode *sn = (SceneNode *)*(al->ppData + al->sizeOfType * i);
+        AddDebugRect(gameMetadata, sn->rect);
+    };
 
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
     Render(gameMetadata,
@@ -1433,5 +1450,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
             PushBack(&(g_rectManager->NonTraversable), collissionRect);
         }
     }
+
 }
 #endif

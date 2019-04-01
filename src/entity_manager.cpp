@@ -121,6 +121,7 @@ void _allocateMoreMemory(GameMemory *gm, EntityManager *em)
 
     auto *entities =
         static_cast<Entity *>(AllocateMemory(gm, (sizeof(Entity) * newTotalAllocatedSpace)));
+    //(Entity *)ReallocMemory(gm, em->entities, (sizeof(Entity) * newTotalAllocatedSpace));
 
     if (entities == nullptr)
     {
@@ -198,5 +199,7 @@ void PushBack(GameMemory *gm, EntityDynamicArray *eda, Entity *entity)
     eda->entities[eda->size] = entity;
     eda->size++;
 }
+
+/* TODO: Realloc */
 
 #endif

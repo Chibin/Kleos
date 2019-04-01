@@ -58,4 +58,11 @@ inline void *AllocateMemory(GameMemory *gm, memory_index size)
 
     return newAllocBase;
 }
+
+inline void *ReallocMemory(GameMemory *gm, void *ptr, memory_index size)
+{
+    u8 *newAllocBase = nullptr;
+
+    return newAllocBase;
+}
 #endif

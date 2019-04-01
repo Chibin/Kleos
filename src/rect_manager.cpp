@@ -71,11 +71,8 @@ void PushBack(RectDynamicArray *rda, Rect *rect)
 {
     if (rda->allocatedSize <= rda->size)
     {
-        fprintf(stderr, "I should not get here\n");
-        printf("I should not get here\n");
-        printf("Pausing all activity. Press enter in console to resume.\n");
-        getchar();
-        // getchar();
+        ASSERT(!"I should not get here\n");
+        ASSERT(!"Pausing all activity. Press enter in console to resume.\n");
     }
 
     rda->rects[rda->size] = rect;
