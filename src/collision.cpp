@@ -51,13 +51,7 @@ b32 ContainsPoint(AABB *aabb, v2 p)
     MinMax minMax = {};
     GetMinMax(aabb, &minMax);
 
-    if(minMax.min.x <= p.x && p.x <= minMax.max.x &&
-       minMax.min.y <= p.y && p.y <= minMax.max.y)
-    {
-        return true;
-    }
-
-    return false;
+    return minMax.min.x <= p.x && p.x <= minMax.max.x && minMax.min.y <= p.y && p.y <= minMax.max.y;
 }
 
 /* RayCast Intersection */
