@@ -115,6 +115,17 @@ inline v2 operator/(f32 A, v2 B) //NOLINT
     return B;
 }
 
+inline b32 operator<(v2 A, v2 B) //NOLINT
+{
+
+    if ((A.x < B.x) && (A.y < B.y))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 /*
  * V3
  */

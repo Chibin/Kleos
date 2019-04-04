@@ -88,10 +88,10 @@ void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gra
         V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
 
     npc->movement.acceleration.y += gravity;
-    for (int i = 0; i < rectManager->NonTraversable.size; i++)
+    for (int i = 0; i < rectManager->NonTraversable.rda.size; i++)
     {
         /* This will need to happen for all AABB checks */
-        Rect *rect = rectManager->NonTraversable.rects[i];
+        Rect *rect = rectManager->NonTraversable.rda.rects[i];
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* XXX: This is the part where we should figure out the direction of the collision */
@@ -144,9 +144,9 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
             nextUpdate.max.x = 0.01f + nextUpdate.min.x;
             AddDebugRect(gameMetadata, &nextUpdate);
 
-            for (int i = 0; i < rectManager->NonTraversable.size; i++)
+            for (int i = 0; i < rectManager->NonTraversable.rda.size; i++)
             {
-                if(TestAABBAABB(rectManager->NonTraversable.rects[i], &nextUpdate))
+                if(TestAABBAABB(rectManager->NonTraversable.rda.rects[i], &nextUpdate))
                 {
                     return true;
                 }
@@ -161,9 +161,9 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
             nextUpdate.min.x = nextUpdate.max.x - 0.01f;
             AddDebugRect(gameMetadata, &nextUpdate);
 
-            for (int i = 0; i < rectManager->NonTraversable.size; i++)
+            for (int i = 0; i < rectManager->NonTraversable.rda.size; i++)
             {
-                if(TestAABBAABB(rectManager->NonTraversable.rects[i], &nextUpdate))
+                if(TestAABBAABB(rectManager->NonTraversable.rda.rects[i], &nextUpdate))
                 {
                     return true;
                 }

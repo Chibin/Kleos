@@ -1,23 +1,15 @@
 #ifndef __COLLISION__
 #define __COLLISION__
 
-#include <cstdio>
+#include "collision.h"
 
-#include "bitmap.h"
-#include "rectangle.h"
-#include "scene_node.h"
-
-struct AABB
+MinMax GetMinMax(v2 center, v2 dim)
 {
-    v2 center;
-    f32 radius;
-};
-
-struct MinMax
-{
-    v2 min;
-    v2 max;
-};
+    MinMax result = {};
+    result.max = center + dim * 0.5f;
+    result.min = center - dim * 0.5f;
+    return result;
+}
 
 inline void GetMinMax(v2 center, f32 radius, v2 *o_min, v2 *o_max)
 {
@@ -32,7 +24,7 @@ void GetMinMax(v2 center, f32 radius, MinMax *o_minMax)
 
 inline void GetMinMax(AABB *aabb, MinMax *o_minMax)
 {
-    GetMinMax(aabb->center, aabb->radius, o_minMax);
+    *o_minMax = GetMinMax(aabb->center, 2.0f * aabb->halfDim);
 }
 
 inline void GetMinMax(Rect *rect, MinMax *o_minMax)
@@ -108,6 +100,16 @@ b32 TestAABBAABB(SceneNode *sn, AABB *range)
     GetMinMax(sn, &snMinMax);
 
     return TestAABBAABB(&snMinMax, &rangeMinMax);
+}
+
+b32 TestAABBAABB(AABB *a, AABB *b)
+{
+    MinMax aMinMax = {};
+    MinMax bMinMax = {};
+    GetMinMax(a, &aMinMax);
+    GetMinMax(b, &bMinMax);
+
+    return TestAABBAABB(&aMinMax, &bMinMax);
 }
 
 #endif

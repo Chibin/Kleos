@@ -326,6 +326,8 @@ struct MapData
     v2 *basePoints;
 
     MapData *next;
+
+    MinMax aabbMinMax;
 };
 
 enum MapDataReadState
@@ -577,4 +579,30 @@ MapData *LoadAssetMap(const char *file)
     free(fileData);
 
     return rootMDNode;
+}
+
+void SetAABB(MapData *rootMDNode)
+{
+    MinMax aabbMinMax = {};
+    for(MapData *currentNode = rootMDNode->next; currentNode != nullptr; currentNode = currentNode->next)
+    {
+        for (memory_index i = 0; i < currentNode->count; i++)
+        {
+
+            v2 center = currentNode->basePoints[i];
+            v2 dim = currentNode->dim;
+            MinMax result = GetMinMax(center, dim);
+
+            if (result.min < aabbMinMax.min)
+            {
+                aabbMinMax.min = result.min;
+            }
+            if (aabbMinMax.max < result.max)
+            {
+                aabbMinMax.max = result.max;
+            }
+        }
+    }
+
+    rootMDNode->aabbMinMax = aabbMinMax;
 }

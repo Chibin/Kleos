@@ -4,12 +4,21 @@
 #include "rectangle.h"
 #include <cstdio>
 
+#include "collision.h"
+
 struct RectDynamicArray
 {
     int size;
     int allocatedSize; /*not in bytes but amount of entities */
 
     Rect **rects;
+};
+
+struct RectStorage
+{
+    /*The smallest and largest points of the all rects in the dyanmic array */
+    MinMax aabbMinMax;
+    RectDynamicArray rda;
 };
 
 #pragma warning(push)
@@ -20,16 +29,34 @@ struct RectManager
     union {
         struct
         {
-            RectDynamicArray Traversable;
-            RectDynamicArray NonTraversable;
+            RectStorage Traversable;
+            RectStorage NonTraversable;
         };
 
-        RectDynamicArray rda[2];
+        RectStorage rs[2];
     };
 
     Rect *player;
 };
 #pragma warning(pop)
+
+void SetAABB(RectStorage *rs)
+{
+    MinMax aabbMinMax = {};
+    for(memory_index i = 0; i < rs->rda.size; i++)
+    {
+        Rect *rect = rs->rda.rects[i];
+            v2 center = V2(rect->basePosition);
+            v2 dim = v2{rect->width, rect->height};
+            MinMax result = GetMinMax(center, dim);
+
+            aabbMinMax.min.x = aabbMinMax.min.x > result.min.x ? result.min.x : aabbMinMax.min.x;
+            aabbMinMax.min.y = aabbMinMax.min.y > result.min.y ? result.min.y : aabbMinMax.min.y;
+            aabbMinMax.max.x = aabbMinMax.max.x < result.max.x ? result.max.x : aabbMinMax.max.x;
+            aabbMinMax.max.y = aabbMinMax.max.y < result.max.y ? result.max.y : aabbMinMax.max.y;
+    }
+    rs->aabbMinMax = aabbMinMax;
+}
 
 RectDynamicArray *CreateRectDynamicArray(GameMemory *gm, uint32 size = 15000)
 {
@@ -47,9 +74,9 @@ RectManager *CreateRectManager(GameMemory *gm)
 {
     RectManager *rm = nullptr;
     rm = static_cast<RectManager *>(AllocateMemory(gm, (sizeof(RectManager))));
-    for (memory_index i = 0; i < ARRAY_SIZE(rm->rda); i++)
+    for (memory_index i = 0; i < ARRAY_SIZE(rm->rs); i++)
     {
-        rm->rda[i] = *CreateRectDynamicArray(gm);
+        rm->rs[i].rda = *CreateRectDynamicArray(gm);
     }
     return rm;
 }

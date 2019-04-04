@@ -109,6 +109,11 @@ inline void *RequestToReservedMemory(memory_index size)
         0, 0, 0, 1  \
     }
 
+#define COLOR_YELLOW\
+    v4              \
+    {               \
+        1, 1, 0, 1  \
+    }
 #include "random.cpp"
 #include "npc.cpp"
 
@@ -673,18 +678,21 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     SceneManager *sm = (SceneManager *)AllocateMemory(perFrameMemory, sizeof(SceneManager));
     memset(sm, 0, sizeof(SceneManager));
     sm->perFrameMemory = perFrameMemory;
+    sm->gameMetadata = gameMetadata;
+
+    SetAABB(&g_rectManager->NonTraversable);
     CreateScenePartition(sm, &g_rectManager->NonTraversable);
 
     AABB range = {};
-    range.radius = 5.0f;
+    range.halfDim = v2{5.0f, 5.0f};
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);
 
     ArrayList *al = GetRectsWithInRange(sm, &range);
     for(memory_index i = 0; i < al->size; i++)
     {
         /* TODO: need to make this look easier to read. This looks questionable. */
-        SceneNode *sn = (SceneNode *)*(al->ppData + al->sizeOfType * i);
-        AddDebugRect(gameMetadata, sn->rect);
+        Rect *r = (Rect *)*(al->ppData + al->sizeOfType * i);
+        AddDebugRect(gameMetadata, r);
     };
 
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
@@ -733,10 +741,10 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     /* XXX: If we're on the ground we should always reset the accelration to the force of gravity. */
     e->acceleration.y += gravity;
 
-    for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
+    for (int i = 0; i < g_rectManager->NonTraversable.rda.size; i++)
     {
         /* This will need to happen for all AABB checks */
-        Rect *rect = g_rectManager->NonTraversable.rects[i];
+        Rect *rect = g_rectManager->NonTraversable.rda.rects[i];
 
 #if 0
         real32 dX = e->velocity.x * dt;
@@ -939,18 +947,18 @@ void DrawScene(
         RectDynamicArray *hitBoxes,
         RectDynamicArray *hurtBoxes)
 {
-    ASSERT(g_rectManager->Traversable.size > 0);
-    for (memory_index i = 0; i < g_rectManager->Traversable.size; i++)
+    ASSERT(g_rectManager->Traversable.rda.size > 0);
+    for (memory_index i = 0; i < g_rectManager->Traversable.rda.size; i++)
     {
-        Rect *rect = g_rectManager->Traversable.rects[i];
+        Rect *rect = g_rectManager->Traversable.rda.rects[i];
         rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
 
-    for (int i = 0; i < g_rectManager->NonTraversable.size; i++)
+    for (int i = 0; i < g_rectManager->NonTraversable.rda.size; i++)
     {
-        Rect *rect = g_rectManager->NonTraversable.rects[i];
+        Rect *rect = g_rectManager->NonTraversable.rda.rects[i];
         rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
@@ -1234,7 +1242,7 @@ void LoadStuff(GameMetadata *gameMetadata)
             AssociateEntity(r, rectEntity, true);
             r->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface")->bitmapID;
             r->renderLayer = BACKGROUND;
-            PushBack(&(g_rectManager->Traversable), r);
+            PushBack(&(g_rectManager->Traversable.rda), r);
         }
     }
 
@@ -1447,7 +1455,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
             Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
             collissionRect->bitmapID = bitmap->bitmapID;
-            PushBack(&(g_rectManager->NonTraversable), collissionRect);
+            PushBack(&(g_rectManager->NonTraversable.rda), collissionRect);
         }
     }
 
