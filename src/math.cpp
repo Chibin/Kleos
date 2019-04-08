@@ -126,6 +126,11 @@ inline b32 operator<(v2 A, v2 B) //NOLINT
     return false;
 }
 
+inline v2 V2(v3 A)
+{
+    return v2{A.x, A.y};
+}
+
 /*
  * V3
  */
