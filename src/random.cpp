@@ -349,7 +349,9 @@ void QueryRange(SceneManager *sm, SceneNode *sn, ArrayList *al, AABB *range)
 
     if (TestAABBAABB(&sn->aabb, range) && sn->rect != nullptr)
     {
+#if 0
         AddDebugRect(sm->gameMetadata, &sn->aabb, v4{1.5f, 1.5f, 0.25f, 1.0f});
+#endif
         PushBack(sm->perFrameMemory, al, (u8 *)sn->rect, AL_TYPE_RECT_PTR);
     }
 
