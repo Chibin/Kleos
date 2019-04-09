@@ -687,12 +687,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     range.halfDim = v2{5.0f, 5.0f};
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);
 
-    ArrayList *al = GetRectsWithInRange(sm, &range);
-    for(memory_index i = 0; i < al->size; i++)
+    Rect **arr = GetRectsWithInRange(sm, &range);
+
+    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
-        /* TODO: need to make this look easier to read. This looks questionable. */
-        Rect *r = (Rect *)*(al->ppData + al->sizeOfType * i);
-        AddDebugRect(gameMetadata, r);
+        AddDebugRect(gameMetadata, arr[i]);
     };
 
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);

@@ -59,10 +59,19 @@ inline void *AllocateMemory(GameMemory *gm, memory_index size)
     return newAllocBase;
 }
 
-inline void *ReallocMemory(GameMemory *gm, void *ptr, memory_index size)
+inline void *ReallocMemory(GameMemory *gm, void *ptr, memory_index oldSize, memory_index size)
 {
     u8 *newAllocBase = nullptr;
 
-    return newAllocBase;
+    u8 *newMemory = (u8 *)AllocateMemory(gm, size);
+    memset(newMemory, 0, size);
+    /* TODO: There needs to be a part where we check if we can just extend
+     * instead of creating a new chunk of memory
+     *
+     * TODO: Also need to free the previous memory, if we create a bigger memory block.
+     */
+    memcpy(newMemory, ptr, oldSize);
+
+    return newMemory;
 }
 #endif

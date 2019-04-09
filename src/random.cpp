@@ -1,4 +1,5 @@
 #include "scene_node.h"
+#include "array.h"
 
 v2 V2(glm::vec3 A)
 {
@@ -226,121 +227,7 @@ void CreateScenePartition(SceneManager *sm, RectStorage *rs)
     }
 }
 
-SceneNode *GetObjectsAt(SceneManager *sm, v2 location)
-{
-    return sm->rootSceneNode;
-}
-
-enum ArrayListType
-{
-    AL_TYPE_SCENE_NODE = 0,
-    AL_TYPE_RECT,
-    AL_TYPE_SCENE_NODE_PTR,
-    AL_TYPE_RECT_PTR,
-};
-
-#define DEFAULT_ARRAY_LIST_SIZE 100
-
-struct ArrayList
-{
-    u32 size;
-    memory_index allocatedSize;
-    u8 *pData;
-    u8 **ppData;
-
-    /* Since this is a "generic" dynamic array, we need to make sure that
-     * whatever we insert is always the same size.
-     */
-    memory_index sizeOfType;
-    /* This is an extra check to make sure the user knows what they're doing*/
-    ArrayListType type;
-};
-
-ArrayList *CreateArrayList(GameMemory *gm, ArrayListType type, memory_index sizeOfType)
-{
-    ASSERT(sizeOfType != 0);
-
-    ArrayList *arrayList = (ArrayList *)AllocateMemory(gm, sizeof(ArrayList));
-    memset(arrayList, 0, sizeof(ArrayList));
-
-    arrayList->type = type;
-    arrayList->sizeOfType = sizeOfType;
-    arrayList->allocatedSize = sizeOfType * DEFAULT_ARRAY_LIST_SIZE;
-    arrayList->pData = nullptr;
-    arrayList->ppData = nullptr;
-
-    switch(type)
-    {
-        case AL_TYPE_SCENE_NODE:
-            ASSERT(sizeOfType == sizeof(SceneNode));
-            arrayList->pData =
-                (u8 *)AllocateMemory(gm, arrayList->allocatedSize);
-            break;
-        case AL_TYPE_SCENE_NODE_PTR:
-            ASSERT(sizeOfType == sizeof(SceneNode *));
-            arrayList->ppData =
-                (u8 **)AllocateMemory(gm, arrayList->allocatedSize);
-            break;
-        case AL_TYPE_RECT_PTR:
-            ASSERT(sizeOfType == sizeof(Rect *));
-            arrayList->ppData =
-                (u8 **)AllocateMemory(gm, arrayList->allocatedSize);
-            break;
-        default:
-            ASSERT(!"I Shouldn't get here!");
-    }
-
-    return arrayList;
-}
-
-void PushBack(GameMemory *gm, ArrayList *al, u8 *data, ArrayListType type)
-{
-    f32 expansionRate = 0.5f;
-
-    if (al->allocatedSize <= al->size * al->sizeOfType)
-    {
-        uint32 newTotalSpace =
-            SafeCastToU32(al->allocatedSize + SafeCastToU32(al->size * expansionRate * al->sizeOfType));
-
-        ASSERT(newTotalSpace > al->allocatedSize);
-
-        u8 *tmp = *al->ppData;
-        u32 oldSize = al->size;
-
-        *al->ppData = (u8 *)AllocateMemory(gm, newTotalSpace);
-        memset(*al->ppData, 0, newTotalSpace);
-        memcpy(*al->ppData, tmp, al->sizeOfType * oldSize);
-
-#if 0
-        /* TODO: Need to verify this */
-        free(tmp);
-#endif
-
-        al->allocatedSize = newTotalSpace;
-    }
-
-    memory_index offset = al->size * al->sizeOfType;
-    switch(type)
-    {
-        case AL_TYPE_SCENE_NODE:
-            ASSERT(al->sizeOfType == sizeof(SceneNode));
-            //al->pData + offset = data;
-            break;
-        case AL_TYPE_SCENE_NODE_PTR:
-            ASSERT(al->sizeOfType == sizeof(SceneNode *));
-            *(al->ppData + offset) = data;
-            break;
-        case AL_TYPE_RECT_PTR:
-            ASSERT(al->sizeOfType == sizeof(Rect *));
-            *(al->ppData + offset) = data;
-            break;
-        default:
-            ASSERT(!"I Shouldn't get here!");
-    }
-    al->size++;
-}
-
-void QueryRange(SceneManager *sm, SceneNode *sn, ArrayList *al, AABB *range)
+void QueryRange(SceneManager *sm, SceneNode *sn, Rect ***arr, AABB *range)
 {
     if (sn == nullptr)
     {
@@ -349,23 +236,22 @@ void QueryRange(SceneManager *sm, SceneNode *sn, ArrayList *al, AABB *range)
 
     if (TestAABBAABB(&sn->aabb, range) && sn->rect != nullptr)
     {
-#if 0
-        AddDebugRect(sm->gameMetadata, &sn->aabb, v4{1.5f, 1.5f, 0.25f, 1.0f});
-#endif
-        PushBack(sm->perFrameMemory, al, (u8 *)sn->rect, AL_TYPE_RECT_PTR);
+        ARRAY_PUSH(Rect **, sm->perFrameMemory, *arr, sn->rect);
     }
 
-    QueryRange(sm, sn->northWest, al, range);
-    QueryRange(sm, sn->northEast, al, range);
-    QueryRange(sm, sn->southWest, al, range);
-    QueryRange(sm, sn->southEast, al, range);
+    QueryRange(sm, sn->northWest, arr, range);
+    QueryRange(sm, sn->northEast, arr, range);
+    QueryRange(sm, sn->southWest, arr, range);
+    QueryRange(sm, sn->southEast, arr, range);
+
 }
 
-ArrayList *GetRectsWithInRange(SceneManager *sm, AABB *range)
+Rect **GetRectsWithInRange(SceneManager *sm, AABB *range)
 {
-    ArrayList *al =
-        CreateArrayList(sm->perFrameMemory, AL_TYPE_RECT_PTR, sizeof(Rect *));
+    Rect **arr = nullptr;
+    ARRAY_CREATE(Rect **, sm->perFrameMemory, arr);
 
-    QueryRange(sm, sm->rootSceneNode, al, range);
-    return al;
+    QueryRange(sm, sm->rootSceneNode, &arr, range);
+
+    return arr;
 }
