@@ -150,6 +150,7 @@ static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 static NPC *g_enemyNPC = nullptr;
+static SceneManager *g_sceneManager = nullptr;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
@@ -676,6 +677,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
 
     SceneManager *sm = (SceneManager *)AllocateMemory(perFrameMemory, sizeof(SceneManager));
+    g_sceneManager = sm;
     memset(sm, 0, sizeof(SceneManager));
     sm->perFrameMemory = perFrameMemory;
     sm->gameMetadata = gameMetadata;
@@ -687,6 +689,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     range.halfDim = v2{5.0f, 5.0f};
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);
 
+    /* TODO: The main problem with the array list macro is that there's 2
+     * values that are hidden... We need a better way to differentiate from an
+     * actual array vs a dynamic array
+     */
     Rect **arr = GetRectsWithInRange(sm, &range);
 
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
@@ -780,7 +786,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     e->position += e->velocity * dt + 0.5f * e->acceleration * dt * dt;
     e->velocity.y += e->acceleration.y *dt;
 
-    UpdatePositionBasedOnCollission(g_enemyNPC, g_rectManager, gravity, dt);
+    UpdatePositionBasedOnCollission(g_sceneManager, g_enemyNPC, g_rectManager, gravity, dt);
 
     /* TODO: can't let the player spam attack while we're still in an attack animation */
     if (e->willAttack)

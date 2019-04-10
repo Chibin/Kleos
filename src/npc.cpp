@@ -76,7 +76,7 @@ void UpdateNPCAnimation(NPC *npc, Rect *r)
     UpdateFrameDirection(npc->spriteAnimation, npc->direction);
 }
 
-void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
 {
 
     v2 center = {0.5f * npc->dim.width, 0.5f * npc->dim.height};
@@ -88,10 +88,17 @@ void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gra
         V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
 
     npc->movement.acceleration.y += gravity;
-    for (int i = 0; i < rectManager->NonTraversable.rda.size; i++)
+    AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+    f32 arbitraryPadding = 5.0f;
+    range.halfDim = range.halfDim + arbitraryPadding;
+    Rect **arr = GetRectsWithInRange(sm, &range);
+
+    AddDebugRect(sm->gameMetadata, &range, COLOR_GREEN);
+
+    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
-        /* This will need to happen for all AABB checks */
-        Rect *rect = rectManager->NonTraversable.rda.rects[i];
+        Rect *rect = arr[i];
+        AddDebugRect(sm->gameMetadata, rect);
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* XXX: This is the part where we should figure out the direction of the collision */
@@ -101,7 +108,7 @@ void UpdatePositionBasedOnCollission(NPC *npc, RectManager *rectManager, f32 gra
 
             break;
         }
-    }
+    };
 
     /* TODO: There is a bug here. We're not properly updating the position
      * based on the collisions

@@ -33,6 +33,14 @@ inline void GetMinMax(Rect *rect, MinMax *o_minMax)
     o_minMax->max = rect->max;
 }
 
+inline MinMax GetMinMax(Rect *rect)
+{
+    MinMax result = {};
+    result.min = rect->min;
+    result.max = rect->max;
+    return result;
+}
+
 void GetMinMax(SceneNode *sn, MinMax *o_minMax)
 {
     GetMinMax(sn->rect, o_minMax);
