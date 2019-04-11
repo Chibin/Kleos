@@ -685,6 +685,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     SetAABB(&g_rectManager->NonTraversable);
     CreateScenePartition(sm, &g_rectManager->NonTraversable);
 
+#if 0
     AABB range = {};
     range.halfDim = v2{5.0f, 5.0f};
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);
@@ -699,6 +700,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     {
         AddDebugRect(gameMetadata, arr[i]);
     };
+#endif
 
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
     Render(gameMetadata,

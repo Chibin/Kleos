@@ -32,17 +32,23 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 {
     return CreateMinimalRectInfo(gm, COLOR_RED, min, max);
 }
+
 /* I have no idea where to put these functions -- place holder area */
-void AddDebugRect(GameMetadata *gm, Rect *rect)
+void AddDebugRect(GameMetadata *gm, Rect *rect, v4 color)
 {
     GameMemory *perFrameMemory = &gm->temporaryMemory;
-    Rect *newRect = CreateMinimalRectInfo(perFrameMemory, rect->min, rect->max);
+    Rect *newRect = CreateMinimalRectInfo(perFrameMemory, color, rect->min, rect->max);
 
     newRect->bitmap = &gm->whiteBitmap;
     newRect->bitmapID = gm->whiteBitmap.bitmapID;
     newRect->renderLayer = DEBUG;
 
     PushBack(gm->rdaDebug, newRect);
+}
+
+void AddDebugRect(GameMetadata *gm, Rect *rect)
+{
+    AddDebugRect(gm, rect, COLOR_RED);
 }
 
 void AddDebugRect(GameMetadata *gm, MinMax *minMax, v4 color)

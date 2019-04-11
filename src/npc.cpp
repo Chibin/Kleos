@@ -98,7 +98,8 @@ void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, RectManager *re
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
         Rect *rect = arr[i];
-        AddDebugRect(sm->gameMetadata, rect);
+        AddDebugRect(sm->gameMetadata, rect, COLOR_YELLOW);
+
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* XXX: This is the part where we should figure out the direction of the collision */
