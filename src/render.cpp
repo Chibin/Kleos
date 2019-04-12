@@ -678,6 +678,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     SceneManager *sm = (SceneManager *)AllocateMemory(perFrameMemory, sizeof(SceneManager));
     g_sceneManager = sm;
+    gameMetadata->sm = sm;
     memset(sm, 0, sizeof(SceneManager));
     sm->perFrameMemory = perFrameMemory;
     sm->gameMetadata = gameMetadata;
@@ -748,10 +749,16 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     /* XXX: If we're on the ground we should always reset the accelration to the force of gravity. */
     e->acceleration.y += gravity;
 
-    for (int i = 0; i < g_rectManager->NonTraversable.rda.size; i++)
+    AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+    f32 arbitraryPadding = 5.0f;
+    range.halfDim = range.halfDim + arbitraryPadding;
+    Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+    AddDebugRect(gameMetadata, &range, COLOR_GREEN);
+
+    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
-        /* This will need to happen for all AABB checks */
-        Rect *rect = g_rectManager->NonTraversable.rda.rects[i];
+        Rect *rect = arr[i];
+        AddDebugRect(gameMetadata, rect, COLOR_YELLOW);
 
 #if 0
         real32 dX = e->velocity.x * dt;
@@ -761,24 +768,12 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         rayDirection = glm::normalize(rayDirection);
         rayDirection = glm::vec3(1 / rayDirection.x, 1 / rayDirection.y, 0);
 #endif
-
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* how to differentiate between x and y axis? */
             e->position.y = rect->max.y + gameMetadata->playerRect->height * 0.5f;
             e->velocity.y = 0;
             e->acceleration.y = gravity;
-        }
-        else
-        {
-            if (rect->type == HITBOX)
-            {
-                PushBack(hitBoxes, rect);
-            }
-            else if (rect->type == HURTBOX)
-            {
-                PushBack(hurtBoxes, rect);
-            }
         }
     }
 

@@ -1,6 +1,8 @@
 #ifndef __NPC__
 #define __NPC__
 
+#define DEBUG_NPC 0
+
 struct Movement {
     glm::vec3 position;
     glm::vec3 velocity;
@@ -88,17 +90,23 @@ void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, RectManager *re
         V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
 
     npc->movement.acceleration.y += gravity;
+
     AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
     f32 arbitraryPadding = 5.0f;
     range.halfDim = range.halfDim + arbitraryPadding;
     Rect **arr = GetRectsWithInRange(sm, &range);
 
+#if DEBUG_NPC
     AddDebugRect(sm->gameMetadata, &range, COLOR_GREEN);
+#endif
 
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
         Rect *rect = arr[i];
+
+#if DEBUG_NPC
         AddDebugRect(sm->gameMetadata, rect, COLOR_YELLOW);
+#endif
 
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
@@ -145,20 +153,29 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
     nextUpdate.max =
         V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
 
+    AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+    /* XXX: The padding/range needs to be wide enough such that we can get the
+     * other "NonTraversable"s. The issue is that the quadtree puts the rect at northwest firsts,
+     * so even though the rect is in range, the AABB in the quadtree for the
+     * rect might be smaller.
+     *
+     * tl;dr: The quadtree is not accurate enough, because of how we insert the rects.
+     * So, we need to make the query range bigger.
+     * The bigger the rect, the harder it is to be found.
+     */
+    f32 arbitraryPadding = 5.0f;
+    range.halfDim = range.halfDim + arbitraryPadding;
+    Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+
+#if DEBUG_NPC
+    AddDebugRect(gameMetadata, &range, COLOR_GREEN);
+#endif
+
     switch(npc->direction)
     {
         case LEFT:
             /* XXX: make it such that the NPC turns early*/
             nextUpdate.max.x = 0.01f + nextUpdate.min.x;
-            AddDebugRect(gameMetadata, &nextUpdate);
-
-            for (int i = 0; i < rectManager->NonTraversable.rda.size; i++)
-            {
-                if(TestAABBAABB(rectManager->NonTraversable.rda.rects[i], &nextUpdate))
-                {
-                    return true;
-                }
-            }
             break;
         case RIGHT:
             /* XXX: Hack to make it such that the nextUpdate rect will be a
@@ -167,18 +184,25 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
              * of the platform with the last pixel.
              */
             nextUpdate.min.x = nextUpdate.max.x - 0.01f;
-            AddDebugRect(gameMetadata, &nextUpdate);
-
-            for (int i = 0; i < rectManager->NonTraversable.rda.size; i++)
-            {
-                if(TestAABBAABB(rectManager->NonTraversable.rda.rects[i], &nextUpdate))
-                {
-                    return true;
-                }
-            }
             break;
         default:
             ASSERT(!"I SHOUDLN'T GET HERE");
+    }
+
+#if DEBUG_NPC
+    AddDebugRect(gameMetadata, &nextUpdate);
+#endif
+
+    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
+    {
+        Rect *rect = arr[i];
+#if DEBUG_NPC
+        AddDebugRect(gameMetadata, rect, COLOR_YELLOW);
+#endif
+        if(TestAABBAABB(rect, &nextUpdate))
+        {
+            return true;
+        }
     }
 
     return false;

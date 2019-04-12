@@ -48,6 +48,8 @@ struct GameMetadata
     b32 initOpenGL;
 
     struct RectDynamicArray *rdaDebug;
+
+    struct SceneManager *sm;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)
