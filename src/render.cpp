@@ -497,6 +497,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         AssociateEntity(gameMetadata->playerRect, g_player, false);
         g_rectManager->player = gameMetadata->playerRect;
         gameMetadata->playerRect->type = REGULAR;
+        gameMetadata->playerRect->renderLayer = PLAYER;
         gameMetadata->playerRect->frameDirection = LEFT;
 
         LoadAssets(gameMetadata);
