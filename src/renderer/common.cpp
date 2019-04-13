@@ -54,7 +54,7 @@ void UpdateUBOandPushConstants(
     if (gameMetadata->isVulkanActive)
     {
         glm::mat4 correction = glm::mat4(1.0);
-        correction[1][1] = -1;
+        correction[1][1] = 1;
         correction[2][2] = 0.5;
         correction[3][2] = 0.5;
 

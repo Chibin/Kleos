@@ -207,10 +207,11 @@ void VulkanBeginRenderPass(VulkanContext *vc)
 void VulkanSetViewportAndScissor(VulkanContext *vc)
 {
     VkViewport viewport = {};
-#if 1
+#if 0
     viewport.y = 0;
     viewport.height = (float)vc->height;
 #else
+    /* Flip the view port so that it behaves similar to OpenGL */
     viewport.y = (float)vc->height;
     viewport.height = -1 * (float)vc->height;
 #endif
