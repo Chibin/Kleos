@@ -29,5 +29,4 @@ void main()
     vColor = vTestColor;
 
     gl_Position = vec4(vPositionModelSpace, 1.0);
-    gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
 }
