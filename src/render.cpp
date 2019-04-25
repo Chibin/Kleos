@@ -645,6 +645,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     perFrameRenderGroup.rectMemory.maxSize = rectMemoryBlockSize;
 
     gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
+    gameMetadata->rdaDebugUI = CreateRectDynamicArray(perFrameMemory);
 
     SceneManager *sm = (SceneManager *)AllocateMemory(perFrameMemory, sizeof(SceneManager));
     g_sceneManager = sm;
@@ -1102,6 +1103,13 @@ void DrawUI(
     }
 
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+
+    for (memory_index i = 0; i < gameMetadata->rdaDebugUI->size; i++)
+    {
+        Rect *rect = gameMetadata->rdaDebugUI->rects[i];
+        ASSERT(rect->bitmap);
+        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
+    }
 
     DrawRenderGroup(
             gameMetadata,

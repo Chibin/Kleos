@@ -48,6 +48,7 @@ struct GameMetadata
     b32 initOpenGL;
 
     struct RectDynamicArray *rdaDebug;
+    struct RectDynamicArray *rdaDebugUI;
 
     struct SceneManager *sm;
 };
