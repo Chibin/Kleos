@@ -76,6 +76,29 @@ Rect *CreateRectangle(GameMemory *gm, glm::vec3 basePosition, v4 color, v2 rectD
             rectDim.y);
 }
 
+Rect *CreateMinimalRectInfo(GameMemory *gm, v4 color, v2 min, v2 max)
+{
+    v2 dim = max - min;
+    v2 xyPosition = min + (max - min) / 2.0f;
+    v3 xyzPosition = {xyPosition.x, xyPosition.y, 0};
+    Rect *r =  CreateRectangle(gm, xyzPosition, color, dim);
+    return r;
+}
+
+Rect *CreateMinimalRectInfo(GameMemory *gm, v4 color, AABB *aabb)
+{
+    v2 dim = aabb->halfDim * 2.0f;
+    v3 xyzPosition = {aabb->center.x, aabb->center.y, 0};
+    Rect *r =  CreateRectangle(gm, xyzPosition, color, dim);
+    return r;
+}
+
+Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
+{
+    return CreateMinimalRectInfo(gm, COLOR_RED, min, max);
+}
+
+
 void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable)
 {
     rect->entity = entity;

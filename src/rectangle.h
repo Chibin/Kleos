@@ -1,10 +1,12 @@
 #ifndef __RECTANGLE_H__
 #define __RECTANGLE_H__
 
+#include "define.h"
 #include "bitmap.h"
 #include "entity.h"
 #include "game_memory.h"
 #include "math.h"
+#include "collision.h"
 
 #define RECT_SIZE 36
 #define NUM_OF_RECT_CORNER 4
