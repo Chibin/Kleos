@@ -19,68 +19,6 @@ v3 V3(glm::vec3 A)
     return result;
 
 }
-Rect *CreateMinimalRectInfo(GameMemory *gm, v4 color, v2 min, v2 max)
-{
-    v2 dim = max - min;
-    v2 xyPosition = min + (max - min) / 2.0f;
-    v3 xyzPosition = {xyPosition.x, xyPosition.y, 0};
-    Rect *r =  CreateRectangle(gm, xyzPosition, color, dim);
-    return r;
-}
-
-Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
-{
-    return CreateMinimalRectInfo(gm, COLOR_RED, min, max);
-}
-
-/* I have no idea where to put these functions -- place holder area */
-void AddDebugRect(GameMetadata *gm, Rect *rect, v4 color)
-{
-    GameMemory *perFrameMemory = &gm->temporaryMemory;
-    Rect *newRect = CreateMinimalRectInfo(perFrameMemory, color, rect->min, rect->max);
-
-    newRect->bitmap = &gm->whiteBitmap;
-    newRect->bitmapID = gm->whiteBitmap.bitmapID;
-    newRect->renderLayer = DEBUG;
-
-    PushBack(gm->rdaDebug, newRect);
-}
-
-void AddDebugRect(GameMetadata *gm, Rect *rect)
-{
-    AddDebugRect(gm, rect, COLOR_RED);
-}
-
-void AddDebugRect(GameMetadata *gm, MinMax *minMax, v4 color)
-{
-    GameMemory *perFrameMemory = &gm->temporaryMemory;
-    Rect *newRect = CreateMinimalRectInfo(perFrameMemory, color, minMax->min, minMax->max);
-
-    newRect->bitmap = &gm->whiteBitmap;
-    newRect->bitmapID = gm->whiteBitmap.bitmapID;
-    newRect->renderLayer = DEBUG;
-
-    PushBack(gm->rdaDebug, newRect);
-}
-
-void AddDebugRect(GameMetadata *gm, AABB *aabb, v4 color)
-{
-    MinMax minMax = {};
-    GetMinMax(aabb, &minMax);
-    AddDebugRect(gm, &minMax, color);
-}
-
-void AddDebugRect(GameMetadata *gm, FrameState *frameState, v3 position, v4 color)
-{
-    GameMemory *perFrameMemory = &gm->temporaryMemory;
-    Rect *newRect = CreateFrameRect(perFrameMemory, frameState, position, color);
-
-    newRect->bitmap = &gm->whiteBitmap;
-    newRect->bitmapID = gm->whiteBitmap.bitmapID;
-    newRect->renderLayer = DEBUG;
-
-    PushBack(gm->rdaDebug, newRect);
-}
 
 struct SceneManager
 {
