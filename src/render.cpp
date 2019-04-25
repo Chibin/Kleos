@@ -442,7 +442,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         f32 screenHeight = screenResolution.v[1];
         g_projection = (glm::mat4 *)AllocateMemory(reservedMemory, (sizeof(glm::mat4)));
         *g_projection =
-            glm::infinitePerspective(45.0f, screenWidth / screenHeight, 0.1f);
+            glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f);
+            //glm::infinitePerspective(45.0f, screenWidth / screenHeight, 1.0f);
+            //glm::mat4(PerspectiveProjectionMatrix(45.0f, screenWidth / screenHeight, 1.0f, 1000.0f)); // Using too small of a znear was not showing up any kind of image onto the screen ... :(
 
         g_rectManager = CreateRectManager(reservedMemory);
 
@@ -722,15 +724,60 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     e->acceleration.y += gravity;
 
     AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+#if 1
     f32 arbitraryPadding = 5.0f;
+#else
+    f32 arbitraryPadding = 50.0f;
+#endif
     range.halfDim = range.halfDim + arbitraryPadding;
     Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);
+
+    f32 screenWidth = gameMetadata->screenResolution.v[0];
+    f32 screenHeight = gameMetadata->screenResolution.v[1];
+
+    glm::mat4 pv = g_camera->view * *g_projection;
+    glm::mat4 inversePV = glm::inverse(pv);
+
+    AABB uiTest = {};
+    glm::vec3 rayWorld =
+        GetRayFromMouse(g_camera, g_projection, V2(g_mousePoint), gameMetadata->screenResolution);
+
+    f32 dimRange = 0.1f;
+    uiTest.halfDim = v2{dimRange, dimRange * (screenWidth / screenHeight)};
+    uiTest.center = V2(ScreenSpaceToNormalizedDeviceSpace(V2(g_mousePoint), screenWidth, screenHeight));
+    AddDebugRectUI(gameMetadata, &uiTest, COLOR_RED);
+
+    glm::vec3 infinitePlanePos = glm::vec3(0, 0, 0);
+    /* This points towards us */
+    glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
+
+    glm::vec3 worldPos =
+        GetWorldPointFromMouse(
+                g_camera,
+                g_projection,
+                V2(g_mousePoint),
+                gameMetadata->screenResolution,
+                infinitePlaneNormal);
+
+    uiTest.halfDim = v2{dimRange, dimRange};
+    uiTest.center = v2{worldPos.x, worldPos.y};
+#if 0
+    printf("coords: X %f, Y %f\n", uiTest.center.x, uiTest.center.y);
+#endif
+
+    AddDebugRect(gameMetadata, &uiTest, COLOR_BLUE);
 
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
         Rect *rect = arr[i];
         AddDebugRect(gameMetadata, rect, COLOR_YELLOW);
+
+        glm::vec3 rayDirection = glm::vec3(1 / rayWorld.x, 1 / rayWorld.y, 0);
+        if (IntersectionAABB(rect, V2(g_camera->pos), rayDirection))
+        {
+            AddDebugRect(gameMetadata, rect, COLOR_BLACK);
+        }
 
 #if 0
         real32 dX = e->velocity.x * dt;
