@@ -129,28 +129,14 @@ v3 ProcessMouseMotion(const SDL_MouseMotionEvent &mme, Camera *camera)
      * Probably doable with the camera?
      */
     //v2 pos = TranslateToWorldCoordinates(v2{x, y});
-    v3 worldCoord = {camera->pos.x, camera->pos.y, camera->pos.z};
+#if 0
+    v2 screenCoordinates = 2 * normalizedMME - 1.0f;
+    screenCoordinates.y = -screenCoordinates.y;
+    return v3{screenCoordinates.x, screenCoordinates.y, 0};
+#else
+    return v3{(f32)mme.x, (f32)mme.y, 0};
+#endif
 
-    if (mme.x < (float)SCREEN_WIDTH/2.0f)
-    {
-        worldCoord.x = worldCoord.x - 1 + normalizedMME.x;
-    }
-    else
-    {
-        worldCoord.x = worldCoord.x - 1 + normalizedMME.x;
-    }
-
-    if (mme.y < (float)SCREEN_HEIGHT/2.0f)
-    {
-        worldCoord.y = worldCoord.y + 1 - normalizedMME.y;
-
-    }
-    else
-    {
-        worldCoord.y = worldCoord.y + 1 - normalizedMME.y;
-    }
-
-    return worldCoord;
 }
 
 void ProcessMouseInput(const SDL_Event &event, Camera *camera)
