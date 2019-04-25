@@ -429,10 +429,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         *gameTimestep = (GameTimestep *)AllocateMemory(reservedMemory, sizeof(GameTimestep));
         ResetGameTimestep(*gameTimestep);
 
-        v3 cameraPos = { 0, 0, 10 };
+        v3 cameraPos = { 0, 0, 2 };
         // and looks at the origin
         v3 cameraTarget = { 0, 0, 0 };
-        // Head is up (set to 0,-1,0 to look upside-down)
+        // Head is up (set to 0,1,0 to look upside-down)
         v3 cameraUp = { 0, 1, 0 };
         g_camera = CreateCamera(reservedMemory, cameraPos, cameraTarget, cameraUp);
 
