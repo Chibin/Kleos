@@ -41,11 +41,6 @@ inline MinMax GetMinMax(Rect *rect)
     return result;
 }
 
-void GetMinMax(SceneNode *sn, MinMax *o_minMax)
-{
-    GetMinMax(sn->rect, o_minMax);
-}
-
 b32 ContainsPoint(AABB *aabb, v2 p)
 {
     MinMax minMax = {};
@@ -57,7 +52,7 @@ b32 ContainsPoint(AABB *aabb, v2 p)
 /* RayCast Intersection */
 bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)
 {
-    /* This may just be a test to see if a raycast will hit an AABB */
+    /* Test to see if a raycast will hit an AABB */
     double tx1 = (rect->min.x - initialPos.x) * rayDInv.x;
     double tx2 = (rect->max.x - initialPos.x) * rayDInv.x;
 
@@ -70,8 +65,10 @@ bool IntersectionAABB(Rect *rect, v2 initialPos, glm::vec3 rayDInv)
     tmin = MAX(tmin, MIN(MIN(ty1, ty2), tmax));
     tmax = MIN(tmax, MAX(MAX(ty1, ty2), tmin));
 
+#if 0
     printf("RayD.x: %f RayD.y: %f \n", rayDInv.x, rayDInv.y);
     printf("tmin:%f tmax:%f\n", tmin, tmax);
+#endif
 
     return tmax > MAX(tmin, 0.0);
 }
@@ -100,16 +97,6 @@ b32 TestAABBAABB(Rect *a, Rect *b)
     return TestAABBAABB(&aMinMax, &bMinMax);
 }
 
-b32 TestAABBAABB(SceneNode *sn, AABB *range)
-{
-    MinMax rangeMinMax = {};
-    MinMax snMinMax = {};
-    GetMinMax(range, &rangeMinMax);
-    GetMinMax(sn, &snMinMax);
-
-    return TestAABBAABB(&snMinMax, &rangeMinMax);
-}
-
 b32 TestAABBAABB(AABB *a, AABB *b)
 {
     MinMax aMinMax = {};
@@ -119,5 +106,4 @@ b32 TestAABBAABB(AABB *a, AABB *b)
 
     return TestAABBAABB(&aMinMax, &bMinMax);
 }
-
 #endif

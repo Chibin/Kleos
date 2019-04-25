@@ -5,7 +5,6 @@
 
 #include "bitmap.h"
 #include "rectangle.h"
-#include "scene_node.h"
 
 struct AABB
 {
@@ -20,16 +19,5 @@ struct MinMax
 };
 
 MinMax GetMinMax(v2 center, v2 dim);
-
-struct SceneNode
-{
-    AABB aabb;
-    Rect *rect;
-
-    SceneNode *northWest;
-    SceneNode *northEast;
-    SceneNode *southWest;
-    SceneNode *southEast;
-};
 
 #endif
