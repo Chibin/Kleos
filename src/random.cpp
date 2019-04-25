@@ -267,9 +267,9 @@ glm::mat4 InversePerspectiveProjectionMatrix(f32 fov, f32 aspectRatio, f32 zNear
     return result;
 }
 
-glm::vec3 ScreenSpaceToNormalizedDeviceSpace(v2 pixelCoords, f32 screenWidth, f32 screenHeight)
+glm::vec3 ScreenSpaceToNormalizedDeviceSpace(v2 pixelCoords, v2 screenResolution)
 {
-    glm::vec2 normalizedMME = {pixelCoords.x / screenWidth, pixelCoords.y / screenHeight};
+    glm::vec2 normalizedMME = {pixelCoords.x / screenResolution.x, pixelCoords.y / screenResolution.y};
     glm::vec2 result = 2.0f * normalizedMME - 1.0f;
     /* XXX:We have to flip this to the negative value due to our viewport being
      * viewed in the negative direction.  Check OpenGL NDC coordinates for more
@@ -302,7 +302,7 @@ glm::vec3 ViewSpaceToWorldSpaceRaycast(Camera *camera, glm::vec4 rayEye)
 glm::vec3 GetRayFromMouse(Camera *camera, glm::mat4 *projection, v2 screenCoords, v2 screenResolution)
 {
     glm::vec3 rayNormalizedDeviceCoords =
-        ScreenSpaceToNormalizedDeviceSpace(screenCoords, screenResolution.x, screenResolution.y);
+        ScreenSpaceToNormalizedDeviceSpace(screenCoords, screenResolution);
 
     /* XXX: There's usually a reverse of a perspective division here, but we're
      * unprojecting a ray instead of a point, we don't need to do that process.

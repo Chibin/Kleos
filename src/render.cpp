@@ -736,19 +736,15 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     f32 screenWidth = gameMetadata->screenResolution.v[0];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
 
-    glm::mat4 pv = g_camera->view * *g_projection;
-    glm::mat4 inversePV = glm::inverse(pv);
-
     AABB uiTest = {};
     glm::vec3 rayWorld =
         GetRayFromMouse(g_camera, g_projection, V2(g_mousePoint), gameMetadata->screenResolution);
 
     f32 dimRange = 0.1f;
-    uiTest.halfDim = v2{dimRange, dimRange * (screenWidth / screenHeight)};
-    uiTest.center = V2(ScreenSpaceToNormalizedDeviceSpace(V2(g_mousePoint), screenWidth, screenHeight));
+    uiTest.halfDim = v2{dimRange, dimRange * (gameMetadata->screenResolution.x / gameMetadata->screenResolution.y)};
+    uiTest.center = V2(ScreenSpaceToNormalizedDeviceSpace(V2(g_mousePoint), gameMetadata->screenResolution));
     AddDebugRectUI(gameMetadata, &uiTest, COLOR_RED);
 
-    glm::vec3 infinitePlanePos = glm::vec3(0, 0, 0);
     /* This points towards us */
     glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
 
