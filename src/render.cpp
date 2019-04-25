@@ -83,6 +83,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"
 
+#include "debug_helper.cpp"
 #include "random.cpp"
 #include "npc.cpp"
 
