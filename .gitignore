@@ -32,3 +32,4 @@ compile_commands.json
 src/assets/
 src/materials/
 src/dummy.dir/
+env.bat

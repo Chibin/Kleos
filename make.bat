@@ -1,19 +1,26 @@
-set SDL2=C:/Libraries/SDL2-2.0.8
-set GLEW=C:/Libraries/glew-2.1.0
-set SDL2_TTF=C:/Libraries/SDL2_ttf-2.0.14
-set VULKAN=C:/VulkanSDK/1.1.92.1
-REM set VULKAN=C:/VulkanSDK/1.1.77.0
+@echo off
+if NOT exist env.bat goto :file_not_found
 
-set SDL2_INCLUDE=%SDL2%/include
-set GLEW_INCLUDE=%GLEW%/include
-set SDL2_TTF_INCLUDE=%SDL2_TTF%/include
-set VULKAN_INCLUDE=%VULKAN%/include
-set GLM_INCLUDE=C:/Libraries/glm
+set INCLUDE_VARS=GLEW_INCLUDE SDL2_INCLUDE SDL2_TTF_INCLUDE VULKAN_INCLUDE
+set LIB_VARS=GLEW_LIB SDL2_LIB SDL2_TTF_LIB VULKAN_LIB
+set ERROR_FOUND=0
 
-set SDL2_LIB=%SDL2%/VisualC//x64/Debug
-set GLEW_LIB=%GLEW%/lib/Debug
-set SDL2_TTF_LIB=%SDL2_TTF%/lib/x64
-set VULKAN_LIB=%VULKAN%/Lib
+rem "cleaning the variables"
+for %%a in (%INCLUDE_VARS% %LIB_VARS%) do (
+    set "%%a="
+)
+
+call env.bat
+
+setlocal enabledelayedexpansion
+for %%a in (%INCLUDE_VARS% %LIB_VARS%) do (
+    if "!%%a!" == "" (
+        echo ERROR:
+        echo variable %%a not set.
+        set ERROR_FOUND=1
+    )
+)
+if %ERROR_FOUND% == 1 goto :error_found
 
 cmake -G "Visual Studio 15 2017 Win64" ^
 	-D CMAKE_PREFIX_PATH="%GLEW_INCLUDE%;%SDL2_INCLUDE%;%SDL2_TTF_INCLUDE%;%VULKAN_INCLUDE%" ^
@@ -29,3 +36,12 @@ goto :EOF
 :error
 echo Failed with error code '%errorlevel%.'
 exit /b %errorlevel%
+
+:error_found
+exit /b 1
+
+:file_not_found
+echo ERROR:
+echo env.bat file not found.
+echo env.bat is used to set the INCLUDE_PATH and LIB_PATH
+exit /b 1
