@@ -85,6 +85,7 @@ inline void *RequestToReservedMemory(memory_index size)
 
 #include "debug_helper.cpp"
 #include "random.cpp"
+#include "scene_node.cpp"
 #include "npc.cpp"
 
 #define UPDATEANDRENDER(name) \
@@ -659,23 +660,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     SetAABB(&g_rectManager->NonTraversable);
     CreateScenePartition(sm, &g_rectManager->NonTraversable);
-
-#if 0
-    AABB range = {};
-    range.halfDim = v2{5.0f, 5.0f};
-    AddDebugRect(gameMetadata, &range, COLOR_GREEN);
-
-    /* TODO: The main problem with the array list macro is that there's 2
-     * values that are hidden... We need a better way to differentiate from an
-     * actual array vs a dynamic array
-     */
-    Rect **arr = GetRectsWithInRange(sm, &range);
-
-    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
-    {
-        AddDebugRect(gameMetadata, arr[i]);
-    };
-#endif
 
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
     Render(gameMetadata,
