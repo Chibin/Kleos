@@ -738,7 +738,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     AABB uiTest = {};
     glm::vec3 rayWorld =
-        GetRayFromMouse(g_camera, g_projection, V2(g_mousePoint), gameMetadata->screenResolution);
+        UnProject(g_camera, g_projection, V2(g_mousePoint), gameMetadata->screenResolution);
 
     f32 dimRange = 0.1f;
     uiTest.halfDim = v2{dimRange, dimRange * (gameMetadata->screenResolution.x / gameMetadata->screenResolution.y)};

@@ -324,6 +324,47 @@ glm::vec3 GetRayFromMouse(Camera *camera, glm::mat4 *projection, v2 screenCoords
     return rayWorld;
 }
 
+/* TODO: The float values between GetRayFromMouse and UnProject might be slightly different.
+ * Might need to do an accuracy check.
+ */
+glm::vec3 UnProject(Camera *camera, glm::mat4 *projection, v2 screenCoords, v2 screenResolution)
+{
+    /* XXX: Both `UnProject` and `GetRayFromMouse` equivalently does the same
+     * thing - doing an UnProject. In just a slightly different approach. One
+     * might seen more intuitive than the other.
+     */
+    glm::vec3 rayNormalizedDeviceCoords =
+        ScreenSpaceToNormalizedDeviceSpace(screenCoords, screenResolution);
+
+    glm::mat4 inPV = glm::inverse( *projection * camera->view);
+
+    /* XXX: Based on our viewport, our znear -> zfar goes from 0 to 1 (I think) */
+    glm::vec4 zNear = glm::vec4(rayNormalizedDeviceCoords.xy, 0.0f, 1.0f);
+    glm::vec4 zFar = glm::vec4(rayNormalizedDeviceCoords.xy, 1.0f, 1.0f);
+
+    glm::vec4 rayZNearXYZW = inPV * zNear;
+    glm::vec4 rayZFarXYZW = inPV * zFar;
+
+    /* XXX: Perspective divide - This will make things further smaller in terms
+     * of points and and the things closer bigger.
+     * For example (not accurate):
+     * 1,   1,   1      -> 1.5,  1.5,  1.5
+     * 100, 100, 100    -> 0.01, 0.01, 0.01,
+     */
+    glm::vec3 rayZNear = glm::vec3(rayZNearXYZW.xyz) / rayZNearXYZW.w;
+    glm::vec3 rayZFar = glm::vec3(rayZFarXYZW.xyz) / rayZFarXYZW.w;
+
+#if 0
+    /* XXX: Needed if we actaully care about the max distance of a ray. Might
+     * be useful for object look up
+     */.
+    f32 d = glm::length(glm::cross(rayZNear, rayZFar)) / glm::length(rayZFar -
+            rayZNear);
+#endif
+
+    return glm::normalize(rayZFar - rayZNear);
+}
+
 glm::vec3 GetWorldPointFromMouse(
         Camera *camera,
         glm::mat4 *projection,
@@ -334,7 +375,11 @@ glm::vec3 GetWorldPointFromMouse(
 
     /* XXX: arbitrary position since it's infinite anyways. */
     glm::vec3 infinitePlanePos = glm::vec3(0, 0, 0);
+#if 0
     glm::vec3 rayWorld = GetRayFromMouse(camera, projection, screenCoords, screenResolution);
+#else
+    glm::vec3 rayWorld = UnProject(camera, projection, screenCoords, screenResolution);
+#endif
 
     /* XXX: rayWorld is just a normalized vector of the ray, which means that it doesn't have a starting location.
      * We're setting the camera's position as the starting location. This is
