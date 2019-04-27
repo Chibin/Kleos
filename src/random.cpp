@@ -87,45 +87,13 @@ glm::mat4 PerspectiveProjectionMatrix(f32 fov, f32 aspectRatio, f32 zNear, f32 z
 
     result[2][0] = 0.0f;
     result[2][1] = 0.0f;
-    result[2][2] = (zFar + zNear) / (zNear - zFar);
-    result[2][3] = (2.0f * zFar * zNear) / (zNear - zFar);
-
-    result[3][0] = 0.0f;
-    result[3][1] = 0.0f;
-    result[3][2] = -1;
-    result[3][3] = 0.0f;
-
-    return result;
-
-}
-
-glm::mat4 InversePerspectiveProjectionMatrix(f32 fov, f32 aspectRatio, f32 zNear, f32 zFar)
-{
-    /* XXX: This inverse perspective projection matrix is used when the Z-Axis
-     * goes from -1 to 1
-     */
-    f32 f = 1.0f / tan(DegToRad(fov) * 0.5f);
-    glm::mat4 result = glm::mat4(0.0f);
-
-    result[0][0] = aspectRatio / f;
-    result[0][1] = 0.0f;
-    result[0][2] = 0.0f;
-    result[0][3] = 0.0f;
-
-    result[1][0] = 0.0f;
-    result[1][1] = 1 / f;
-    result[1][2] = 0.0f;
-    result[1][3] = 0.0f;
-
-    result[2][0] = 0.0f;
-    result[2][1] = 0.0f;
-    result[2][2] = 0;
+    result[2][2] = zFar / (zNear - zFar);
     result[2][3] = -1;
 
     result[3][0] = 0.0f;
     result[3][1] = 0.0f;
-    result[3][2] = (zNear - zFar) / (2.0f * zFar * zNear);
-    result[3][3] = (zFar + zNear) / (2.0f * zFar * zNear);
+    result[3][2] = (zNear * zFar) / (zNear - zFar);
+    result[3][3] = 0.0f;
 
     return result;
 }
