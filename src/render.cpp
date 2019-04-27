@@ -443,9 +443,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         f32 screenHeight = screenResolution.v[1];
         g_projection = (glm::mat4 *)AllocateMemory(reservedMemory, (sizeof(glm::mat4)));
         *g_projection =
-            glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f);
+            //glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f);
             //glm::infinitePerspective(45.0f, screenWidth / screenHeight, 1.0f);
-            //glm::mat4(PerspectiveProjectionMatrix(45.0f, screenWidth / screenHeight, 1.0f, 1000.0f)); // Using too small of a znear was not showing up any kind of image onto the screen ... :(
+            glm::mat4(PerspectiveProjectionMatrix(Radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f));
 
         g_rectManager = CreateRectManager(reservedMemory);
 

@@ -64,16 +64,15 @@ f32 Randf32(u32 range)
 }
 
 
-f32 DegToRad(f32 deg)
+f32 Radians(f32 deg)
 {
     return  deg * (f32)M_PI / 180.0f;
 }
 
 glm::mat4 PerspectiveProjectionMatrix(f32 fov, f32 aspectRatio, f32 zNear, f32 zFar)
 {
-    /* XXX: This perspective projection matrix is used when the Z-Axis goes from -1 to 1 */
-
-    f32 f = 1.0f / tan(DegToRad(fov) * 0.5f);
+    /* XXX: (Vulkan) This perspective projection matrix is used when the z-far <-> z-near goes from 0 to 1 */
+    f32 f = 1.0f / tan(fov * 0.5f);
     glm::mat4 result = glm::mat4(0.0f);
 
     result[0][0] = f / aspectRatio;
