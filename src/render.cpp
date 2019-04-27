@@ -95,7 +95,7 @@ inline void *RequestToReservedMemory(memory_index size)
               GLuint debugProgram, Entity *entity)
 
 void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
+            RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
             RenderGroup *perFrameRenderGroup, VulkanContext *vc);
 void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes,
             RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup);
@@ -212,7 +212,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             vc->textures[0].dataSize = texWidth * texHeight * 4;
             vc->textures[0].data = pixels;
 
-            VulkanPrepareTexture(vc,
+            VulkanPrepareTexture(
                     &vc->gpu,
                     &vc->device,
                     &vc->setupCmd,
@@ -238,7 +238,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
              * This will give us a longer width when creating a vkimage.
              */
             sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f              ", 33.0f, 66.0f, 99.0f); // NOLINT
-            StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                             // NOLINT
+            StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                             // NOLINT
             stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
             vc->UITextures[0].texWidth = stringBitmap.width;
@@ -247,7 +247,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             vc->UITextures[0].dataSize = stringBitmap.size;
             vc->UITextures[0].data = stringBitmap.data;
 
-            VulkanPrepareTexture(vc,
+            VulkanPrepareTexture(
                     &vc->gpu,
                     &vc->device,
                     &vc->setupCmd,
@@ -269,7 +269,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             vc->playerTextures[0].dataSize = texWidth * texHeight * 4;
             vc->playerTextures[0].data = playerPixels;
 
-            VulkanPrepareTexture(vc,
+            VulkanPrepareTexture(
                     &vc->gpu,
                     &vc->device,
                     &vc->setupCmd,
@@ -293,7 +293,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             vc->boxTextures[0].dataSize = texWidth * texHeight * 4;
             vc->boxTextures[0].data = boxPixels;
 
-            VulkanPrepareTexture(vc,
+            VulkanPrepareTexture(
                     &vc->gpu,
                     &vc->device,
                     &vc->setupCmd,
@@ -317,7 +317,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             vc->pshroomTextures[0].dataSize = texWidth * texHeight * 4;
             vc->pshroomTextures[0].data = pshroomPixels;
 
-            VulkanPrepareTexture(vc,
+            VulkanPrepareTexture(
                     &vc->gpu,
                     &vc->device,
                     &vc->setupCmd,
@@ -339,7 +339,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             vc->whiteTextures[0].dataSize = gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * 4;
             vc->whiteTextures[0].data = gameMetadata->whiteBitmap.data;
 
-            VulkanPrepareTexture(vc,
+            VulkanPrepareTexture(
                     &vc->gpu,
                     &vc->device,
                     &vc->setupCmd,
@@ -571,7 +571,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ProcessMouseInput(event, g_camera);
             break;
         case SDL_MOUSEMOTION:
-            g_mousePoint = ProcessMouseMotion(event.motion, g_camera);
+            g_mousePoint = ProcessMouseMotion(event.motion);
             break;
         case SDL_KEYDOWN:
             ProcessInputDown(
@@ -667,8 +667,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
            gameMetadata->vboID,
            gameMetadata->textureID,
            gameMetadata->program,
-           gameMetadata->debugProgram,
-           g_player,
            hitBoxes,
            hurtBoxes,
            &perFrameRenderGroup,
@@ -679,7 +677,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
 void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup, bool isPlayer = false)
 {
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     /*
@@ -707,7 +704,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     /* XXX: If we're on the ground we should always reset the accelration to the force of gravity. */
     e->acceleration.y += gravity;
 
-    AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+    MinMax temp = GetMinMax(&nextUpdate);
+    AABB range = MinMaxToSquareAABB(&temp);
 #if 1
     f32 arbitraryPadding = 5.0f;
 #else
@@ -716,9 +714,6 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     range.halfDim = range.halfDim + arbitraryPadding;
     Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);
-
-    f32 screenWidth = gameMetadata->screenResolution.v[0];
-    f32 screenHeight = gameMetadata->screenResolution.v[1];
 
     AABB uiTest = {};
     glm::vec3 rayWorld =
@@ -782,7 +777,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     e->position += e->velocity * dt + 0.5f * e->acceleration * dt * dt;
     e->velocity.y += e->acceleration.y *dt;
 
-    UpdatePositionBasedOnCollission(g_sceneManager, g_enemyNPC, g_rectManager, gravity, dt);
+    UpdatePositionBasedOnCollission(g_sceneManager, g_enemyNPC, gravity, dt);
 
     /* TODO: can't let the player spam attack while we're still in an attack animation */
     if (e->willAttack)
@@ -929,7 +924,7 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     UpdateGameTimestep(gameTimestep);
 
     const GLfloat gravity = -9.81f;
-    UpdateNPCMovement(g_enemyNPC, gameMetadata, g_rectManager, gravity, gameTimestep->dt);
+    UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
 
     /* Update entities */
     UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
@@ -939,9 +934,9 @@ void DrawScene(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
-        VulkanBuffers *g_vkBuffers,
-        Camera *g_camera,
-        glm::mat4 *g_projection,
+        VulkanBuffers *vkBuffers,
+        Camera *camera,
+        glm::mat4 *projection,
         GLuint *viewLoc,
         GLuint *projectionLoc,
         GLuint *textureID,
@@ -1009,8 +1004,8 @@ void DrawScene(
     UpdateUBOandPushConstants(
             gameMetadata,
             vc,
-            g_camera,
-            g_projection,
+            camera,
+            projection,
             viewLoc,
             projectionLoc);
 
@@ -1019,9 +1014,7 @@ void DrawScene(
             perFrameRenderGroup,
             sortedRectInfo,
             vc,
-            g_vkBuffers,
-            g_camera,
-            g_projection,
+            vkBuffers,
             textureID);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
@@ -1032,9 +1025,7 @@ void DrawUI(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
-        VulkanBuffers *g_vkBuffers,
-        Camera *g_camera,
-        glm::mat4 *g_projection,
+        VulkanBuffers *vkBuffers,
         GLuint *viewLoc,
         GLuint *projectionLoc,
         GLuint *textureID,
@@ -1050,7 +1041,7 @@ void DrawUI(
     /* TODO: create something that can get a new bitmap id? */
     stringBitmap.bitmapID = 99;
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
-    StringToBitmap(perFrameMemory, &stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
+    StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
 
     ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
     ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
@@ -1143,19 +1134,21 @@ void DrawUI(
             gameMetadata,
             perFrameRenderGroup,
             vc,
-            g_vkBuffers,
-            g_camera,
-            g_projection,
+            vkBuffers,
             textureID);
 
 }
 
-void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            GLuint debugProgram, Entity *entity, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
-            RenderGroup *perFrameRenderGroup, VulkanContext *vc)
+void Render(GameMetadata *gameMetadata,
+        GLuint vao,
+        GLuint vbo,
+        GLuint textureID,
+        GLuint program,
+        RectDynamicArray *hitBoxes,
+        RectDynamicArray *hurtBoxes,
+        RenderGroup *perFrameRenderGroup,
+        VulkanContext *vc)
 {
-
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
     f64 MSPerFrame = 0;
     f64 FPS = 0;
@@ -1213,8 +1206,6 @@ void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID
         perFrameRenderGroup,
         vc,
         &g_vkBuffers,
-        g_camera,
-        g_projection,
         &viewLoc,
         &projectionLoc,
         &textureID,
@@ -1461,8 +1452,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
             collissionRect->renderLayer = FRONT_STATIC;
             UpdateColors(collissionRect, v4{ 0.0f, 0.0f, 1.0f, 0.7f });
 
-            Bitmap *bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
-            collissionRect->bitmapID = bitmap->bitmapID;
+            Bitmap *findBoxBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
+            collissionRect->bitmapID = findBoxBitmap->bitmapID;
             PushBack(&(g_rectManager->NonTraversable.rda), collissionRect);
         }
     }

@@ -118,7 +118,7 @@ void ProcessMouseButton(const SDL_MouseButtonEvent &mbe)
 #define SCREEN_WIDTH 1366
 #define SCREEN_HEIGHT 768
 
-v3 ProcessMouseMotion(const SDL_MouseMotionEvent &mme, Camera *camera)
+v3 ProcessMouseMotion(const SDL_MouseMotionEvent &mme)
 {
     printf("X %d, Y %d\n", mme.x, mme.y);
     v2 normalizedMME = {mme.x/(f32)SCREEN_WIDTH, mme.y/(f32)SCREEN_HEIGHT};

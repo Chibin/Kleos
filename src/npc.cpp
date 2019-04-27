@@ -78,7 +78,7 @@ void UpdateNPCAnimation(NPC *npc, Rect *r)
     UpdateFrameDirection(npc->spriteAnimation, npc->direction);
 }
 
-void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, RectManager *rectManager, f32 gravity, f32 dt)
+void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, f32 gravity, f32 dt)
 {
 
     v2 center = {0.5f * npc->dim.width, 0.5f * npc->dim.height};
@@ -90,8 +90,8 @@ void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, RectManager *re
         V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
 
     npc->movement.acceleration.y += gravity;
-
-    AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+    MinMax temp = GetMinMax(&nextUpdate);
+    AABB range = MinMaxToSquareAABB(&temp);
     f32 arbitraryPadding = 5.0f;
     range.halfDim = range.halfDim + arbitraryPadding;
     Rect **arr = GetRectsWithInRange(sm, &range);
@@ -141,11 +141,10 @@ void NPCMoveLeft(NPC *npc)
     npc->movement.velocity.x -= 1.0f;
 }
 
-b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *rectManager, f32 gravity, f32 dt)
+b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, f32 dt)
 {
     v2 center = {0.5f * npc->dim.width, 0.5f * npc->dim.height};
     /* We only need the min and max from the rect to test for AABB, so we can be a bit reckless here. */
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     Rect nextUpdate = {};
 
     nextUpdate.min =
@@ -153,7 +152,8 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, RectManager *r
     nextUpdate.max =
         V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
 
-    AABB range = MinMaxToSquareAABB(&GetMinMax(&nextUpdate));
+    MinMax temp = GetMinMax(&nextUpdate);
+    AABB range = MinMaxToSquareAABB(&temp);
     /* XXX: The padding/range needs to be wide enough such that we can get the
      * other "NonTraversable"s. The issue is that the quadtree puts the rect at northwest firsts,
      * so even though the rect is in range, the AABB in the quadtree for the
@@ -224,18 +224,18 @@ void SwitchDirection(NPC *npc)
     }
 }
 
-void MoveUniDirectional(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
+void MoveUniDirectional(NPC *npc, GameMetadata *gm, f32 dt)
 {
     switch(npc->direction)
     {
         case LEFT:
-            if (CanMoveTheSameDirection(npc, gm, rectManager, gravity, dt) == false)
+            if (CanMoveTheSameDirection(npc, gm, dt) == false)
             {
                 npc->direction = RIGHT;
             }
             break;
         case RIGHT:
-            if (CanMoveTheSameDirection(npc, gm, rectManager, gravity, dt) == false)
+            if (CanMoveTheSameDirection(npc, gm, dt) == false)
             {
                 npc->direction = LEFT;
             }
@@ -259,23 +259,17 @@ void MoveUniDirectional(NPC *npc, GameMetadata *gm, RectManager *rectManager, f3
     }
 }
 
-void MoveBiDirectional(NPC *npc)
-{
-
-}
-
-void NPCMoveX(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
+void NPCMoveX(NPC *npc, GameMetadata *gm, f32 dt)
 {
     switch(npc->movementPattern)
     {
         case UNI_DIRECTIONAL:
         {
-            MoveUniDirectional(npc, gm, rectManager, gravity, dt);
+            MoveUniDirectional(npc, gm, dt);
             break;
         }
         case BI_DIRECTIONAL:
         {
-            MoveBiDirectional(npc);
             break;
         }
         default:
@@ -283,7 +277,7 @@ void NPCMoveX(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity,
     }
 }
 
-void NPCMove(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
+void NPCMove(NPC *npc, GameMetadata *gm, f32 dt)
 {
     /* This is where the NPC will decide where to move.
      * For now, let's make the NPC move left and right.*/
@@ -292,7 +286,7 @@ void NPCMove(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, 
     switch (npc->movementType)
     {
         case X_MOVEMENT:
-            NPCMoveX(npc, gm, rectManager, gravity, dt);
+            NPCMoveX(npc, gm, dt);
             //or
             //NPCMoveRight(npc);
             break;
@@ -310,8 +304,8 @@ void NPCMove(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, 
     */
 }
 
-void UpdateNPCMovement(NPC *npc, GameMetadata *gm, RectManager *rectManager, f32 gravity, f32 dt)
+void UpdateNPCMovement(NPC *npc, GameMetadata *gm, f32 dt)
 {
-    NPCMove(npc, gm, rectManager, gravity, dt);
+    NPCMove(npc, gm, dt);
 }
 #endif

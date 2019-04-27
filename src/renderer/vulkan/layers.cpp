@@ -1,3 +1,5 @@
+#pragma warning(push)
+#pragma warning(disable : 4100)
 VKAPI_ATTR VkBool32 VKAPI_CALL
 BreakCallback(
         VkFlags msgFlags,
@@ -27,8 +29,6 @@ DbgFunc(VkFlags msgFlags,
 
     ASSERT(message);
 
-    auto validation_error = 1;
-
     if (msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
     {
         sprintf_s(message, strlen(pMsg) + 100, "ERROR: [%s] Code %d : \n%s", pLayerPrefix, msgCode, pMsg);
@@ -56,6 +56,7 @@ DbgFunc(VkFlags msgFlags,
      */
     return false;
 }
+#pragma warning(pop)
 
 /*
  * Return true if all layer names specified in checkNames

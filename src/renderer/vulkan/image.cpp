@@ -315,7 +315,7 @@ void VulkanUseStagingBufferToCopyLinearTextureToOptimized(
     VulkanDestroyTextureImage(device, &stagingTexture);
 }
 
-void VulkanPrepareTexture(VulkanContext *vc,
+void VulkanPrepareTexture(
         VkPhysicalDevice *gpu,
         VkDevice *device,
         VkCommandBuffer *setupCmd,

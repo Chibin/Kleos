@@ -28,7 +28,7 @@
 #define  ATTACHMENT_COUNT 3
 #include "./shader.cpp"
 #include "./layers.cpp"
-void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear);
+void VulkanRender(VulkanContext *vc, u32 numOfVertices);
 
 static bool AvailableMemoryTypeFromProperties(
         VkPhysicalDeviceMemoryProperties *memoryProperties,
@@ -125,7 +125,6 @@ void VulkanPrepareVertices(
     VkPhysicalDeviceMemoryProperties memoryProperties = {};
 	vkGetPhysicalDeviceMemoryProperties(vc->gpu, &memoryProperties);
 
-    VulkanVertices *vertices = &vc->vertices;
     VkMemoryRequirements memReqs = {};
     void *data;
 
@@ -269,7 +268,7 @@ void VulkanEndBufferCommands(VulkanContext *vc)
     ASSERT(vkEndCommandBuffer(vc->drawCmd) == VK_SUCCESS);
 }
 
-static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
+static void VulkanBuildDrawCommand(struct VulkanContext *vc, u32 numOfVertices)
 {
     VkResult err;
 
@@ -407,8 +406,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 
     VkResult err;
     uint32_t deviceValidationLayerCount = 0;
-    char **instanceValidationLayers = nullptr;
-    VkBool32 validationFound = 0;
     bool useBreak = false;
 
     uint32_t currentBufferIndex;
@@ -575,7 +572,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         &presentQueueNodeIndex);
 
     VulkanInitDevice(
-        vc,
         &device,
         &gpu,
         graphicsQueueNodeIndex,
@@ -633,7 +629,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
         &swapchain,
         &width,
         &height,
-        &vc->depth,
         &device,
         colorSpace,
         &vc->swapchainImageCount,
@@ -698,8 +693,6 @@ VulkanContext *VulkanSetup(SDL_Window **window)
 void VulkanInitFrameBuffers(VulkanContext *vc)
 {
     VkResult err;
-    u32 width = vc->width;
-    u32 height = vc->height;
     VkDevice *device = &vc->device;
 
     /* The amount of frame buffers rely on how many attachments we have in the renderpass */
@@ -821,7 +814,7 @@ void VulkanPrepareRender(VulkanContext *vc)
          * vulkan_resize(vc);
          */
         PAUSE_HERE("pausing\n");
-        VulkanRender(vc, 0, true);
+        VulkanRender(vc, 0);
         vkDestroySemaphore(vc->device, vc->presentCompleteSemaphore, nullptr);
         return;
     }
@@ -861,12 +854,12 @@ void VulkanPrepareRender(VulkanContext *vc)
 
 }
 
-void VulkanRender(VulkanContext *vc, u32 numOfVertices, b32 shouldClear)
+void VulkanRender(VulkanContext *vc, u32 numOfVertices)
 {
     VulkanPrepareRender(vc);
 
     // FIXME/TODO: DEAL WITH VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-    VulkanBuildDrawCommand(vc, numOfVertices, shouldClear);
+    VulkanBuildDrawCommand(vc, numOfVertices);
 
     VulkanEndRender(vc);
 }

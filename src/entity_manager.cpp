@@ -97,6 +97,8 @@ int Append(GameMemory *gm, EntityManager *em, Entity *entity)
     return em->size - 1;
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4100)
 void _freeMemory(EntityManager *em)
 {
     /* TODO: This is a bit complicated since everything is done as a stack...
@@ -107,6 +109,7 @@ void _freeMemory(EntityManager *em)
      */
      //free(em->entities); // we can't do this! and should be done through our memory manager.
 }
+#pragma warning(pop)
 
 /* helper functions */
 void _allocateMoreMemory(GameMemory *gm, EntityManager *em)

@@ -19,10 +19,6 @@ b32 UpdateFrameState(FrameState *fs, u32 dt)
     return true;
 }
 
-void Transform(Rect *r, glm::mat4 xform)
-{
-}
-
 Rect *CreateFrameRect(GameMemory *perFrameMemory, FrameState *fs, v3 position, v4 rectColor)
 {
     v3 startingPosition = position;

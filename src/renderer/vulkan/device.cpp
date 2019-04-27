@@ -1,4 +1,4 @@
-void VulkanInitDevice(VulkanContext *vc,
+void VulkanInitDevice(
         VkDevice *device,
         VkPhysicalDevice *gpu,
         const u32 graphicsQueueNodeIndex,

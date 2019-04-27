@@ -33,7 +33,6 @@
         else if (raw[1] > raw[0])                                             \
         {                                                                     \
             memory_index newCapacity = SafeCastToU32(raw[0] * 0.25f);         \
-            memory_index oldSize = raw[1];                                    \
             raw = (memory_index *)ReallocMemory(                              \
                     gameMemory,                                               \
                     raw,                                                      \

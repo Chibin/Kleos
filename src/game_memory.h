@@ -61,8 +61,6 @@ inline void *AllocateMemory(GameMemory *gm, memory_index size)
 
 inline void *ReallocMemory(GameMemory *gm, void *ptr, memory_index oldSize, memory_index size)
 {
-    u8 *newAllocBase = nullptr;
-
     u8 *newMemory = (u8 *)AllocateMemory(gm, size);
     memset(newMemory, 0, size);
     /* TODO: There needs to be a part where we check if we can just extend

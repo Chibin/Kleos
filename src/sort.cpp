@@ -33,7 +33,6 @@ void MergeRGRI(Rect **result, Rect **rectMemoryTemp, memory_index left, memory_i
     {
         Rect *leftRect = (Rect *)rectMemoryTemp[iLeft];
         Rect *rightRect = (Rect *)rectMemoryTemp[iRight];
-        Rect *r = (Rect *)result[i];
 
         if (iRight <= right && leftRect->renderLayer < rightRect->renderLayer)
         {

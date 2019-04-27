@@ -300,6 +300,12 @@ u8 SafeCastToU8(f32 num)
     return (u8)num;
 }
 
+u8 SafeCastToU8(s32 num)
+{
+    ASSERT(num <= 256 && num >= 0); // NOLINT
+    return (u8)num;
+}
+
 s32 *SafeCastU32ToS32(u32 *u32Pointer)
 {
     ASSERT(*u32Pointer <= INT32_MAX); // NOLINT

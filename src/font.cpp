@@ -116,7 +116,7 @@ inline void FlipImage(u32 *pixels, u32 width, u32 height)
     }
 }
 
-inline void SDLSurfaceToBitmap(GameMemory *gm, SDL_Surface *surface, struct Bitmap *bitmap)
+inline void SDLSurfaceToBitmap(SDL_Surface *surface, struct Bitmap *bitmap)
 {
     u32 width = surface->w;
     u32 height = surface->h;
@@ -169,7 +169,7 @@ void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
     SDL_FreeSurface(surface);
 }
 
-void StringToBitmap(GameMemory *gm, Bitmap *bitmap, TTF_Font *font, const char *msg)
+void StringToBitmap(Bitmap *bitmap, TTF_Font *font, const char *msg)
 {
     /* FIXME: Is this right? we might not be able to assume that we can just
      * pick the first glenum texture
@@ -178,7 +178,7 @@ void StringToBitmap(GameMemory *gm, Bitmap *bitmap, TTF_Font *font, const char *
     SDL_Surface *surface = StringToSDLSurface(font, msg);
     ASSERT(surface != nullptr);
 
-    SDLSurfaceToBitmap(gm, surface, bitmap);
+    SDLSurfaceToBitmap(surface, bitmap);
 
     //SDL_FreeSurface(surface);
 }

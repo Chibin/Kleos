@@ -2,9 +2,7 @@ void Draw(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
-        VulkanBuffers *g_vkBuffers,
-        Camera *g_camera,
-        glm::mat4 *g_projection)
+        VulkanBuffers *vkBuffers)
 {
     if (perFrameRenderGroup->vertexMemory.used == 0)
     {
@@ -17,14 +15,14 @@ void Draw(
         memset(&vc->vertices, 0, sizeof(vc->vertices));
         VulkanPrepareVertices(
                 vc,
-                &g_vkBuffers->bufs[g_vkBuffers->count],
-                &g_vkBuffers->mems[g_vkBuffers->count],
+                &vkBuffers->bufs[vkBuffers->count],
+                &vkBuffers->mems[vkBuffers->count],
                 (void *)perFrameRenderGroup->vertexMemory.base,
                 perFrameRenderGroup->vertexMemory.used);
 
         VulkanAddDrawCmd(
                 vc,
-                &g_vkBuffers->bufs[g_vkBuffers->count++],
+                &vkBuffers->bufs[vkBuffers->count++],
                 SafeCastToU32(perFrameRenderGroup->rectCount * 6));
     }
 
@@ -131,7 +129,7 @@ void EndRender(
 void RenderCleanup(
         GameMetadata *gameMetadata,
         VulkanContext *vc,
-        VulkanBuffers *g_vkBuffers)
+        VulkanBuffers *vkBuffers)
 {
     if (gameMetadata->isVulkanActive)
     {
@@ -139,12 +137,12 @@ void RenderCleanup(
         vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
         vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
-        for (memory_index i = 0; i < g_vkBuffers->count; i++)
+        for (memory_index i = 0; i < vkBuffers->count; i++)
         {
-            vkDestroyBuffer(vc->device, g_vkBuffers->bufs[i], nullptr);
-            vkFreeMemory(vc->device, g_vkBuffers->mems[i], nullptr);
+            vkDestroyBuffer(vc->device, vkBuffers->bufs[i], nullptr);
+            vkFreeMemory(vc->device, vkBuffers->mems[i], nullptr);
         }
-        g_vkBuffers->count = 0;
+        vkBuffers->count = 0;
     }
 }
 
@@ -153,9 +151,7 @@ void DrawRenderGroup(
         RenderGroup *perFrameRenderGroup,
         Rect **sortedRectInfo,
         VulkanContext *vc,
-        VulkanBuffers *g_vkBuffers,
-        Camera *g_camera,
-        glm::mat4 *g_projection,
+        VulkanBuffers *vkBuffers,
         GLuint *textureID)
 {
     Bitmap *bitmap = nullptr;
@@ -179,9 +175,7 @@ void DrawRenderGroup(
                     gameMetadata,
                     perFrameRenderGroup,
                     vc,
-                    g_vkBuffers,
-                    g_camera,
-                    g_projection);
+                    vkBuffers);
 
             ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
@@ -206,9 +200,7 @@ void DrawRenderGroup(
             gameMetadata,
             perFrameRenderGroup,
             vc,
-            g_vkBuffers,
-            g_camera,
-            g_projection);
+            vkBuffers);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 }
@@ -217,9 +209,7 @@ void DrawRenderGroup(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
-        VulkanBuffers *g_vkBuffers,
-        Camera *g_camera,
-        glm::mat4 *g_projection,
+        VulkanBuffers *vkBuffers,
         GLuint *textureID)
 {
     Bitmap *bitmap = nullptr;
@@ -243,9 +233,7 @@ void DrawRenderGroup(
                     gameMetadata,
                     perFrameRenderGroup,
                     vc,
-                    g_vkBuffers,
-                    g_camera,
-                    g_projection);
+                    vkBuffers);
 
             ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
@@ -270,9 +258,7 @@ void DrawRenderGroup(
             gameMetadata,
             perFrameRenderGroup,
             vc,
-            g_vkBuffers,
-            g_camera,
-            g_projection);
+            vkBuffers);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 }

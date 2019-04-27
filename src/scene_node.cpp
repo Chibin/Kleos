@@ -63,8 +63,8 @@ b32 InsertToScenePartition(SceneManager *sm, SceneNode *sn, Rect *rect)
     //generate an ID for each specific dimension
     //
     ASSERT(sm->perFrameMemory != nullptr);
-
-    if(TestAABBAABB(&sn->aabb, &RectToAABB(rect)) == false)
+    AABB temp = RectToAABB(rect);
+    if(TestAABBAABB(&sn->aabb, &temp) == false)
     {
         return false;
     }

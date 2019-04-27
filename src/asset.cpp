@@ -61,7 +61,7 @@ memory_index CopyLine(const char *from, u8 *to, b32 isNewlineOnly)
 {
     char tmpBuffer[MAX_NUM_CHARS];
     memory_index bytesCopied = CopyLine(from, tmpBuffer, sizeof(tmpBuffer), isNewlineOnly);
-    *to = SDL_atoi(tmpBuffer);
+    *to = SafeCastToU8(SDL_atoi(tmpBuffer));
     return bytesCopied;
 }
 
@@ -101,7 +101,6 @@ void LoadFrameData(GameMetadata *gameMetadata, const char* file)
     char *fileData = ReadFile(file, &fileSize);
     memory_index counter = 0;
     FrameDataReadState fdrs = NAME;
-    u8 frameCount = 0;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     /* All 3 of them represent the end of a line. But...
@@ -190,15 +189,15 @@ void LoadFrameData(GameMetadata *gameMetadata, const char* file)
             {
                 FrameCycle *fc = &fa->frameCycles[animationStateCount];
 
-                char *frameCount = "frame count:\r\n";
-                if (VerifyStringAndGotoNextLine(tmp, frameCount) == false)
+                char *name = "frame count:\r\n";
+                if (VerifyStringAndGotoNextLine(tmp, name) == false)
                 {
-                    frameCount = "frame count:\n";
-                    ASSERT(VerifyStringAndGotoNextLine(tmp, frameCount));
+                    name = "frame count:\n";
+                    ASSERT(VerifyStringAndGotoNextLine(tmp, name));
                     isNewlineOnly = true;
                 }
 
-                counter += strlen(frameCount);
+                counter += strlen(name);
                 tmp = fileData + counter;
 
                 memory_index bytesCopied = CopyLine(tmp, &fc->frameCount, isNewlineOnly);
