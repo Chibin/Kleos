@@ -5,12 +5,6 @@
 static bool g_canJump = true;
 static bool g_canAttack = true;
 
-void ToggleBetweenVulkanAndOpenGL(GameMetadata *gm)
-{
-    gm->isVulkanActive = !gm->isVulkanActive;
-    gm->isOpenGLActive = !gm->isVulkanActive;
-}
-
 void TogglePauseGame(GameMetadata *gm)
 {
     if (IsGamePaused(gm->gameTimestep))
@@ -34,7 +28,6 @@ void ProcessInputDown(
         *continueRunning = false;
         break;
     case  SDLK_1:
-        ToggleBetweenVulkanAndOpenGL(gm);
         break;
     case SDLK_p:
         TogglePauseGame(gm);

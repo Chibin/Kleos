@@ -28,14 +28,6 @@ struct GameMetadata
 
     FrameAnimation frameAnimationSentinelNode;
 
-    GLuint vaoID;
-    GLuint eboID;
-    GLuint vboID;
-    GLuint textureID;
-
-    GLuint program;
-    GLuint debugProgram;
-
     ParticleSystem particleSystem;
 
     v2 screenResolution;
@@ -43,9 +35,6 @@ struct GameMetadata
     struct Rect *playerRect;
 
     VulkanContext *vulkanContext;
-    b32 isVulkanActive;
-    b32 isOpenGLActive;
-    b32 initOpenGL;
 
     struct RectDynamicArray *rdaDebug;
     struct RectDynamicArray *rdaDebugUI;

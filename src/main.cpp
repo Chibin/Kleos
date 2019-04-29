@@ -13,14 +13,13 @@ int main(int /*unused*/, char ** /*unused*/)
     RenderAPI renderAPI = {};
 
     if (!WindowSetup(&mainWindow, programName) ||
-        !WindowsOpenGLSetup(mainWindow, &mainContext) || !WindowsSDLTTFSetup() ||
+        !WindowsSDLTTFSetup() ||
         !LoadDLLWindows(&renderAPI))
     {
         return -1;
     }
 
-    b32 isVulkanActive = true;
-    MainGameLoop(mainWindow, isVulkanActive, &renderAPI);
+    MainGameLoop(mainWindow, &renderAPI);
     WindowsCleanup(mainWindow, &mainContext);
     return 0;
 }

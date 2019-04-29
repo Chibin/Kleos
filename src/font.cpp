@@ -72,13 +72,6 @@ inline u32 *Get2DAddress(u32 *base, u32 xOffset, u32 yOffset, u32 maxWidth)
     return base + height + xOffset;
 }
 
-inline void OpenGLLoadBitmap(Bitmap *bitmap, GLuint textureID)
-{
-    OpenGLBindTexture(textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, bitmap->format, bitmap->width, bitmap->height, 0,
-                 bitmap->format, GL_UNSIGNED_BYTE, bitmap->data);
-}
-
 inline void CopyData(u32 *src, u32 *dest, memory_index size)
 {
     memory_index temp = size;
@@ -142,7 +135,7 @@ inline void SDLSurfaceToBitmap(SDL_Surface *surface, struct Bitmap *bitmap)
     bitmap->pitch = pitch;
 };
 
-void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
+void StringToTexture(TTF_Font *font, const char *msg)
 {
     /* FIXME: Is this right? we might not be able to assume that we can just
      * pick the first glenum texture
@@ -162,8 +155,6 @@ void StringToTexture(TTF_Font *font, const char *msg, GLuint &textureID)
     u32 height = surface->h;
 
     FlipImage((u32 *)surface->pixels, width, height);
-    OpenGLBindImageToTexture(format, surface->w, surface->h,
-                             surface->pixels, textureID);
 
     // Clean up the surface and font
     SDL_FreeSurface(surface);

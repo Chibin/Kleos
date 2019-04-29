@@ -75,25 +75,4 @@ inline void SetBitmap(Bitmap *bitmap, const char *name, TextureParam texturePara
     bitmap->textureParam = textureParam;
     bitmap->bitmapID = bitmapID;
 }
-
-inline GLuint OpenGLBindBitmapToTexture(Bitmap *bitmap)
-{
-    return OpenGLAllocateTexture(bitmap->format, bitmap->width, bitmap->height, bitmap->data);
-}
-
-GLuint ImageToTexture(const char *ImageName)
-{
-    /* This is a one time upload to OpenGL -- you don't get to keep bitmap data */
-    GLuint textureID;
-    Bitmap bitmap = {};
-
-    ImageToBitmap(&bitmap, ImageName);
-
-    textureID = OpenGLBindBitmapToTexture(&bitmap);
-    stbi_image_free(bitmap.data);
-
-    OpenGLCheckErrors();
-    return textureID;
-}
-
 #endif

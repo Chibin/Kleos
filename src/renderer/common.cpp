@@ -9,29 +9,20 @@ void Draw(
         return;
     }
 
-    if (gameMetadata->isVulkanActive)
-    {
-        ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
-        memset(&vc->vertices, 0, sizeof(vc->vertices));
-        VulkanPrepareVertices(
-                vc,
-                &vkBuffers->bufs[vkBuffers->count],
-                &vkBuffers->mems[vkBuffers->count],
-                (void *)perFrameRenderGroup->vertexMemory.base,
-                perFrameRenderGroup->vertexMemory.used);
+    ASSERT(perFrameRenderGroup->vertexMemory.used > 0);
+    memset(&vc->vertices, 0, sizeof(vc->vertices));
+    VulkanPrepareVertices(
+            vc,
+            &vkBuffers->bufs[vkBuffers->count],
+            &vkBuffers->mems[vkBuffers->count],
+            (void *)perFrameRenderGroup->vertexMemory.base,
+            perFrameRenderGroup->vertexMemory.used);
 
-        VulkanAddDrawCmd(
-                vc,
-                &vkBuffers->bufs[vkBuffers->count++],
-                SafeCastToU32(perFrameRenderGroup->rectCount * 6));
-    }
+    VulkanAddDrawCmd(
+            vc,
+            &vkBuffers->bufs[vkBuffers->count++],
+            SafeCastToU32(perFrameRenderGroup->rectCount * 6));
 
-    if (gameMetadata->isOpenGLActive)
-    {
-        glBufferData(GL_ARRAY_BUFFER, perFrameRenderGroup->vertexMemory.used,
-                perFrameRenderGroup->vertexMemory.base, GL_STATIC_DRAW);
-        DrawRawRectangle(perFrameRenderGroup->rectCount);
-    }
 }
 
 void UpdateUBOandPushConstants(
@@ -49,76 +40,46 @@ void UpdateUBOandPushConstants(
     } pushConstants;
     pushConstants = {};
 
-    if (gameMetadata->isVulkanActive)
-    {
-        pushConstants.proj = *g_projection;
-        pushConstants.view = g_camera->view;
-        vkCmdPushConstants(
-                vc->drawCmd,
-                vc->pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT,
-                0,
-                sizeof(PushConstantMatrix),
-                &pushConstants);
+    pushConstants.proj = *g_projection;
+    pushConstants.view = g_camera->view;
+    vkCmdPushConstants(
+            vc->drawCmd,
+            vc->pipelineLayout,
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(PushConstantMatrix),
+            &pushConstants);
 
-        //VulkanUpdateUniformBuffer(vc, &ubo);
-    }
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        glUniformMatrix4fv(*viewLoc, 1, GL_FALSE, glm::value_ptr(g_camera->view));
-        glUniformMatrix4fv(*projectionLoc, 1, GL_FALSE, glm::value_ptr(*g_projection));
-    }
+    //VulkanUpdateUniformBuffer(vc, &ubo);
 }
 
 void UpdateSamplerImage(
         GameMetadata *gameMetadata,
         VulkanContext *vc,
         Bitmap *bitmap,
-        TextureParam *textureParam,
-        GLuint *textureID)
+        TextureParam *textureParam)
 {
-    if (gameMetadata->isOpenGLActive)
-    {
-        OpenGLUpdateTextureParameter(textureParam);
-        OpenGLLoadBitmap(bitmap, *textureID);
-    }
+    VkDescriptorSet *descSet =
+        GetHashValue(&gameMetadata->bitmapToDescriptorSetMap, bitmap);
+    ASSERT(descSet != NULL);
 
-    if (gameMetadata->isVulkanActive)
-    {
-        VkDescriptorSet *descSet =
-            GetHashValue(&gameMetadata->bitmapToDescriptorSetMap, bitmap);
-        ASSERT(descSet != NULL);
-
-        vkCmdBindDescriptorSets(
-                vc->drawCmd,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                vc->pipelineLayout,
-                0,
-                1,
-                descSet,
-                0,
-                nullptr);
-    }
+    vkCmdBindDescriptorSets(
+            vc->drawCmd,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vc->pipelineLayout,
+            0,
+            1,
+            descSet,
+            0,
+            nullptr);
 }
 
 void EndRender(
         GameMetadata *gameMetadata,
         VulkanContext *vc)
 {
-    if (gameMetadata->isVulkanActive)
-    {
-        VulkanEndBufferCommands(vc);
-        VulkanEndRender(vc);
-    }
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        glBindVertexArray(0);
-        OpenGLCheckErrors();
-
-        OpenGLEndUseProgram();
-    }
+    VulkanEndBufferCommands(vc);
+    VulkanEndRender(vc);
 }
 
 void RenderCleanup(
@@ -126,19 +87,16 @@ void RenderCleanup(
         VulkanContext *vc,
         VulkanBuffers *vkBuffers)
 {
-    if (gameMetadata->isVulkanActive)
-    {
-        /* clean up */
-        vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
-        vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
+    /* clean up */
+    vkFreeMemory(vc->device, vc->vertices.mem, nullptr);
+    vkDestroyBuffer(vc->device, vc->vertices.buf, nullptr);
 
-        for (memory_index i = 0; i < vkBuffers->count; i++)
-        {
-            vkDestroyBuffer(vc->device, vkBuffers->bufs[i], nullptr);
-            vkFreeMemory(vc->device, vkBuffers->mems[i], nullptr);
-        }
-        vkBuffers->count = 0;
+    for (memory_index i = 0; i < vkBuffers->count; i++)
+    {
+        vkDestroyBuffer(vc->device, vkBuffers->bufs[i], nullptr);
+        vkFreeMemory(vc->device, vkBuffers->mems[i], nullptr);
     }
+    vkBuffers->count = 0;
 }
 
 void DrawRenderGroup(
@@ -146,8 +104,7 @@ void DrawRenderGroup(
         RenderGroup *perFrameRenderGroup,
         Rect **sortedRectInfo,
         VulkanContext *vc,
-        VulkanBuffers *vkBuffers,
-        GLuint *textureID)
+        VulkanBuffers *vkBuffers)
 {
     Bitmap *bitmap = nullptr;
     Bitmap *prevBitmap = nullptr;
@@ -180,8 +137,7 @@ void DrawRenderGroup(
                         gameMetadata,
                         vc,
                         bitmap,
-                        &textureParam,
-                        textureID);
+                        &textureParam);
             }
 
             prevBitmap = bitmap;
@@ -204,8 +160,7 @@ void DrawRenderGroup(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
-        VulkanBuffers *vkBuffers,
-        GLuint *textureID)
+        VulkanBuffers *vkBuffers)
 {
     Bitmap *bitmap = nullptr;
     Bitmap *prevBitmap = nullptr;
@@ -238,8 +193,7 @@ void DrawRenderGroup(
                         gameMetadata,
                         vc,
                         bitmap,
-                        &textureParam,
-                        textureID);
+                        &textureParam);
             }
 
             prevBitmap = bitmap;

@@ -65,7 +65,6 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "font.cpp"
 #include "game_time.cpp"
 #include "input.cpp"
-#include "opengl.cpp"
 #include "shaders.cpp"
 
 #include "collision.cpp"
@@ -94,15 +93,12 @@ inline void *RequestToReservedMemory(memory_index size)
     void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, \
               GLuint debugProgram, Entity *entity)
 
-void Render(GameMetadata *gameMetadata, GLuint vao, GLuint vbo, GLuint textureID, GLuint program,
-            RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
+void Render(GameMetadata *gameMetadata, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
             RenderGroup *perFrameRenderGroup, VulkanContext *vc);
 void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes,
             RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup);
 void LoadStuff(GameMetadata *gameMetadata);
-inline void LoadShaders(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
-inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc);
 
 /* TODO: We'll need to get rid of these global variables later on */
 Camera *g_camera = nullptr;
@@ -136,7 +132,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     VulkanContext *vc = gameMetadata->vulkanContext;
 
-    if (gameMetadata->isVulkanActive)
     {
 #if 0
         if (vc->depthStencil > 0.99f)
@@ -184,7 +179,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_vkBuffers.maxNum = 100;
 
         Bitmap stringBitmap = {};
-        if (gameMetadata->isVulkanActive)
         {
 
             memset(&gameMetadata->bitmapToDescriptorSetMap, 0, sizeof(BitmapDescriptorMap));
@@ -475,7 +469,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         LoadAssets(gameMetadata);
 
-        if (gameMetadata->isVulkanActive)
         {
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
@@ -587,53 +580,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         }
     }
 
-    if (gameMetadata->isOpenGLActive)
-    {
-
-        if (!gameMetadata->initOpenGL)
-        {
-            gameMetadata->initOpenGL = true;
-
-            LoadShaders(gameMetadata);
-
-            /*  Each vertex attribute takes its data from memory managed by a
-             *  VBO. VBO data -- one could have multiple VBOs -- is determined by the
-             *  current VBO bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer.
-             *  Since the previously defined VBO was bound before
-             *  calling glVertexAttribPointer vertex attribute 0 is now associated with
-             * its vertex data.
-             */
-
-            glGenVertexArrays(1, &gameMetadata->vaoID);
-            glGenBuffers(1, &gameMetadata->eboID);
-            glGenBuffers(1, &gameMetadata->vboID);
-
-            OpenGLCreateVAO(
-                    gameMetadata->vaoID,
-                    gameMetadata->vboID,
-                    sizeof(Vertex) * NUM_OF_RECT_CORNER,
-                    nullptr,   /* use null to skip preloading data to vbo */
-                    gameMetadata->eboID, sizeof(g_rectIndices),
-                    g_rectIndices); // NOLINT
-        }
-
-        /* start with a 'clear' screen */
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        //glEnable(GL_DEPTH_TEST);
-        /* Ignore depth values (Z) to cause drawing bottom to top */
-        //glDepthFunc(GL_NEVER);
-        /* same as the one above? */
-        glDisable (GL_DEPTH_TEST);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // NOLINT
-    }
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        ASSERT(gameMetadata->program);
-        ASSERT(gameMetadata->debugProgram);
-    }
-
     RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
 
@@ -663,10 +609,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
     Render(gameMetadata,
-           gameMetadata->vaoID,
-           gameMetadata->vboID,
-           gameMetadata->textureID,
-           gameMetadata->program,
            hitBoxes,
            hurtBoxes,
            &perFrameRenderGroup,
@@ -939,7 +881,6 @@ void DrawScene(
         glm::mat4 *projection,
         GLuint *viewLoc,
         GLuint *projectionLoc,
-        GLuint *textureID,
         RectDynamicArray *hitBoxes,
         RectDynamicArray *hurtBoxes)
 {
@@ -1014,8 +955,7 @@ void DrawScene(
             perFrameRenderGroup,
             sortedRectInfo,
             vc,
-            vkBuffers,
-            textureID);
+            vkBuffers);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
@@ -1028,7 +968,6 @@ void DrawUI(
         VulkanBuffers *vkBuffers,
         GLuint *viewLoc,
         GLuint *projectionLoc,
-        GLuint *textureID,
         const f64 &MSPerFrame,
         const f64 &FPS,
         const f64 &MCPF)
@@ -1070,7 +1009,6 @@ void DrawUI(
     perFrameRenderGroup->rectCount = 0;
     ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
 
-    if (gameMetadata->isVulkanActive)
     {
 
         /* TODO: Update UI texture */
@@ -1115,12 +1053,6 @@ void DrawUI(
         topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
     }
 
-    /* UI has the highest priority on the screen, so it should be drawn last */
-    if (gameMetadata->isOpenGLActive)
-    {
-        SetOpenGLDrawToScreenCoordinate(*viewLoc, *projectionLoc);
-    }
-
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
     for (memory_index i = 0; i < gameMetadata->rdaDebugUI->size; i++)
@@ -1134,16 +1066,10 @@ void DrawUI(
             gameMetadata,
             perFrameRenderGroup,
             vc,
-            vkBuffers,
-            textureID);
-
+            vkBuffers);
 }
 
 void Render(GameMetadata *gameMetadata,
-        GLuint vao,
-        GLuint vbo,
-        GLuint textureID,
-        GLuint program,
         RectDynamicArray *hitBoxes,
         RectDynamicArray *hurtBoxes,
         RenderGroup *perFrameRenderGroup,
@@ -1157,34 +1083,10 @@ void Render(GameMetadata *gameMetadata,
 
     GLuint modelLoc, viewLoc, projectionLoc;
 
-    if (gameMetadata->isVulkanActive)
     {
         VulkanPrepareRender(vc);
         VulkanBeginRenderPass(vc);
         VulkanSetViewportAndScissor(vc);
-    }
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        glDisable(GL_CULL_FACE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        /* programs used first will have higher priority being shown in the
-         * canvas
-         */
-        glBindVertexArray(vao);
-
-        OpenGLCheckErrors();
-        OpenGLBeginUseProgram(program, textureID);
-
-        /* load uniform variable to shader program before drawing */
-        modelLoc = glGetUniformLocation(program, "model");
-        viewLoc = glGetUniformLocation(program, "view");
-        projectionLoc = glGetUniformLocation(program, "projection");
-
-        OpenGLCheckErrors();
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
     }
 
     /* Should I differentiate between scene and ui rendergroups? */
@@ -1197,7 +1099,6 @@ void Render(GameMetadata *gameMetadata,
         g_projection,
         &viewLoc,
         &projectionLoc,
-        &textureID,
         hitBoxes,
         hurtBoxes);
 
@@ -1208,7 +1109,6 @@ void Render(GameMetadata *gameMetadata,
         &g_vkBuffers,
         &viewLoc,
         &projectionLoc,
-        &textureID,
         MSPerFrame,
         FPS,
         MCPF);
@@ -1266,26 +1166,6 @@ void LoadStuff(GameMetadata *gameMetadata)
     g_enemyNPC->movementPattern = UNI_DIRECTIONAL;
 }
 
-inline void SetOpenGLDrawToScreenCoordinate(GLuint projectionLoc, GLuint viewLoc)
-{
-/* TODO: sort things based on the transparency?? You have to draw the
-     * "background" first so that the "transparent" part of the texture renders
-     * the background properly. otherwise, you'll just get a blank background.
-     */
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4()));
-}
-
-inline void LoadShaders(GameMetadata *gameMetadata)
-{
-    /* load shaders */
-    gameMetadata->program = CreateProgram("materials/programs/vertex.glsl",
-                                          "materials/programs/fragment.glsl");
-    gameMetadata->debugProgram =
-        CreateProgram("materials/programs/vertex.glsl",
-                      "materials/programs/debug_fragment_shaders.glsl");
-}
-
 inline void LoadAssets(GameMetadata *gameMetadata)
 {
 
@@ -1295,11 +1175,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     SetBitmap(awesomefaceBitmap, "awesomeface", TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
     PushBitmap(&gameMetadata->bitmapSentinelNode, awesomefaceBitmap);
-
-    if (gameMetadata->isOpenGLActive)
-    {
-        gameMetadata->textureID = OpenGLBindBitmapToTexture(awesomefaceBitmap);
-    }
 
     auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(newBitmap, "arche", TextureParam{ GL_NEAREST, GL_NEAREST },
