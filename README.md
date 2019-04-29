@@ -45,8 +45,13 @@ https://www.reddit.com/r/neovim/comments/7l0757/neovim_installation_in_windows_1
 To easily generate compile_commands.json on Windows, use ninja for the cmake generator.
 `cmake -G "Ninja" ..."
 
+# General Build
+
+use `cmake` to build the program.
+You can view the `make.bat` or `make.sh`->`compile-and-lint.sh` as an example for the usage.
+
 # Debian
-apt-get install libsdl2-dev 
+apt-get install libsdl2-dev
 apt-get install libglm-dev
 
 I manually built sdl2, sdl2-ttf, and glm as well.
@@ -77,7 +82,7 @@ dnf install glm-devel
 
 # Docker build
 ```
-docker build -t jobless:testing .
+docker build -t kleos:testing .
 ./run.sh
 ```
 
