@@ -4,7 +4,7 @@ SDL2 ttf
 glm
 GLEW
 
-## Debugging OpenGL
+## Debugging Graphics
 Currently using RenderDoc https://renderdoc.org
 
 ## Using cl

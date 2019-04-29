@@ -29,9 +29,7 @@ void UpdateUBOandPushConstants(
         GameMetadata *gameMetadata,
         VulkanContext *vc,
         Camera *g_camera,
-        glm::mat4 *g_projection,
-        GLuint *viewLoc,
-        GLuint *projectionLoc)
+        glm::mat4 *g_projection)
 {
     struct PushConstantMatrix
     {

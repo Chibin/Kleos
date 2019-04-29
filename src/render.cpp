@@ -11,8 +11,6 @@
 
 #include <GL/glew.h>
 #define GL3_PROTOTYPES 1
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4201)
@@ -89,9 +87,6 @@ inline void *RequestToReservedMemory(memory_index size)
 
 #define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
-#define RENDER(name)                                                    \
-    void name(GLuint vao, GLuint vbo, GLuint textureID, GLuint program, \
-              GLuint debugProgram, Entity *entity)
 
 void Render(GameMetadata *gameMetadata, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
             RenderGroup *perFrameRenderGroup, VulkanContext *vc);
@@ -103,7 +98,6 @@ inline void LoadAssets(GameMetadata *gameMetadata);
 /* TODO: We'll need to get rid of these global variables later on */
 Camera *g_camera = nullptr;
 glm::mat4 *g_projection = nullptr;
-GLfloat *g_rectangleVertices = nullptr;
 EntityManager *g_entityManager = nullptr;
 Entity *g_player = nullptr;
 RectManager *g_rectManager = nullptr;
@@ -113,7 +107,6 @@ static bool g_debugMode = false;
 static bool g_spriteDirectionToggle = false;
 static Animation2D *g_spriteAnimation = nullptr;
 static Animation2D *g_spriteAnimations = nullptr;
-static GLuint g_permanentTextureID;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 static NPC *g_enemyNPC = nullptr;
@@ -416,8 +409,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ASSERT(!g_rectManager);
         ASSERT(!g_entityManager);
         ASSERT(!g_reservedMemory);
-
-        glGenTextures(1, &g_permanentTextureID);
 
         g_reservedMemory = reservedMemory;
 
@@ -879,8 +870,6 @@ void DrawScene(
         VulkanBuffers *vkBuffers,
         Camera *camera,
         glm::mat4 *projection,
-        GLuint *viewLoc,
-        GLuint *projectionLoc,
         RectDynamicArray *hitBoxes,
         RectDynamicArray *hurtBoxes)
 {
@@ -946,9 +935,7 @@ void DrawScene(
             gameMetadata,
             vc,
             camera,
-            projection,
-            viewLoc,
-            projectionLoc);
+            projection);
 
     DrawRenderGroup(
             gameMetadata,
@@ -966,8 +953,6 @@ void DrawUI(
         RenderGroup *perFrameRenderGroup,
         VulkanContext *vc,
         VulkanBuffers *vkBuffers,
-        GLuint *viewLoc,
-        GLuint *projectionLoc,
         const f64 &MSPerFrame,
         const f64 &FPS,
         const f64 &MCPF)
@@ -1081,8 +1066,6 @@ void Render(GameMetadata *gameMetadata,
     f64 MCPF = 0;
     CalculateFrameStatistics(gameMetadata->gameTimestep, &MSPerFrame, &FPS, &MCPF);
 
-    GLuint modelLoc, viewLoc, projectionLoc;
-
     {
         VulkanPrepareRender(vc);
         VulkanBeginRenderPass(vc);
@@ -1097,8 +1080,6 @@ void Render(GameMetadata *gameMetadata,
         &g_vkBuffers,
         g_camera,
         g_projection,
-        &viewLoc,
-        &projectionLoc,
         hitBoxes,
         hurtBoxes);
 
@@ -1107,8 +1088,6 @@ void Render(GameMetadata *gameMetadata,
         perFrameRenderGroup,
         vc,
         &g_vkBuffers,
-        &viewLoc,
-        &projectionLoc,
         MSPerFrame,
         FPS,
         MCPF);
