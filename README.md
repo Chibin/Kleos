@@ -51,8 +51,10 @@ use `cmake` to build the program.
 You can view the `make.bat` or `make.sh`->`compile-and-lint.sh` as an example for the usage.
 
 # Debian
+```
 apt-get install libsdl2-dev
 apt-get install libglm-dev
+```
 
 I manually built sdl2, sdl2-ttf, and glm as well.
 
@@ -71,11 +73,13 @@ clang -shared -fPIC -std=c++14 render.cpp -lGLEW  -lSDL2 -lSDL2_ttf -lm -ldl -lG
 ```
 
 # Fedora
+```
 dnf install mesa-libGL-devel
 dnf install glew-devel
 dnf install SDL2_ttf-devel
 dnf install SDL_ttf-devel
 dnf install glm-devel
+```
 
 ``` clang -std=c++14  main.cpp /usr/lib64/libGLEW.a -lSDL2 -lSDL2_ttf -lm -ldl -lGL -lstdc++ ```
 
