@@ -149,11 +149,11 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
-
+        snprintf(gameMetadata->whiteBitmap.name, sizeof(gameMetadata->whiteBitmap.name), "%s", "white");
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
         gameMetadata->whiteBitmap.format = GL_RGBA;
-        gameMetadata->whiteBitmap.bitmapID = 998; // XXX: needs to be changed somewhere
+        gameMetadata->whiteBitmap.bitmapID = MAX_HASH - 1; // XXX: needs to be changed somewhere
         gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
         gameMetadata->whiteBitmap.data =
             (u8 *)AllocateMemory(reservedMemory, gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * sizeof(u32));
@@ -218,7 +218,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             //
 
             stringBitmap = {};
-            stringBitmap.bitmapID = 99; // Arbitrary number
+            stringBitmap.bitmapID = MAX_HASH - 2; // Arbitrary number
             char buffer[256];
             /* Hack: There's a bunch of blank spaces at the end to accomodate
              * the amout of extra characters for later images.
@@ -317,6 +317,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             stbi_image_free(pshroomPixels);
 
+
             vc->whiteTextures[0].texWidth = gameMetadata->whiteBitmap.width;
             vc->whiteTextures[0].texHeight = gameMetadata->whiteBitmap.height;
             /* stbi does not do padding, so the pitch is the component times
@@ -337,6 +338,43 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                     vc->whiteTextures,
                     VK_IMAGE_LAYOUT_GENERAL);
 
+            ARRAY_CREATE(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi);
+
+            VulkanDescriptorSetInfo tempVulkanDescriptorSetInfo = {};
+            tempVulkanDescriptorSetInfo.textureObjCount = DEMO_TEXTURE_COUNT;
+            tempVulkanDescriptorSetInfo.uniformData = &vc->uniformData;
+            tempVulkanDescriptorSetInfo.uniformDataFragment = &vc->uniformDataFragment;
+
+            tempVulkanDescriptorSetInfo.descSet = {};
+            tempVulkanDescriptorSetInfo.textureObj = vc->textures;
+            tempVulkanDescriptorSetInfo.name = "awesomeface";
+            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+            tempVulkanDescriptorSetInfo.descSet = {};
+            tempVulkanDescriptorSetInfo.textureObj = vc->whiteTextures;
+            tempVulkanDescriptorSetInfo.name = "white";
+            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+            tempVulkanDescriptorSetInfo.descSet = {};
+            tempVulkanDescriptorSetInfo.textureObj = vc->boxTextures;
+            tempVulkanDescriptorSetInfo.name = "box";
+            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+            tempVulkanDescriptorSetInfo.descSet = {};
+            tempVulkanDescriptorSetInfo.textureObj = vc->playerTextures;
+            tempVulkanDescriptorSetInfo.name = "arche";
+            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+            tempVulkanDescriptorSetInfo.descSet = {};
+            tempVulkanDescriptorSetInfo.textureObj = vc->pshroomTextures;
+            tempVulkanDescriptorSetInfo.name = "pshroom";
+            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+            vc->vdsi = vdsi;
+            /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
+             * There might be a better way of doing this. This is just a hack.*/
+            vc->descSet = &vc->vdsi[0].descSet;
+
             /* Creating pipeline layout, descriptor pool, and render pass can be done
              * indenpendently
              */
@@ -344,50 +382,16 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
             vc->pipelineLayout = {};
             VulkanInitPipelineLayout(vc);
-            VulkanSetDescriptorSet(
-                    vc,
-                    &vc->descSet,
-                    vc->textures,
-                    DEMO_TEXTURE_COUNT,
-                    &vc->uniformData,
-                    &vc->uniformDataFragment);
+
+            for (memory_index i = 0; i < ARRAY_LIST_SIZE(vdsi); i++)
+            {
+                VulkanSetDescriptorSet(vc, &vc->vdsi[i]);
+            }
 
             VulkanSetDescriptorSet(
                     vc,
                     &vc->secondDescSet,
                     vc->UITextures,
-                    DEMO_TEXTURE_COUNT,
-                    &vc->uniformData,
-                    &vc->uniformDataFragment);
-
-            VulkanSetDescriptorSet(
-                    vc,
-                    &vc->playerDescSet,
-                    vc->playerTextures,
-                    DEMO_TEXTURE_COUNT,
-                    &vc->uniformData,
-                    &vc->uniformDataFragment);
-
-            VulkanSetDescriptorSet(
-                    vc,
-                    &vc->boxDescSet,
-                    vc->boxTextures,
-                    DEMO_TEXTURE_COUNT,
-                    &vc->uniformData,
-                    &vc->uniformDataFragment);
-
-            VulkanSetDescriptorSet(
-                    vc,
-                    &vc->pshroomDescSet,
-                    vc->pshroomTextures,
-                    DEMO_TEXTURE_COUNT,
-                    &vc->uniformData,
-                    &vc->uniformDataFragment);
-
-            VulkanSetDescriptorSet(
-                    vc,
-                    &vc->whiteDescSet,
-                    vc->whiteTextures,
                     DEMO_TEXTURE_COUNT,
                     &vc->uniformData,
                     &vc->uniformDataFragment);
@@ -461,30 +465,21 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         LoadAssets(gameMetadata);
 
         {
-            HashInsert(
-                    &gameMetadata->bitmapToDescriptorSetMap,
-                    FindBitmap(&gameMetadata->bitmapSentinelNode, "box"),
-                    &vc->boxDescSet);
 
-            HashInsert(
-                    &gameMetadata->bitmapToDescriptorSetMap,
-                    FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom"),
-                    &vc->pshroomDescSet);
-
-            HashInsert(
-                    &gameMetadata->bitmapToDescriptorSetMap,
-                    FindBitmap(&gameMetadata->bitmapSentinelNode, "arche"),
-                    &vc->playerDescSet);
-
+#if 0
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
                     FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface"),
                     &vc->descSet);
-
-            HashInsert(
-                    &gameMetadata->bitmapToDescriptorSetMap,
-                    &gameMetadata->whiteBitmap,
-                    &vc->whiteDescSet);
+#else
+            for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
+            {
+                HashInsert(
+                        &gameMetadata->bitmapToDescriptorSetMap,
+                        FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
+                        &vc->vdsi[i].descSet);
+            }
+#endif
 
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
@@ -963,7 +958,7 @@ void DrawUI(
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
     /* TODO: create something that can get a new bitmap id? */
-    stringBitmap.bitmapID = 99;
+    stringBitmap.bitmapID = MAX_HASH - 2;
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
     StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
 
@@ -1154,6 +1149,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     SetBitmap(awesomefaceBitmap, "awesomeface", TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
     PushBitmap(&gameMetadata->bitmapSentinelNode, awesomefaceBitmap);
+
+    PushBitmap(&gameMetadata->bitmapSentinelNode, &gameMetadata->whiteBitmap);
 
     auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
     SetBitmap(newBitmap, "arche", TextureParam{ GL_NEAREST, GL_NEAREST },

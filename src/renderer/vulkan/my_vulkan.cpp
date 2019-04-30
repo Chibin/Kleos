@@ -197,7 +197,7 @@ void VulkanBeginRenderPass(VulkanContext *vc)
             vc->pipelineLayout,
             0,
             1,
-            &vc->descSet,
+            vc->descSet,
             0,
             nullptr);
 
@@ -678,7 +678,7 @@ VulkanContext *VulkanSetup(SDL_Window **window)
     vc->memoryProperties = memoryProperties;
     vc->depthIncrement = -0.01f;
 
-    vc->descSet = {};
+    vc->descSet = nullptr;
 
     vc->quit = false;
     return vc;

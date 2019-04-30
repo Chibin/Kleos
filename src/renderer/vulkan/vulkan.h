@@ -88,6 +88,15 @@ struct TextureObject
     char *imagePath;
 };
 
+struct VulkanDescriptorSetInfo
+{
+    VkDescriptorSet descSet;
+    TextureObject *textureObj;
+    u32 textureObjCount;
+    UniformObject *uniformData;
+    UniformObject *uniformDataFragment;
+    char *name;
+};
 
 struct VulkanContext
 {
@@ -120,12 +129,8 @@ struct VulkanContext
     VkShaderModule fragShaderModule;
 
     VkDescriptorPool descPool;
-    VkDescriptorSet descSet;
+    VkDescriptorSet *descSet;
     VkDescriptorSet secondDescSet;
-    VkDescriptorSet playerDescSet;
-    VkDescriptorSet boxDescSet;
-    VkDescriptorSet pshroomDescSet;
-    VkDescriptorSet whiteDescSet;
     VkDescriptorSetLayout descLayout;
 
     PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallback;
@@ -170,6 +175,8 @@ struct VulkanContext
     uint32_t swapchainImageCount;
 
     VkPhysicalDeviceMemoryProperties memoryProperties;
+
+    VulkanDescriptorSetInfo *vdsi;
 };
 
 #endif

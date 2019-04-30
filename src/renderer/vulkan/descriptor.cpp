@@ -55,6 +55,17 @@ void VulkanSetDescriptorSet(
     free(texDescs);
 }
 
+void VulkanSetDescriptorSet(VulkanContext *vc, VulkanDescriptorSetInfo *vdsi)
+{
+    VulkanSetDescriptorSet(
+            vc,
+            &vdsi->descSet,
+            vdsi->textureObj,
+            vdsi->textureObjCount,
+            vdsi->uniformData,
+            vdsi->uniformDataFragment);
+}
+
 void VulkanPrepareDescriptorPool(VulkanContext *vc)
 {
     /* TODO: Update parameters to account of max sets and poolsize count */
