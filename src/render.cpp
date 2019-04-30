@@ -172,237 +172,135 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         g_vkBuffers.maxNum = 100;
 
         Bitmap stringBitmap = {};
-        {
 
-            memset(&gameMetadata->bitmapToDescriptorSetMap, 0, sizeof(BitmapDescriptorMap));
+        memset(&gameMetadata->bitmapToDescriptorSetMap, 0, sizeof(BitmapDescriptorMap));
 #if 1
-            for (memory_index i = 0; i < MAX_HASH; i++)
-            {
-                ASSERT(gameMetadata->bitmapToDescriptorSetMap.hashTable[i] == nullptr);
-            }
-#endif
-            // BitmapDescriptorMap bitmapToDescriptorSetMap  = CreateNewHashMap();
-            bool useStagingBuffer = false;
-            stbi_set_flip_vertically_on_load(1);
-
-            s32 texWidth = 0;
-            s32 texHeight = 0;
-            s32 texChannels = 0;
-            stbi_uc *pixels = stbi_load("./materials/textures/awesomeface.png",
-                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-            vc->textures[0].texWidth = texWidth;
-            vc->textures[0].texHeight = texHeight;
-            /* stbi does not do padding, so the pitch is the component times
-             * the width of the image. The component is 4 because of STBI_rgb_alpha.
-             */
-            vc->textures[0].texPitch = texWidth * 4;
-            vc->textures[0].dataSize = texWidth * texHeight * 4;
-            vc->textures[0].data = pixels;
-
-            VulkanPrepareTexture(
-                    &vc->gpu,
-                    &vc->device,
-                    &vc->setupCmd,
-                    &vc->cmdPool,
-                    &vc->queue,
-                    &vc->memoryProperties,
-                    useStagingBuffer,
-                    vc->textures,
-                    VK_IMAGE_LAYOUT_GENERAL);;
-
-            stbi_image_free(pixels);
-
-            //
-            // bitmap
-            // descriptor set
-            //
-
-            stringBitmap = {};
-            stringBitmap.bitmapID = MAX_HASH - 2; // Arbitrary number
-            char buffer[256];
-            /* Hack: There's a bunch of blank spaces at the end to accomodate
-             * the amout of extra characters for later images.
-             * This will give us a longer width when creating a vkimage.
-             */
-            sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f              ", 33.0f, 66.0f, 99.0f); // NOLINT
-            StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                             // NOLINT
-            stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
-
-            vc->UITextures[0].texWidth = stringBitmap.width;
-            vc->UITextures[0].texHeight = stringBitmap.height;
-            vc->UITextures[0].texPitch = stringBitmap.pitch;
-            vc->UITextures[0].dataSize = stringBitmap.size;
-            vc->UITextures[0].data = stringBitmap.data;
-
-            VulkanPrepareTexture(
-                    &vc->gpu,
-                    &vc->device,
-                    &vc->setupCmd,
-                    &vc->cmdPool,
-                    &vc->queue,
-                    &vc->memoryProperties,
-                    useStagingBuffer,
-                    vc->UITextures,
-                    VK_IMAGE_LAYOUT_GENERAL);
-
-            stbi_uc *playerPixels = stbi_load( "./materials/textures/arche.png",
-                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-            vc->playerTextures[0].texWidth = texWidth;
-            vc->playerTextures[0].texHeight = texHeight;
-            /* stbi does not do padding, so the pitch is the component times
-             * the width of the image. The component is 4 because of STBI_rgb_alpha.
-             */
-            vc->playerTextures[0].texPitch = texWidth * 4;
-            vc->playerTextures[0].dataSize = texWidth * texHeight * 4;
-            vc->playerTextures[0].data = playerPixels;
-
-            VulkanPrepareTexture(
-                    &vc->gpu,
-                    &vc->device,
-                    &vc->setupCmd,
-                    &vc->cmdPool,
-                    &vc->queue,
-                    &vc->memoryProperties,
-                    useStagingBuffer,
-                    vc->playerTextures,
-                    VK_IMAGE_LAYOUT_GENERAL);
-
-            stbi_image_free(playerPixels);
-
-            stbi_uc *boxPixels = stbi_load( "./materials/textures/container.png",
-                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-            vc->boxTextures[0].texWidth = texWidth;
-            vc->boxTextures[0].texHeight = texHeight;
-            /* stbi does not do padding, so the pitch is the component times
-             * the width of the image. The component is 4 because of STBI_rgb_alpha.
-             */
-            vc->boxTextures[0].texPitch = texWidth * 4;
-            vc->boxTextures[0].dataSize = texWidth * texHeight * 4;
-            vc->boxTextures[0].data = boxPixels;
-
-            VulkanPrepareTexture(
-                    &vc->gpu,
-                    &vc->device,
-                    &vc->setupCmd,
-                    &vc->cmdPool,
-                    &vc->queue,
-                    &vc->memoryProperties,
-                    useStagingBuffer,
-                    vc->boxTextures,
-                    VK_IMAGE_LAYOUT_GENERAL);
-
-            stbi_image_free(boxPixels);
-
-            stbi_uc *pshroomPixels = stbi_load( "./materials/textures/pshroom.png",
-                    &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-            vc->pshroomTextures[0].texWidth = texWidth;
-            vc->pshroomTextures[0].texHeight = texHeight;
-            /* stbi does not do padding, so the pitch is the component times
-             * the width of the image. The component is 4 because of STBI_rgb_alpha.
-             */
-            vc->pshroomTextures[0].texPitch = texWidth * 4;
-            vc->pshroomTextures[0].dataSize = texWidth * texHeight * 4;
-            vc->pshroomTextures[0].data = pshroomPixels;
-
-            VulkanPrepareTexture(
-                    &vc->gpu,
-                    &vc->device,
-                    &vc->setupCmd,
-                    &vc->cmdPool,
-                    &vc->queue,
-                    &vc->memoryProperties,
-                    useStagingBuffer,
-                    vc->pshroomTextures,
-                    VK_IMAGE_LAYOUT_GENERAL);
-
-            stbi_image_free(pshroomPixels);
-
-
-            vc->whiteTextures[0].texWidth = gameMetadata->whiteBitmap.width;
-            vc->whiteTextures[0].texHeight = gameMetadata->whiteBitmap.height;
-            /* stbi does not do padding, so the pitch is the component times
-             * the width of the image. The component is 4 because of STBI_rgb_alpha.
-             */
-            vc->whiteTextures[0].texPitch = gameMetadata->whiteBitmap.width * 4;
-            vc->whiteTextures[0].dataSize = gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * 4;
-            vc->whiteTextures[0].data = gameMetadata->whiteBitmap.data;
-
-            VulkanPrepareTexture(
-                    &vc->gpu,
-                    &vc->device,
-                    &vc->setupCmd,
-                    &vc->cmdPool,
-                    &vc->queue,
-                    &vc->memoryProperties,
-                    useStagingBuffer,
-                    vc->whiteTextures,
-                    VK_IMAGE_LAYOUT_GENERAL);
-
-            ARRAY_CREATE(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi);
-
-            VulkanDescriptorSetInfo tempVulkanDescriptorSetInfo = {};
-            tempVulkanDescriptorSetInfo.textureObjCount = DEMO_TEXTURE_COUNT;
-            tempVulkanDescriptorSetInfo.uniformData = &vc->uniformData;
-            tempVulkanDescriptorSetInfo.uniformDataFragment = &vc->uniformDataFragment;
-
-            tempVulkanDescriptorSetInfo.descSet = {};
-            tempVulkanDescriptorSetInfo.textureObj = vc->textures;
-            tempVulkanDescriptorSetInfo.name = "awesomeface";
-            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
-
-            tempVulkanDescriptorSetInfo.descSet = {};
-            tempVulkanDescriptorSetInfo.textureObj = vc->whiteTextures;
-            tempVulkanDescriptorSetInfo.name = "white";
-            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
-
-            tempVulkanDescriptorSetInfo.descSet = {};
-            tempVulkanDescriptorSetInfo.textureObj = vc->boxTextures;
-            tempVulkanDescriptorSetInfo.name = "box";
-            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
-
-            tempVulkanDescriptorSetInfo.descSet = {};
-            tempVulkanDescriptorSetInfo.textureObj = vc->playerTextures;
-            tempVulkanDescriptorSetInfo.name = "arche";
-            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
-
-            tempVulkanDescriptorSetInfo.descSet = {};
-            tempVulkanDescriptorSetInfo.textureObj = vc->pshroomTextures;
-            tempVulkanDescriptorSetInfo.name = "pshroom";
-            ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
-
-            vc->vdsi = vdsi;
-            /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
-             * There might be a better way of doing this. This is just a hack.*/
-            vc->descSet = &vc->vdsi[0].descSet;
-
-            /* Creating pipeline layout, descriptor pool, and render pass can be done
-             * indenpendently
-             */
-            VulkanPrepareDescriptorPool(vc);
-
-            vc->pipelineLayout = {};
-            VulkanInitPipelineLayout(vc);
-
-            for (memory_index i = 0; i < ARRAY_LIST_SIZE(vdsi); i++)
-            {
-                VulkanSetDescriptorSet(vc, &vc->vdsi[i]);
-            }
-
-            VulkanSetDescriptorSet(
-                    vc,
-                    &vc->secondDescSet,
-                    vc->UITextures,
-                    DEMO_TEXTURE_COUNT,
-                    &vc->uniformData,
-                    &vc->uniformDataFragment);
-
-            VulkanInitRenderPass(vc);
-            VulkanInitFrameBuffers(vc);
-
-            memset(&vc->vertices, 0, sizeof(vc->vertices));
-            VulkanPreparePipeline(vc, sizeof(Vertex));
-            VulkanPrepare2ndPipeline(vc, sizeof(Vertex));
+        for (memory_index i = 0; i < MAX_HASH; i++)
+        {
+            ASSERT(gameMetadata->bitmapToDescriptorSetMap.hashTable[i] == nullptr);
         }
+#endif
+        // BitmapDescriptorMap bitmapToDescriptorSetMap  = CreateNewHashMap();
+        bool useStagingBuffer = false;
+        stbi_set_flip_vertically_on_load(1);
+
+        s32 texWidth = 0;
+        s32 texHeight = 0;
+        s32 texChannels = 0;
+
+        stringBitmap = {};
+        stringBitmap.bitmapID = MAX_HASH - 2; // Arbitrary number
+        char buffer[256];
+        /* Hack: There's a bunch of blank spaces at the end to accomodate
+         * the amout of extra characters for later images.
+         * This will give us a longer width when creating a vkimage.
+         */
+        sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f              ", 33.0f, 66.0f, 99.0f); // NOLINT
+        StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                             // NOLINT
+        stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
+
+        vc->UITextures[0].texWidth = stringBitmap.width;
+        vc->UITextures[0].texHeight = stringBitmap.height;
+        vc->UITextures[0].texPitch = stringBitmap.pitch;
+        vc->UITextures[0].dataSize = stringBitmap.size;
+        vc->UITextures[0].data = stringBitmap.data;
+
+        VulkanPrepareTexture(
+                &vc->gpu,
+                &vc->device,
+                &vc->setupCmd,
+                &vc->cmdPool,
+                &vc->queue,
+                &vc->memoryProperties,
+                useStagingBuffer,
+                vc->UITextures,
+                VK_IMAGE_LAYOUT_GENERAL);
+
+        VulkanDescriptorSetInfo tempVulkanDescriptorSetInfo = {};
+        tempVulkanDescriptorSetInfo.textureObjCount = DEMO_TEXTURE_COUNT;
+        tempVulkanDescriptorSetInfo.uniformData = &vc->uniformData;
+        tempVulkanDescriptorSetInfo.uniformDataFragment = &vc->uniformDataFragment;
+
+        tempVulkanDescriptorSetInfo.descSet = {};
+        tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
+        memset(tempVulkanDescriptorSetInfo.textureObj, 0, sizeof(TextureObject));
+        tempVulkanDescriptorSetInfo.name = "awesomeface";
+        tempVulkanDescriptorSetInfo.imagePath ="./materials/textures/awesomeface.png";
+
+        ARRAY_CREATE(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi);
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+        tempVulkanDescriptorSetInfo.descSet = {};
+        tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
+        tempVulkanDescriptorSetInfo.name = "arche";
+        tempVulkanDescriptorSetInfo.imagePath = "./materials/textures/arche.png";
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+        tempVulkanDescriptorSetInfo.descSet = {};
+        tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
+        tempVulkanDescriptorSetInfo.name = "box";
+        tempVulkanDescriptorSetInfo.imagePath = "./materials/textures/container.png";
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+        tempVulkanDescriptorSetInfo.descSet = {};
+        tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
+        tempVulkanDescriptorSetInfo.name = "pshroom";
+        tempVulkanDescriptorSetInfo.imagePath = "./materials/textures/pshroom.png";
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+        tempVulkanDescriptorSetInfo.descSet = {};
+        tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
+        tempVulkanDescriptorSetInfo.name = "white";
+        tempVulkanDescriptorSetInfo.imagePath = "";
+        tempVulkanDescriptorSetInfo.textureObj[0].texWidth = gameMetadata->whiteBitmap.width;
+        tempVulkanDescriptorSetInfo.textureObj[0].texHeight = gameMetadata->whiteBitmap.height;
+        /* stbi does not do padding, so the pitch is the component times
+         * the width of the image. The component is 4 because of STBI_rgb_alpha.
+         */
+        tempVulkanDescriptorSetInfo.textureObj[0].texPitch = gameMetadata->whiteBitmap.width * 4;
+        tempVulkanDescriptorSetInfo.textureObj[0].dataSize =
+            gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * 4;
+        tempVulkanDescriptorSetInfo.textureObj[0].data = gameMetadata->whiteBitmap.data;
+
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+
+        for(memory_index i = 0; i < ARRAY_LIST_SIZE(vdsi); i++)
+        {
+            VulkanLoadImageToGPU(vc, &vdsi[i]);
+        }
+
+        vc->vdsi = vdsi;
+        /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
+         * There might be a better way of doing this. This is just a hack.*/
+        vc->descSet = &vc->vdsi[0].descSet;
+
+        /* Creating pipeline layout, descriptor pool, and render pass can be done
+         * indenpendently
+         */
+        VulkanPrepareDescriptorPool(vc);
+
+        vc->pipelineLayout = {};
+        VulkanInitPipelineLayout(vc);
+
+        for (memory_index i = 0; i < ARRAY_LIST_SIZE(vdsi); i++)
+        {
+            VulkanSetDescriptorSet(vc, &vc->vdsi[i]);
+        }
+
+        VulkanSetDescriptorSet(
+                vc,
+                &vc->secondDescSet,
+                vc->UITextures,
+                DEMO_TEXTURE_COUNT,
+                &vc->uniformData,
+                &vc->uniformDataFragment);
+
+        VulkanInitRenderPass(vc);
+        VulkanInitFrameBuffers(vc);
+
+        memset(&vc->vertices, 0, sizeof(vc->vertices));
+        VulkanPreparePipeline(vc, sizeof(Vertex));
+        VulkanPrepare2ndPipeline(vc, sizeof(Vertex));
 
         START_DEBUG_TIMING();
 
@@ -464,29 +362,18 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         LoadAssets(gameMetadata);
 
+        for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
         {
-
-#if 0
             HashInsert(
                     &gameMetadata->bitmapToDescriptorSetMap,
-                    FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface"),
-                    &vc->descSet);
-#else
-            for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
-            {
-                HashInsert(
-                        &gameMetadata->bitmapToDescriptorSetMap,
-                        FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
-                        &vc->vdsi[i].descSet);
-            }
-#endif
-
-            HashInsert(
-                    &gameMetadata->bitmapToDescriptorSetMap,
-                    &stringBitmap,
-                    &vc->secondDescSet);
+                    FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
+                    &vc->vdsi[i].descSet);
         }
 
+        HashInsert(
+                &gameMetadata->bitmapToDescriptorSetMap,
+                &stringBitmap,
+                &vc->secondDescSet);
 
         LoadStuff(gameMetadata);
 

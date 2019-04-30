@@ -96,6 +96,8 @@ struct VulkanDescriptorSetInfo
     UniformObject *uniformData;
     UniformObject *uniformDataFragment;
     char *name;
+
+    char *imagePath;
 };
 
 struct VulkanContext
@@ -165,12 +167,7 @@ struct VulkanContext
     UniformObject uniformData;
     UniformObject uniformDataFragment;
     Depth depth;
-    TextureObject textures[DEMO_TEXTURE_COUNT];
     TextureObject UITextures[DEMO_TEXTURE_COUNT];
-    TextureObject playerTextures[DEMO_TEXTURE_COUNT];
-    TextureObject boxTextures[DEMO_TEXTURE_COUNT];
-    TextureObject pshroomTextures[DEMO_TEXTURE_COUNT];
-    TextureObject whiteTextures[DEMO_TEXTURE_COUNT];
 
     uint32_t swapchainImageCount;
 

@@ -227,3 +227,51 @@ glm::vec3 GetWorldPointFromMouse(
 
     return worldPos;
 }
+
+inline b32 IsStringEmpty(char *string)
+{
+    return strcmp(string, "") == 1;
+}
+
+/* If the image path is empty, we assume that we don't need to load the image. */
+void VulkanLoadImageToGPU(VulkanContext *vc, VulkanDescriptorSetInfo *vdsi)
+{
+    stbi_set_flip_vertically_on_load(1);
+    b32 useStagingBuffer = false;
+
+    s32 texWidth = 0;
+    s32 texHeight = 0;
+    s32 texChannels = 0;
+
+    stbi_uc *pixels = nullptr;
+
+    /* image path not empty */
+    if (IsStringEmpty(vdsi->imagePath))
+    {
+        pixels = stbi_load(vdsi->imagePath,
+                           &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        vdsi->textureObj[0].texWidth = texWidth;
+        vdsi->textureObj[0].texHeight = texHeight;
+        /* stbi does not do padding, so the pitch is the component times
+         * the width of the image. The component is 4 because of STBI_rgb_alpha.
+         */
+        vdsi->textureObj[0].texPitch = texWidth * 4;
+        vdsi->textureObj[0].dataSize = texWidth * texHeight * 4;
+        vdsi->textureObj[0].data = pixels;
+    }
+
+    ASSERT(vdsi->textureObj[0].data != nullptr);
+
+    VulkanPrepareTexture(
+            &vc->gpu,
+            &vc->device,
+            &vc->setupCmd,
+            &vc->cmdPool,
+            &vc->queue,
+            &vc->memoryProperties,
+            useStagingBuffer,
+            vdsi->textureObj,
+            VK_IMAGE_LAYOUT_GENERAL);;
+
+    stbi_image_free(pixels);
+}
