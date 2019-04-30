@@ -74,6 +74,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "render_group.h"
 #include "asset.cpp"
 #include "sort.cpp"
+#include "string.cpp"
 
 #include "hashtable.cpp"
 
@@ -756,44 +757,12 @@ void DrawScene(
         RectDynamicArray *hurtBoxes)
 {
     ASSERT(g_rectManager->Traversable.rda.size > 0);
-    for (memory_index i = 0; i < g_rectManager->Traversable.rda.size; i++)
-    {
-        Rect *rect = g_rectManager->Traversable.rda.rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
-        ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
-    }
 
-    for (int i = 0; i < g_rectManager->NonTraversable.rda.size; i++)
-    {
-        Rect *rect = g_rectManager->NonTraversable.rda.rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
-        ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
-    }
-
-    for (memory_index i = 0; i < hitBoxes->size; i++)
-    {
-        Rect *rect = hitBoxes->rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
-        ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
-    }
-
-    for (memory_index i = 0; i < hurtBoxes->size; i++)
-    {
-        Rect *rect = hurtBoxes->rects[i];
-        rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
-        ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
-    }
-
-    for (memory_index i = 0; i < gameMetadata->rdaDebug->size; i++)
-    {
-        Rect *rect = gameMetadata->rdaDebug->rects[i];
-        ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
-    }
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hitBoxes);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebug);
 
     gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode,
                                                   gameMetadata->playerRect->bitmapID);
@@ -876,58 +845,49 @@ void DrawUI(
     perFrameRenderGroup->rectCount = 0;
     ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
 
-    {
+    /* TODO: Update UI texture */
+    /* use texture of arrays or arrays of texture? */
+    vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
+    vkCmdBindDescriptorSets(
+            vc->drawCmd,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vc->pipelineLayout,
+            0,
+            1,
+            &vc->secondDescSet,
+            0,
+            nullptr);
 
-        /* TODO: Update UI texture */
-        /* use texture of arrays or arrays of texture? */
-        vkCmdNextSubpass(vc->drawCmd, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(vc->drawCmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vc->pipeline2);
-        vkCmdBindDescriptorSets(
-                vc->drawCmd,
-                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                vc->pipelineLayout,
-                0,
-                1,
-                &vc->secondDescSet,
-                0,
-                nullptr);
+    ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
+    ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
+    VulkanCopyImageFromHostToLocal(
+            &vc-> device,
+            stringBitmap.pitch,
+            stringBitmap.height,
+            vc->UITextures[0].image,
+            vc->UITextures[0].mem,
+            stringBitmap.size,
+            stringBitmap.data);
 
-        ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
-        ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
-        VulkanCopyImageFromHostToLocal(
-                &vc-> device,
-                stringBitmap.pitch,
-                stringBitmap.height,
-                vc->UITextures[0].image,
-                vc->UITextures[0].mem,
-                stringBitmap.size,
-                stringBitmap.data);
-
-        /* I am doing some "shady" things in the vulkan side.
-         * There's a fixed sized image that we're always updating.
-         * sometimes, the new texture is smaller than the fixed size image we have.
-         * so we have to scale the UV coordinates based on the newly generated coordinates.
-         * bleh... but it works -- kind of.
-         * Ideally, the text overlay should be generated based on a generated glyph.
-         */
-        Vertex *vTopRight = &(statsRect->vertices[0]);
-        vTopRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-        Vertex *vBottomRight = &(statsRect->vertices[1]);
-        vBottomRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, 0}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-        Vertex *vBottomLeft = &(statsRect->vertices[2]);
-        vBottomLeft->vUv = v2{ 0, 0 };
-        Vertex *topLeft = &(statsRect->vertices[3]);
-        topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-    }
+    /* I am doing some "shady" things in the vulkan side.
+     * There's a fixed sized image that we're always updating.
+     * sometimes, the new texture is smaller than the fixed size image we have.
+     * so we have to scale the UV coordinates based on the newly generated coordinates.
+     * bleh... but it works -- kind of.
+     * Ideally, the text overlay should be generated based on a generated glyph.
+     */
+    Vertex *vTopRight = &(statsRect->vertices[0]);
+    vTopRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+    Vertex *vBottomRight = &(statsRect->vertices[1]);
+    vBottomRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, 0}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
+    Vertex *vBottomLeft = &(statsRect->vertices[2]);
+    vBottomLeft->vUv = v2{ 0, 0 };
+    Vertex *topLeft = &(statsRect->vertices[3]);
+    topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
 
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
-
-    for (memory_index i = 0; i < gameMetadata->rdaDebugUI->size; i++)
-    {
-        Rect *rect = gameMetadata->rdaDebugUI->rects[i];
-        ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
-    }
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebugUI);
 
     DrawRenderGroup(
             gameMetadata,
@@ -948,11 +908,9 @@ void Render(GameMetadata *gameMetadata,
     f64 MCPF = 0;
     CalculateFrameStatistics(gameMetadata->gameTimestep, &MSPerFrame, &FPS, &MCPF);
 
-    {
-        VulkanPrepareRender(vc);
-        VulkanBeginRenderPass(vc);
-        VulkanSetViewportAndScissor(vc);
-    }
+    VulkanPrepareRender(vc);
+    VulkanBeginRenderPass(vc);
+    VulkanSetViewportAndScissor(vc);
 
     /* Should I differentiate between scene and ui rendergroups? */
     DrawScene(
@@ -1033,26 +991,26 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
     auto *awesomefaceBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    auto *boxBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+    auto *pshroomBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
+
     SetBitmap(awesomefaceBitmap, "awesomeface", TextureParam{ GL_LINEAR, GL_LINEAR },
               g_bitmapID++, "./materials/textures/awesomeface.png");
+    SetBitmap(newBitmap, "arche", TextureParam{ GL_NEAREST, GL_NEAREST },
+              g_bitmapID++, "./materials/textures/arche.png");
+    SetBitmap(boxBitmap, "box", TextureParam{ GL_LINEAR, GL_LINEAR },
+              g_bitmapID++, "./materials/textures/container.png");
+    SetBitmap(pshroomBitmap, "pshroom", TextureParam{ GL_LINEAR, GL_LINEAR },
+              g_bitmapID++, "./materials/textures/pshroom.png");
+
     PushBitmap(&gameMetadata->bitmapSentinelNode, awesomefaceBitmap);
+    PushBitmap(&gameMetadata->bitmapSentinelNode, newBitmap);
+    PushBitmap(&gameMetadata->bitmapSentinelNode, boxBitmap);
+    PushBitmap(&gameMetadata->bitmapSentinelNode, pshroomBitmap);
 
     PushBitmap(&gameMetadata->bitmapSentinelNode, &gameMetadata->whiteBitmap);
 
-    auto *newBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(newBitmap, "arche", TextureParam{ GL_NEAREST, GL_NEAREST },
-              g_bitmapID++, "./materials/textures/arche.png");
-    PushBitmap(&gameMetadata->bitmapSentinelNode, newBitmap);
-
-    auto *boxBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(boxBitmap, "box", TextureParam{ GL_LINEAR, GL_LINEAR },
-              g_bitmapID++, "./materials/textures/container.png");
-    PushBitmap(&gameMetadata->bitmapSentinelNode, boxBitmap);
-
-    auto *pshroomBitmap = (Bitmap *)AllocateMemory(reservedMemory, sizeof(Bitmap));
-    SetBitmap(pshroomBitmap, "pshroom", TextureParam{ GL_LINEAR, GL_LINEAR },
-              g_bitmapID++, "./materials/textures/pshroom.png");
-    PushBitmap(&gameMetadata->bitmapSentinelNode, pshroomBitmap);
 
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
