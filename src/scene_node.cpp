@@ -135,7 +135,7 @@ void QueryRange(SceneManager *sm, SceneNode *sn, Rect ***arr, AABB *range)
 
     if (TestAABBAABB(&sn->aabb, range) && sn->rect != nullptr)
     {
-        ARRAY_PUSH(Rect **, sm->perFrameMemory, *arr, sn->rect);
+        ARRAY_PUSH(Rect *, sm->perFrameMemory, *arr, sn->rect);
     }
 
     QueryRange(sm, sn->northWest, arr, range);
@@ -147,8 +147,7 @@ void QueryRange(SceneManager *sm, SceneNode *sn, Rect ***arr, AABB *range)
 
 Rect **GetRectsWithInRange(SceneManager *sm, AABB *range)
 {
-    Rect **arr = nullptr;
-    ARRAY_CREATE(Rect **, sm->perFrameMemory, arr);
+    ARRAY_CREATE(Rect *, sm->perFrameMemory, arr);
 
     QueryRange(sm, sm->rootSceneNode, &arr, range);
 
