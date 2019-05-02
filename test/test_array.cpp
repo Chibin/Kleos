@@ -21,8 +21,8 @@ void testInt()
 
     for(u32 i = 0; i < count; i++)
     {
-        //assert(i == arr[i]);
         printf("out: %d, expected: %d\n", arr[i], i);
+        assert(i == arr[i]);
     }
 }
 
