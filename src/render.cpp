@@ -229,25 +229,27 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         tempVulkanDescriptorSetInfo.imagePath ="./materials/textures/awesomeface.png";
 
         ARRAY_CREATE(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi);
-        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+        vc->vdsi = vdsi;
+
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
         tempVulkanDescriptorSetInfo.descSet = {};
         tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
         tempVulkanDescriptorSetInfo.name = "arche";
         tempVulkanDescriptorSetInfo.imagePath = "./materials/textures/arche.png";
-        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
         tempVulkanDescriptorSetInfo.descSet = {};
         tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
         tempVulkanDescriptorSetInfo.name = "box";
         tempVulkanDescriptorSetInfo.imagePath = "./materials/textures/container.png";
-        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
         tempVulkanDescriptorSetInfo.descSet = {};
         tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
         tempVulkanDescriptorSetInfo.name = "pshroom";
         tempVulkanDescriptorSetInfo.imagePath = "./materials/textures/pshroom.png";
-        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
         tempVulkanDescriptorSetInfo.descSet = {};
         tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
@@ -263,14 +265,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * 4;
         tempVulkanDescriptorSetInfo.textureObj[0].data = gameMetadata->whiteBitmap.data;
 
-        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi, tempVulkanDescriptorSetInfo);
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
-        for(memory_index i = 0; i < ARRAY_LIST_SIZE(vdsi); i++)
+        for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
         {
-            VulkanLoadImageToGPU(vc, &vdsi[i]);
+            VulkanLoadImageToGPU(vc, &vc->vdsi[i]);
         }
 
-        vc->vdsi = vdsi;
         /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
          * There might be a better way of doing this. This is just a hack.*/
         vc->descSet = &vc->vdsi[0].descSet;
@@ -283,7 +284,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         vc->pipelineLayout = {};
         VulkanInitPipelineLayout(vc);
 
-        for (memory_index i = 0; i < ARRAY_LIST_SIZE(vdsi); i++)
+        for (memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
         {
             VulkanSetDescriptorSet(vc, &vc->vdsi[i]);
         }
