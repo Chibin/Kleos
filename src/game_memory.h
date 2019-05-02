@@ -68,7 +68,7 @@ inline void *ReallocMemory(GameMemory *gm, void *ptr, memory_index oldSize, memo
      *
      * TODO: Also need to free the previous memory, if we create a bigger memory block.
      */
-    while(oldSize -> 0)
+    while(oldSize --> 0)
     {
         *((u8 *)newMemory + oldSize) = *((u8 *)ptr + oldSize);
     }
