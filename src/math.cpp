@@ -131,6 +131,11 @@ inline v2 V2(v3 A)
     return v2{A.x, A.y};
 }
 
+inline v2 abs(v2 a)
+{
+    return v2{fabsf(a.x), fabsf(a.y)};
+}
+
 /*
  * V3
  */

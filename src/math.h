@@ -154,5 +154,6 @@ inline v2 &operator+=(v2 &A, v2 B);
 inline b32 operator<(v2 A, v2 B); //NOLINT
 inline b32 operator>(v2 A, v2 B); //NOLINT
 inline v2 V2(v3 A);
+inline v2 abs(v2);
 
 #endif
