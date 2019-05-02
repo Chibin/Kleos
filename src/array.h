@@ -31,7 +31,7 @@
             raw[0] = ARRAY_INIT_SIZE;                                                                               \
             arr = (T *)&raw[2];                                                                                     \
         }                                                                                                           \
-        else if (raw[1] > raw[0] - 1)                                                                               \
+        else if (raw[0] - 1 < raw[1]) /*capacity - 1 < size */                                                      \
         {                                                                                                           \
             memory_index newCapacity = SafeCastToU32(ARRAY_LIST_CAPACITY(arr) + ARRAY_LIST_CAPACITY(arr) * 0.5f);   \
             raw = (memory_index *)ReallocMemory(                                                                    \
