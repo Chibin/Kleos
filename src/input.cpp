@@ -63,13 +63,10 @@ void ProcessMouseButtonReleased(u8 button)
     switch (button)
     {
         case SDL_BUTTON_LEFT:
-            ASSERT(!"LEFT RELEASE");
             break;
         case SDL_BUTTON_RIGHT:
-            ASSERT(!"right release");
             break;
         case SDL_BUTTON_MIDDLE:
-            ASSERT(!"middle release");
             break;
         default:
             ASSERT(!"I shouldn't get here");
@@ -82,13 +79,10 @@ void ProcessMouseButtonPressed(u8 button)
     switch (button)
     {
         case SDL_BUTTON_LEFT:
-            ASSERT(!"LEFT PRESSED\n");
             break;
         case SDL_BUTTON_RIGHT:
-            ASSERT(!"right pressed");
             break;
         case SDL_BUTTON_MIDDLE:
-            ASSERT(!"middle pressed");
             break;
         default:
             ASSERT(!"I shouldn't get here");
@@ -111,25 +105,14 @@ void ProcessMouseButton(const SDL_MouseButtonEvent &mbe)
 #define SCREEN_WIDTH 1366
 #define SCREEN_HEIGHT 768
 
+v3 GetScreenCoordinateFromMouse(const SDL_MouseMotionEvent &mme)
+{
+    return v3{(f32)mme.x, (f32)mme.y, 0};
+}
+
 v3 ProcessMouseMotion(const SDL_MouseMotionEvent &mme)
 {
-    printf("X %d, Y %d\n", mme.x, mme.y);
-    v2 normalizedMME = {mme.x/(f32)SCREEN_WIDTH, mme.y/(f32)SCREEN_HEIGHT};
-
-    //v2 worldCoord = GetCenterOfWorldCoordinatesOnScreen();
-
-    /* TODO: Translate to world coordinates.
-     * Probably doable with the camera?
-     */
-    //v2 pos = TranslateToWorldCoordinates(v2{x, y});
-#if 0
-    v2 screenCoordinates = 2 * normalizedMME - 1.0f;
-    screenCoordinates.y = -screenCoordinates.y;
-    return v3{screenCoordinates.x, screenCoordinates.y, 0};
-#else
-    return v3{(f32)mme.x, (f32)mme.y, 0};
-#endif
-
+    return GetScreenCoordinateFromMouse(mme);
 }
 
 void ProcessMouseInput(const SDL_Event &event, Camera *camera)

@@ -239,3 +239,93 @@ void PushRectDynamicArrayToRenderGroupRectInfo(
         PushRenderGroupRectInfo(perFrameRenderGroup, rect);
     }
 }
+
+b32 IsWithinThreshold(v2 a, v2 b, f32 thresholdValueInScreenCoordinates)
+{
+    v2 result = abs(a - b);
+
+    return result.x < thresholdValueInScreenCoordinates && result.y < thresholdValueInScreenCoordinates;
+}
+
+void AddNewRectToWorld(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SDL_Event &event)
+{
+    SDL_MouseButtonEvent mbe = event.button;
+    v2 screenCoordinates = V2(GetScreenCoordinateFromMouse(event.motion));
+
+    glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
+
+    glm::vec3 worldPos = {};
+
+    switch (mbe.button)
+    {
+        case SDL_BUTTON_LEFT:
+            worldPos =
+                GetWorldPointFromMouse(
+                        camera,
+                        projection,
+                        screenCoordinates,
+                        gm->screenResolution,
+                        infinitePlaneNormal);
+            break;
+        default:
+            break;
+    }
+
+    if (mbe.state == SDL_PRESSED && gm->isLeftButtonReleased)
+    {
+        gm->screenCoordinates[0] = screenCoordinates;
+        gm->mouseDrag[0] = worldPos;
+
+        gm->isLeftButtonReleased = false;
+    }
+    else if (mbe.state == SDL_RELEASED)
+    {
+        gm->isLeftButtonReleased = true;
+
+        gm->mouseDrag[1] = worldPos;
+        gm->screenCoordinates[1] = screenCoordinates;
+
+        f32 screenCoordinatesThresholdValue = 17.0f;
+        if (IsWithinThreshold(gm->screenCoordinates[0], gm->screenCoordinates[1], screenCoordinatesThresholdValue))
+        {
+            ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->objectsToBeAddedTotheWorld, worldPos);
+        }
+    }
+
+}
+
+void UpdateMouseDrag(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SDL_Event &event)
+{
+    if (!gm->isLeftButtonReleased)
+    {
+        SDL_MouseButtonEvent mbe = event.button;
+        v2 screenCoordinates = V2(GetScreenCoordinateFromMouse(event.motion));
+
+        glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
+
+        glm::vec3 worldPos =
+            GetWorldPointFromMouse(
+                    camera,
+                    projection,
+                    screenCoordinates,
+                    gm->screenResolution,
+                    infinitePlaneNormal);
+
+        gm->mouseDrag[1] = worldPos;
+    }
+}
+
+RectDynamicArray *CreateRDAForNewWorldObjects(GameMetadata *gm)
+{
+    GameMemory *perFrameMemory = &gm->temporaryMemory;
+    RectDynamicArray *result = CreateRectDynamicArray(perFrameMemory);
+
+    for (memory_index i = 0; i < ARRAY_LIST_SIZE(gm->objectsToBeAddedTotheWorld); i++)
+    {
+        glm::vec3 pos = gm->objectsToBeAddedTotheWorld[i];
+        Rect *rect = CreateRectangle(perFrameMemory, V3(pos), COLOR_BLUE, 1, 1);
+        PushBack(result, rect);
+    }
+
+    return result;
+}

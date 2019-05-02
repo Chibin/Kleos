@@ -42,6 +42,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.frameAnimationSentinelNode.next = &gameMetadata.frameAnimationSentinelNode;
     gameMetadata.frameAnimationSentinelNode.prev = &gameMetadata.frameAnimationSentinelNode;
 
+    gameMetadata.isLeftButtonReleased = true;
+
     FindFile(GetProgramPath(), "render*dll");
 
     /* We still want to initialize vulkan. This is so that we have the

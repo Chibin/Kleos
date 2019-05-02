@@ -150,6 +150,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
+        ARRAY_CREATE(glm::vec3, &gameMetadata->reservedMemory, worldArr);
+        gameMetadata->objectsToBeAddedTotheWorld = worldArr;
+
         snprintf(gameMetadata->whiteBitmap.name, sizeof(gameMetadata->whiteBitmap.name), "%s", "white");
         gameMetadata->whiteBitmap.width = 1;
         gameMetadata->whiteBitmap.height = 1;
@@ -435,11 +438,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
             ProcessMouseButton(event.button);
+            AddNewRectToWorld(gameMetadata, g_camera, g_projection, event);
         case SDL_MOUSEWHEEL:
             ProcessMouseInput(event, g_camera);
             break;
         case SDL_MOUSEMOTION:
             g_mousePoint = ProcessMouseMotion(event.motion);
+            UpdateMouseDrag(gameMetadata, g_camera, g_projection, event);
             break;
         case SDL_KEYDOWN:
             ProcessInputDown(
@@ -758,6 +763,19 @@ void DrawScene(
         RectDynamicArray *hurtBoxes)
 {
     ASSERT(g_rectManager->Traversable.rda.size > 0);
+
+    AABB range = {};
+    range.halfDim = V2(gameMetadata->mouseDrag[0] - gameMetadata->mouseDrag[1]) * 0.5f;
+    range.center = V2(gameMetadata->mouseDrag[0]) - range.halfDim;
+    /* sometimes we're going to the negative value when calculating the
+     * dimension. This needs to be positive in order to work.
+     * We also need to use the negative dimension to calculate two out of the four quadrants.
+     */
+    range.halfDim = abs(range.halfDim);
+    AddDebugRect(gameMetadata, &range, COLOR_RED);
+
+    PushRectDynamicArrayToRenderGroupRectInfo(
+            gameMetadata, perFrameRenderGroup, CreateRDAForNewWorldObjects(gameMetadata));
 
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda);

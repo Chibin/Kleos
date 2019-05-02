@@ -40,6 +40,11 @@ struct GameMetadata
     struct RectDynamicArray *rdaDebugUI;
 
     struct SceneManager *sm;
+
+    glm::vec3 *objectsToBeAddedTotheWorld;
+    glm::vec3 mouseDrag[2];
+    v2 screenCoordinates[2];
+    b32 isLeftButtonReleased;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)
