@@ -346,6 +346,20 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
          */
         g_entityManager = CreateEntityManger(reservedMemory);
 
+        LoadAssets(gameMetadata);
+        for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
+        {
+            HashInsert(
+                    &gameMetadata->bitmapToDescriptorSetMap,
+                    FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
+                    &vc->vdsi[i].descSet);
+        }
+
+        HashInsert(
+                &gameMetadata->bitmapToDescriptorSetMap,
+                &stringBitmap,
+                &vc->secondDescSet);
+
         Entity newPlayer = {};
         newPlayer.position = glm::vec3(0, 0, 0);
         newPlayer.isPlayer = true;
@@ -364,21 +378,8 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         gameMetadata->playerRect->type = REGULAR;
         gameMetadata->playerRect->renderLayer = PLAYER;
         gameMetadata->playerRect->frameDirection = LEFT;
-
-        LoadAssets(gameMetadata);
-
-        for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
-        {
-            HashInsert(
-                    &gameMetadata->bitmapToDescriptorSetMap,
-                    FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
-                    &vc->vdsi[i].descSet);
-        }
-
-        HashInsert(
-                &gameMetadata->bitmapToDescriptorSetMap,
-                &stringBitmap,
-                &vc->secondDescSet);
+        gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "arche");
+        gameMetadata->playerRect->bitmapID = gameMetadata->playerRect->bitmap->bitmapID;
 
         LoadStuff(gameMetadata);
 
@@ -783,9 +784,6 @@ void DrawScene(
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebug);
 
-    gameMetadata->playerRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode,
-                                                  gameMetadata->playerRect->bitmapID);
-
     PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
 
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
@@ -1030,11 +1028,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
     PushBitmap(&gameMetadata->bitmapSentinelNode, &gameMetadata->whiteBitmap);
 
-
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);
-
-    gameMetadata->playerRect->bitmapID = archeBitmap->bitmapID;
 
     /* XXX: There's a loose coupling between frame animation and bitmap width
      * and height. We need the width and height to make a conversion to pixel
@@ -1161,7 +1156,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
             Rect *collissionRect =
                 CreateRectangle(reservedMemory, startingPosition, color, currentNode->dim);
             AssociateEntity(collissionRect, collisionEntity, false);
-
 
             collissionRect->type = COLLISION;
             collissionRect->renderLayer = FRONT_STATIC;
