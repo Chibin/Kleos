@@ -763,6 +763,8 @@ void DrawScene(
         RectDynamicArray *hitBoxes,
         RectDynamicArray *hurtBoxes)
 {
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+
     ASSERT(g_rectManager->Traversable.rda.size > 0);
 
     AABB range = {};
@@ -773,20 +775,34 @@ void DrawScene(
      * We also need to use the negative dimension to calculate two out of the four quadrants.
      */
     range.halfDim = abs(range.halfDim);
-    AddDebugRect(gameMetadata, &range, COLOR_RED);
+    Rect *dragCreatedRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE, &range);
 
-    PushRectDynamicArrayToRenderGroupRectInfo(
-            gameMetadata, perFrameRenderGroup, CreateRDAForNewWorldObjects(gameMetadata));
+    RectDynamicArray *newWorldObjects = CreateRDAForNewWorldObjects(gameMetadata);
+
+    if (gameMetadata->createNewRect)
+    {
+        gameMetadata->createNewRect = false;
+
+        Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE, &range);
+        permanentRect->type = COLLISION;
+        permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
+        permanentRect->renderLayer = FRONT_STATIC;
+        PushBack(&g_rectManager->NonTraversable.rda, permanentRect);
+
+        SetAABB(&g_rectManager->NonTraversable);
+    }
+
+    AddDebugRect(gameMetadata, &range, COLOR_RED);
 
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, newWorldObjects);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hitBoxes);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebug);
 
     PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
 
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     Rect *minimalRect = CreateMinimalRectInfo(perFrameMemory, g_enemyNPC);
     UpdateNPCAnimation(g_enemyNPC, minimalRect);
     PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect);

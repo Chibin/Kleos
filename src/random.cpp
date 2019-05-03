@@ -290,6 +290,8 @@ void AddNewRectToWorld(GameMetadata *gm, Camera *camera, glm::mat4 *projection, 
         {
             ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->objectsToBeAddedTotheWorld, worldPos);
         }
+
+        gm->createNewRect = true;
     }
 
 }
@@ -324,6 +326,7 @@ RectDynamicArray *CreateRDAForNewWorldObjects(GameMetadata *gm)
     {
         glm::vec3 pos = gm->objectsToBeAddedTotheWorld[i];
         Rect *rect = CreateRectangle(perFrameMemory, V3(pos), COLOR_BLUE, 1, 1);
+        rect->bitmapID = 0;
         PushBack(result, rect);
     }
 

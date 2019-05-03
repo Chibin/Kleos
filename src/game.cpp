@@ -43,6 +43,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.frameAnimationSentinelNode.prev = &gameMetadata.frameAnimationSentinelNode;
 
     gameMetadata.isLeftButtonReleased = true;
+    gameMetadata.createNewRect = false;
 
     FindFile(GetProgramPath(), "render*dll");
 

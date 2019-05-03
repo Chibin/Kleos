@@ -45,6 +45,7 @@ struct GameMetadata
     glm::vec3 mouseDrag[2];
     v2 screenCoordinates[2];
     b32 isLeftButtonReleased;
+    b32 createNewRect;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)
