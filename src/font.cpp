@@ -13,7 +13,7 @@
 TTF_Font *OpenFont()
 {
     const char *file = "assets/fonts/lato/Lato-Regular.ttf";
-    int ptsize = 16;
+    int ptsize = 144;
 
     TTF_Font *font = TTF_OpenFont(file, ptsize);
     if (font == nullptr)
