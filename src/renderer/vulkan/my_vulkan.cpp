@@ -878,7 +878,7 @@ void VulkanLoadImageToGPU(VulkanContext *vc, VulkanDescriptorSetInfo *vdsi)
     stbi_uc *pixels = nullptr;
 
     /* image path not empty */
-    if (IsStringEmpty(vdsi->imagePath))
+    if (! IsStringEmpty(vdsi->imagePath))
     {
         pixels = stbi_load(vdsi->imagePath,
                            &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);

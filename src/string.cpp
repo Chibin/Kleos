@@ -3,7 +3,7 @@
 
 inline b32 IsStringEmpty(char *string)
 {
-    return strcmp(string, "") == 1;
+    return strcmp(string, "") == 0;
 }
 
 #endif
