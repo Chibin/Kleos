@@ -153,20 +153,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         ARRAY_CREATE(glm::vec3, &gameMetadata->reservedMemory, worldArr);
         gameMetadata->objectsToBeAddedTotheWorld = worldArr;
 
-        snprintf(gameMetadata->whiteBitmap.name, sizeof(gameMetadata->whiteBitmap.name), "%s", "white");
-        gameMetadata->whiteBitmap.width = 1;
-        gameMetadata->whiteBitmap.height = 1;
-        gameMetadata->whiteBitmap.format = GL_RGBA;
-        gameMetadata->whiteBitmap.bitmapID = MAX_HASH - 1; // XXX: needs to be changed somewhere
-        gameMetadata->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
-        gameMetadata->whiteBitmap.data =
-            (u8 *)AllocateMemory(reservedMemory, gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * sizeof(u32));
-        for (memory_index i = 0; i < gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height; i++)
-        {
-            /* alpha -> blue -> green -> red: 1 byte each */
-            *((u32 *)gameMetadata->whiteBitmap.data + i) = 0x33333333;
-        }
-
         TTF_Font *font = OpenFont();
         ASSERT(font != nullptr);
         gameMetadata->font = font;
@@ -184,9 +170,12 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ASSERT(gameMetadata->bitmapToDescriptorSetMap.hashTable[i] == nullptr);
         }
 #endif
-        // BitmapDescriptorMap bitmapToDescriptorSetMap  = CreateNewHashMap();
+
         bool useStagingBuffer = false;
         stbi_set_flip_vertically_on_load(1);
+
+        SetWhiteBitmap(gameMetadata);
+        SetFontBitmap(gameMetadata);
 
         s32 texWidth = 0;
         s32 texHeight = 0;
@@ -199,8 +188,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
          * the amout of extra characters for later images.
          * This will give us a longer width when creating a vkimage.
          */
+
         sprintf_s(buffer, sizeof(char) * 150, "   %.02f ms/f    %.0ff/s    %.02fcycles/f              ", 33.0f, 66.0f, 99.0f); // NOLINT
-        StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                             // NOLINT
+        StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                    // NOLINT
         stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
 
         vc->UITextures[0].texWidth = stringBitmap.width;
@@ -220,6 +210,9 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
                 vc->UITextures,
                 VK_IMAGE_LAYOUT_GENERAL);
 
+        ARRAY_CREATE(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi);
+        vc->vdsi = vdsi;
+
         VulkanDescriptorSetInfo tempVulkanDescriptorSetInfo = {};
         tempVulkanDescriptorSetInfo.textureObjCount = DEMO_TEXTURE_COUNT;
         tempVulkanDescriptorSetInfo.uniformData = &vc->uniformData;
@@ -230,10 +223,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         memset(tempVulkanDescriptorSetInfo.textureObj, 0, sizeof(TextureObject));
         tempVulkanDescriptorSetInfo.name = "awesomeface";
         tempVulkanDescriptorSetInfo.imagePath ="./materials/textures/awesomeface.png";
-
-        ARRAY_CREATE(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vdsi);
-        vc->vdsi = vdsi;
-
         ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
         tempVulkanDescriptorSetInfo.descSet = {};
@@ -267,7 +256,21 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         tempVulkanDescriptorSetInfo.textureObj[0].dataSize =
             gameMetadata->whiteBitmap.width * gameMetadata->whiteBitmap.height * 4;
         tempVulkanDescriptorSetInfo.textureObj[0].data = gameMetadata->whiteBitmap.data;
+        ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
+        tempVulkanDescriptorSetInfo.descSet = {};
+        tempVulkanDescriptorSetInfo.textureObj = (TextureObject *)AllocateMemory(reservedMemory, sizeof(TextureObject));
+        tempVulkanDescriptorSetInfo.name = "font";
+        tempVulkanDescriptorSetInfo.imagePath = "";
+        tempVulkanDescriptorSetInfo.textureObj[0].texWidth = gameMetadata->fontBitmap.width;
+        tempVulkanDescriptorSetInfo.textureObj[0].texHeight = gameMetadata->fontBitmap.height;
+        /* stbi does not do padding, so the pitch is the component times
+         * the width of the image. The component is 4 because of STBI_rgb_alpha.
+         */
+        tempVulkanDescriptorSetInfo.textureObj[0].texPitch = gameMetadata->fontBitmap.width * 4;
+        tempVulkanDescriptorSetInfo.textureObj[0].dataSize =
+            gameMetadata->fontBitmap.width * gameMetadata->fontBitmap.height * 4;
+        tempVulkanDescriptorSetInfo.textureObj[0].data = gameMetadata->fontBitmap.data;
         ARRAY_PUSH(VulkanDescriptorSetInfo, &gameMetadata->reservedMemory, vc->vdsi, tempVulkanDescriptorSetInfo);
 
         for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
@@ -848,7 +851,11 @@ void DrawUI(
 
     /* TODO: create something that can get a new bitmap id? */
     stringBitmap.bitmapID = MAX_HASH - 2;
+#if 1
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
+#else
+    sprintf_s(buffer, sizeof(char) * 150, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+#endif
     StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
 
     ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
@@ -858,7 +865,7 @@ void DrawUI(
 
     f32 screenWidth = gameMetadata->screenResolution.v[0];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
-    f32 scaleFactor = 3.0f;
+    f32 scaleFactor = 0.35f;
 
     f32 rectWidth  = stringBitmap.width / screenWidth * scaleFactor;
     f32 rectHeight = stringBitmap.height / screenHeight * scaleFactor;
@@ -869,11 +876,23 @@ void DrawUI(
     Rect *statsRect =
         CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
 
+    startingPosition = v3{ 0, -1 +  0.5f, 0 };
+    f32 scale = 0.8f;
+
+    Rect *editModeRect =
+        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, gameMetadata->fontBitmap.width / screenWidth * scaleFactor, gameMetadata->fontBitmap.height / screenHeight * scaleFactor);
+
     statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
     statsRect->bitmap = &gameMetadata->whiteBitmap;
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
 
     statsRect->bitmap = &stringBitmap;
+
+    editModeRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+    editModeRect->bitmap = &gameMetadata->whiteBitmap;
+    PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect);
+    editModeRect->bitmapID = gameMetadata->fontBitmap.bitmapID;
+    editModeRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "font");
 
     perFrameRenderGroup->rectCount = 0;
     ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
@@ -894,6 +913,7 @@ void DrawUI(
 
     ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
     ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
+#if 1
     VulkanCopyImageFromHostToLocal(
             &vc-> device,
             stringBitmap.pitch,
@@ -902,6 +922,7 @@ void DrawUI(
             vc->UITextures[0].mem,
             stringBitmap.size,
             stringBitmap.data);
+#endif
 
     /* I am doing some "shady" things in the vulkan side.
      * There's a fixed sized image that we're always updating.
@@ -920,6 +941,9 @@ void DrawUI(
     topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
 
     PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
+
+    PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect);
+
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebugUI);
 
     DrawRenderGroup(
@@ -1043,6 +1067,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
     PushBitmap(&gameMetadata->bitmapSentinelNode, pshroomBitmap);
 
     PushBitmap(&gameMetadata->bitmapSentinelNode, &gameMetadata->whiteBitmap);
+    PushBitmap(&gameMetadata->bitmapSentinelNode, &gameMetadata->fontBitmap);
 
     Bitmap *archeBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, newBitmap->bitmapID);
     ASSERT(archeBitmap != nullptr);

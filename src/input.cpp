@@ -17,6 +17,11 @@ void TogglePauseGame(GameMetadata *gm)
     }
 }
 
+void ToggleEditMode(GameMetadata *gm)
+{
+    gm->isEditMode = !gm->isEditMode;
+}
+
 void ProcessInputDown(
         SDL_Keycode sym,
         GameMetadata *gm,
@@ -32,6 +37,8 @@ void ProcessInputDown(
     case SDLK_p:
         TogglePauseGame(gm);
         break;
+    case SDLK_e:
+        ToggleEditMode(gm);
     default:
         /* TODO: differentiate different types of input
          * something like...  if (mode == movement)

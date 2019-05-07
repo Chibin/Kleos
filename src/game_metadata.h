@@ -23,6 +23,7 @@ struct GameMetadata
 
     Bitmap bitmapSentinelNode;
     Bitmap whiteBitmap;
+    Bitmap fontBitmap;
 
     BitmapDescriptorMap bitmapToDescriptorSetMap;
 
@@ -46,6 +47,8 @@ struct GameMetadata
     v2 screenCoordinates[2];
     b32 isLeftButtonReleased;
     b32 createNewRect;
+
+    b32 isEditMode;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)
