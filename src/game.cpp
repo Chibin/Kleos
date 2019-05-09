@@ -45,7 +45,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.isLeftButtonReleased = true;
     gameMetadata.createNewRect = false;
 
-    gameMetadata.isEditMode = false;
+    gameMetadata.isEditMode = true;
 
     FindFile(GetProgramPath(), "render*dll");
 

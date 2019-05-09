@@ -221,10 +221,10 @@ v2 GetFontPixelStart(s32 character)
             result = v2{1026, fontMaxPixelHeight};
             break;
         case 'D':
-            result = v2{1131, fontMaxPixelHeight};
+            result = v2{1140, fontMaxPixelHeight};
             break;
         case 'E':
-            result = v2{1236, fontMaxPixelHeight};
+            result = v2{1247, fontMaxPixelHeight};
             break;
         case 'F':
             result = v2{1320, fontMaxPixelHeight};
@@ -254,7 +254,7 @@ v2 GetFontPixelStart(s32 character)
             result = v2{2020, fontMaxPixelHeight};
             break;
         case 'O':
-            result = v2{2127, fontMaxPixelHeight};
+            result = v2{2136, fontMaxPixelHeight};
             break;
         case 'P':
             result = v2{2246, fontMaxPixelHeight};
@@ -296,7 +296,7 @@ v2 GetFontPixelStart(s32 character)
             result = v2{3401, fontMaxPixelHeight};
             break;
         case 'c':
-            result = v2{3476, fontMaxPixelHeight};
+            result = v2{3481, fontMaxPixelHeight};
             break;
         case 'd':
             result = v2{3548, fontMaxPixelHeight};
@@ -307,8 +307,11 @@ v2 GetFontPixelStart(s32 character)
         case 'f':
             result = v2{3703, fontMaxPixelHeight};
             break;
+        case 'i':
+            result = v2{3902, fontMaxPixelHeight};
+            break;
         case 'l':
-            result = v2{4053, fontMaxPixelHeight};
+            result = v2{4055, fontMaxPixelHeight};
             break;
         case 'm':
             result = v2{4083, fontMaxPixelHeight};
@@ -318,6 +321,9 @@ v2 GetFontPixelStart(s32 character)
             break;
         case 's':
             result = v2{4583, fontMaxPixelHeight};
+            break;
+        case 't':
+            result = v2{4633, fontMaxPixelHeight};
             break;
         case 'y':
             result = v2{5033, fontMaxPixelHeight};
@@ -383,7 +389,7 @@ v2 GetFontPixelEnd(s32 character)
             result = v2{1130, fontMaxPixelHeight};
             break;
         case 'D':
-            result = v2{1235, fontMaxPixelHeight};
+            result = v2{1230, fontMaxPixelHeight};
             break;
         case 'E':
             result = v2{1325, fontMaxPixelHeight};
@@ -458,16 +464,19 @@ v2 GetFontPixelEnd(s32 character)
             result = v2{3476, fontMaxPixelHeight};
             break;
         case 'c':
-            result = v2{3548, fontMaxPixelHeight};
+            result = v2{3538, fontMaxPixelHeight};
             break;
         case 'd':
-            result = v2{3629, fontMaxPixelHeight};
+            result = v2{3615, fontMaxPixelHeight};
             break;
         case 'e':
-            result = v2{3703, fontMaxPixelHeight};
+            result = v2{3700, fontMaxPixelHeight};
             break;
         case 'f':
             result = v2{3753, fontMaxPixelHeight};
+            break;
+        case 'i':
+            result = v2{3933, fontMaxPixelHeight};
             break;
         case 'l':
             result = v2{4083, fontMaxPixelHeight};
@@ -476,7 +485,10 @@ v2 GetFontPixelEnd(s32 character)
             result = v2{4203, fontMaxPixelHeight};
             break;
         case 's':
-            result = v2{4633, fontMaxPixelHeight};
+            result = v2{4632, fontMaxPixelHeight};
+            break;
+        case 't':
+            result = v2{4693, fontMaxPixelHeight};
             break;
         case 'y':
             result = v2{5103, fontMaxPixelHeight};

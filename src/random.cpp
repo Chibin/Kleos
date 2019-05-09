@@ -431,13 +431,13 @@ void PushStringRectToRenderGroup(RenderGroup *perFrameRenderGroup, GameMetadata 
         v2 end = GetFontPixelEnd(character);
         f32 xWidth = end.x - start.x;
 
-        if (character == 'a' || character == 'f' || character == 'c' || character == 'y' || character == 's')
+        if (character == 'a' || character == 'f' || character == 'd' || character == 'i' || character == 'c' || character == 's' || character == 'l' || character == 'I')
         {
             position.x -= 50 / screenWidth * scale;
         }
-        else if (character == 'l')
+        else if (character == 't' || character == 'y')
         {
-            position.x -= 50 / screenWidth * scale;
+            position.x -= 20 / screenWidth * scale;
         }
         else if (character == '/')
         {

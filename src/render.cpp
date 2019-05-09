@@ -854,7 +854,7 @@ void DrawUI(
 
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
 
-    f32 scaleFactor = 0.25;
+    f32 scaleFactor = 0.50f;
 
     /* This is in raw OpenGL coordinates */
     v3 startingPosition = v3{ -1, 1 - gameMetadata->fontBitmap.height / screenHeight * scaleFactor * 0.5f, 0 };
@@ -877,7 +877,7 @@ void DrawUI(
         padding = 0.02f;
         startingPosition = v3{ -1 + padding, -1 + rectHeight, 0 };
         PushStringRectToRenderGroup(
-                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "EDITMODE");
+                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
     }
 
     perFrameRenderGroup->rectCount = 0;
