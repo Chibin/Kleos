@@ -57,3 +57,9 @@
     {                           \
         0, 0, 0, 0.3f           \
     }
+
+#define TRANSPARENCY(T)         \
+    v4                          \
+    {                           \
+        0, 0, 0, T              \
+    }
