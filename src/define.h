@@ -31,3 +31,29 @@
     {               \
         1, 1, 0, 1  \
     }
+
+#define COLOR_RED_TRANSPARENT   \
+    v4                          \
+    {                           \
+        1, 0, 0, 0.3f           \
+    }
+#define COLOR_BLUE_TRANSPARENT  \
+    v4                          \
+    {                           \
+        0, 0, 1, 0.3f           \
+    }
+#define COLOR_GREEN_TRANSPARENT \
+    v4                          \
+    {                           \
+        0, 1, 0, 0.3f           \
+    }
+#define COLOR_YELLOW_TRANSPARENT\
+    v4                          \
+    {                           \
+        1, 1, 0, 0.3f           \
+    }
+#define COLOR_BLACK_TRANSPARENT \
+    v4                          \
+    {                           \
+        0, 0, 0, 0.3f           \
+    }

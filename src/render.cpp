@@ -539,7 +539,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 #endif
     range.halfDim = range.halfDim + arbitraryPadding;
     Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
-    AddDebugRect(gameMetadata, &range, COLOR_GREEN);
+    AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
 
     AABB uiTest = {};
     glm::vec3 rayWorld =
@@ -548,7 +548,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     f32 dimRange = 0.1f;
     uiTest.halfDim = v2{dimRange, dimRange * (gameMetadata->screenResolution.x / gameMetadata->screenResolution.y)};
     uiTest.center = V2(ScreenSpaceToNormalizedDeviceSpace(V2(g_mousePoint), gameMetadata->screenResolution));
-    AddDebugRectUI(gameMetadata, &uiTest, COLOR_RED);
+    AddDebugRectUI(gameMetadata, &uiTest, COLOR_RED_TRANSPARENT);
 
     /* This points towards us */
     glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
@@ -567,17 +567,17 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     printf("coords: X %f, Y %f\n", uiTest.center.x, uiTest.center.y);
 #endif
 
-    AddDebugRect(gameMetadata, &uiTest, COLOR_BLUE);
+    AddDebugRect(gameMetadata, &uiTest, COLOR_BLUE_TRANSPARENT);
 
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
         Rect *rect = arr[i];
-        AddDebugRect(gameMetadata, rect, COLOR_YELLOW);
+        AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
 
         glm::vec3 rayDirection = glm::vec3(1 / rayWorld.x, 1 / rayWorld.y, 0);
         if (IntersectionAABB(rect, V2(g_camera->pos), rayDirection))
         {
-            AddDebugRect(gameMetadata, rect, COLOR_BLACK);
+            AddDebugRect(gameMetadata, rect, COLOR_BLACK_TRANSPARENT);
         }
 
 #if 0
@@ -648,7 +648,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
              * entity. Otherwise, it's hard to make the frame distance
              * symetrical when swapping between both directions
              */
-            AddDebugRect(gameMetadata, &e->frameState, V3(e->position), COLOR_RED);
+            AddDebugRect(gameMetadata, &e->frameState, V3(e->position), COLOR_RED_TRANSPARENT);
         }
         else
         {
@@ -778,7 +778,7 @@ void DrawScene(
      * We also need to use the negative dimension to calculate two out of the four quadrants.
      */
     range.halfDim = abs(range.halfDim);
-    Rect *dragCreatedRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE, &range);
+    Rect *dragCreatedRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
 
     RectDynamicArray *newWorldObjects = CreateRDAForNewWorldObjects(gameMetadata);
 
@@ -786,7 +786,7 @@ void DrawScene(
     {
         gameMetadata->createNewRect = false;
 
-        Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE, &range);
+        Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
         permanentRect->type = COLLISION;
         permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
         permanentRect->renderLayer = FRONT_STATIC;
@@ -795,7 +795,7 @@ void DrawScene(
         SetAABB(&g_rectManager->NonTraversable);
     }
 
-    AddDebugRect(gameMetadata, &range, COLOR_RED);
+    AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
 
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda);

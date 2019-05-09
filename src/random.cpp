@@ -325,7 +325,7 @@ RectDynamicArray *CreateRDAForNewWorldObjects(GameMetadata *gm)
     for (memory_index i = 0; i < ARRAY_LIST_SIZE(gm->objectsToBeAddedTotheWorld); i++)
     {
         glm::vec3 pos = gm->objectsToBeAddedTotheWorld[i];
-        Rect *rect = CreateRectangle(perFrameMemory, V3(pos), COLOR_BLUE, 1, 1);
+        Rect *rect = CreateRectangle(perFrameMemory, V3(pos), COLOR_BLUE_TRANSPARENT, 1, 1);
         rect->bitmapID = 0;
         PushBack(result, rect);
     }
@@ -373,6 +373,13 @@ void SetWhiteBitmap(GameMetadata *gm)
     for (memory_index i = 0; i < gm->whiteBitmap.width * gm->whiteBitmap.height; i++)
     {
         /* alpha -> blue -> green -> red: 1 byte each */
+#if 0
         *((u32 *)gm->whiteBitmap.data + i) = 0x33333333;
+#else
+        *((u32 *)gm->whiteBitmap.data + i) = 0xFF222222;
+#endif
+    }
+}
+
     }
 }
