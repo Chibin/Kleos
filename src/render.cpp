@@ -849,50 +849,36 @@ void DrawUI(
     Bitmap stringBitmap = {};
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
-    /* TODO: create something that can get a new bitmap id? */
-    stringBitmap.bitmapID = MAX_HASH - 2;
-#if 1
-    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
-#else
-    sprintf_s(buffer, sizeof(char) * 150, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-#endif
-    StringToBitmap(&stringBitmap, gameMetadata->font, buffer);                                  // NOLINT
-
-    ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
-    ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
-
-    stringBitmap.textureParam = TextureParam{ GL_NEAREST,  GL_NEAREST };
-
     f32 screenWidth = gameMetadata->screenResolution.v[0];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
-    f32 scaleFactor = 0.35f;
 
-    f32 rectWidth  = stringBitmap.width / screenWidth * scaleFactor;
-    f32 rectHeight = stringBitmap.height / screenHeight * scaleFactor;
+    sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
+
+    f32 scaleFactor = 0.25;
 
     /* This is in raw OpenGL coordinates */
-    v3 startingPosition = v3{ -1 + rectWidth * 0.5f, 1 - rectHeight * 0.5f, 0 };
+    v3 startingPosition = v3{ -1, 1 - gameMetadata->fontBitmap.height / screenHeight * scaleFactor * 0.5f, 0 };
 
-    Rect *statsRect =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, rectWidth, rectHeight);
+    PushStringRectToRenderGroup(
+            perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, buffer);
 
-    startingPosition = v3{ 0, -1 +  0.5f, 0 };
-    f32 scale = 0.8f;
+    if (gameMetadata->isEditMode)
+    {
+        f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scaleFactor * 0.5f;
+        f32 padding = 0.0f;
+        startingPosition =
+            v3{ 0.0f, -1 + rectHeight, 0 };
+        Rect *bottomUIBar =
+            CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, 2, rectHeight * 2);
+        bottomUIBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+        bottomUIBar->bitmap = &gameMetadata->whiteBitmap;
+        PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar);
 
-    Rect *editModeRect =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_WHITE, gameMetadata->fontBitmap.width / screenWidth * scaleFactor, gameMetadata->fontBitmap.height / screenHeight * scaleFactor);
-
-    statsRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-    statsRect->bitmap = &gameMetadata->whiteBitmap;
-    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
-
-    statsRect->bitmap = &stringBitmap;
-
-    editModeRect->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-    editModeRect->bitmap = &gameMetadata->whiteBitmap;
-    PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect);
-    editModeRect->bitmapID = gameMetadata->fontBitmap.bitmapID;
-    editModeRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "font");
+        padding = 0.02f;
+        startingPosition = v3{ -1 + padding, -1 + rectHeight, 0 };
+        PushStringRectToRenderGroup(
+                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "EDITMODE");
+    }
 
     perFrameRenderGroup->rectCount = 0;
     ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
@@ -910,10 +896,7 @@ void DrawUI(
             &vc->secondDescSet,
             0,
             nullptr);
-
-    ASSERT(vc->UITextures[0].texWidth >= stringBitmap.width);
-    ASSERT(vc->UITextures[0].texHeight >= stringBitmap.height);
-#if 1
+#if 0
     VulkanCopyImageFromHostToLocal(
             &vc-> device,
             stringBitmap.pitch,
@@ -923,26 +906,6 @@ void DrawUI(
             stringBitmap.size,
             stringBitmap.data);
 #endif
-
-    /* I am doing some "shady" things in the vulkan side.
-     * There's a fixed sized image that we're always updating.
-     * sometimes, the new texture is smaller than the fixed size image we have.
-     * so we have to scale the UV coordinates based on the newly generated coordinates.
-     * bleh... but it works -- kind of.
-     * Ideally, the text overlay should be generated based on a generated glyph.
-     */
-    Vertex *vTopRight = &(statsRect->vertices[0]);
-    vTopRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-    Vertex *vBottomRight = &(statsRect->vertices[1]);
-    vBottomRight->vUv = PixelToUV(v2{ (f32)stringBitmap.width, 0}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-    Vertex *vBottomLeft = &(statsRect->vertices[2]);
-    vBottomLeft->vUv = v2{ 0, 0 };
-    Vertex *topLeft = &(statsRect->vertices[3]);
-    topLeft->vUv = PixelToUV(v2{ 0, (f32)stringBitmap.height}, (u32)vc->UITextures[0].texWidth, (u32)vc->UITextures[0].texHeight);
-
-    PushRenderGroupRectInfo(perFrameRenderGroup, statsRect);
-
-    PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect);
 
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebugUI);
 

@@ -338,6 +338,7 @@ void SetFontBitmap(GameMetadata *gm)
     char buffer[256];
     u8 capitalLetters[27] = {};
     u8 lowercaseLetters[27] = {};
+    u8 specialCharacters[5] = {'/', '.', ',', '!', };
     u8 numbers[11] = {}; /* extra byte for '\n' */
 
     for(memory_index i = 0; i < 26; i++)
@@ -350,7 +351,8 @@ void SetFontBitmap(GameMetadata *gm)
     {
         numbers[i] = '0' + SafeCastToU32(i);
     }
-    sprintf_s(buffer, sizeof(char) * 150, "%s%s%s", numbers, capitalLetters, lowercaseLetters);
+    sprintf_s(buffer, sizeof(char) * 150, "%s%s%s%s",
+            numbers, capitalLetters, lowercaseLetters, specialCharacters);
 
     StringToBitmap(&gm->fontBitmap, gm->font, buffer);                                // NOLINT
 
@@ -381,5 +383,88 @@ void SetWhiteBitmap(GameMetadata *gm)
     }
 }
 
+void SetUVForCharacter(Rect *rect, s32 character)
+{
+    Bitmap *bitmap = rect->bitmap;
+    ASSERT(bitmap != nullptr);
+
+    Vertex *vTopRight = &(rect->vertices[0]);
+    Vertex *vBottomRight = &(rect->vertices[1]);
+    Vertex *vBottomLeft = &(rect->vertices[2]);
+    Vertex *topLeft = &(rect->vertices[3]);
+
+    v2 start = GetFontPixelStart(character);
+    v2 end = GetFontPixelEnd(character);
+
+    vTopRight->vUv = PixelToUV(
+            end,
+            bitmap->width, bitmap->height);
+    vBottomRight->vUv = PixelToUV(
+            v2{end.x, 0},
+            bitmap->width, bitmap->height);
+    vBottomLeft->vUv = PixelToUV(
+            v2{start.x, 0},
+            bitmap->width, bitmap->height);
+    topLeft->vUv = PixelToUV(
+            start,
+            bitmap->width, bitmap->height);
+}
+
+void PushStringRectToRenderGroup(RenderGroup *perFrameRenderGroup, GameMetadata *gameMetadata, GameMemory *gameMemory, v3 startingPosition, f32 scale, const char *string)
+{
+    v3 position = startingPosition;
+    f32 screenWidth = gameMetadata->screenResolution.v[0];
+    f32 screenHeight = gameMetadata->screenResolution.v[1];
+
+    f32 extraPixelPadding = 0;
+    f32 pixelWidthOfA = 83 * 0.5f;
+    for(memory_index i = 0; i < strlen(string); i++)
+    {
+        s32 character = string[i];
+        if (character == ' ')
+        {
+            position.x += pixelWidthOfA / screenWidth * scale;
+            continue;
+        }
+
+        v2 start = GetFontPixelStart(character);
+        v2 end = GetFontPixelEnd(character);
+        f32 xWidth = end.x - start.x;
+
+        if (character == 'a' || character == 'f' || character == 'c' || character == 'y' || character == 's')
+        {
+            position.x -= 50 / screenWidth * scale;
+        }
+        else if (character == 'l')
+        {
+            position.x -= 50 / screenWidth * scale;
+        }
+        else if (character == '/')
+        {
+            position.x -= 40 / screenWidth * scale;
+        }
+
+        Rect *editModeRect =
+            CreateRectangle(gameMemory, position, COLOR_WHITE, xWidth / screenWidth * scale, gameMetadata->fontBitmap.height / screenHeight * scale);
+        editModeRect->bitmapID = gameMetadata->fontBitmap.bitmapID;
+        editModeRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "font");
+
+        if (character == 'I')
+        {
+            extraPixelPadding = 25;
+        }
+        else if (character == 'E')
+        {
+            extraPixelPadding = 40;
+        }
+        else if (character == '.')
+        {
+            extraPixelPadding = 60;
+        }
+
+        position.x += (xWidth + extraPixelPadding) / screenWidth * scale;
+
+        SetUVForCharacter(editModeRect, character);
+        PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect);
     }
 }
