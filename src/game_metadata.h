@@ -49,6 +49,10 @@ struct GameMetadata
     b32 createNewRect;
 
     b32 isEditMode;
+    b32 isCommandPrompt;
+
+    char commandPrompt[256];
+    memory_index commandPromptCount;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

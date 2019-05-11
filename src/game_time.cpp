@@ -9,16 +9,6 @@ b32 IsGamePaused(GameTimestep *gt)
     return gt->isPaused;
 }
 
-void UnpauseGameTimeStep(GameTimestep *gt)
-{
-    gt->isPaused = false;
-}
-
-void PauseGameTimestep(GameTimestep *gt)
-{
-    gt->isPaused = true;
-}
-
 void ResetGameTimestep(GameTimestep *gt)
 {
     uint32 now = SDL_GetTicks();

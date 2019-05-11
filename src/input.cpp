@@ -5,21 +5,30 @@
 static bool g_canJump = true;
 static bool g_canAttack = true;
 
-void TogglePauseGame(GameMetadata *gm)
+void Toggle(b32 *value)
 {
-    if (IsGamePaused(gm->gameTimestep))
-    {
-        UnpauseGameTimeStep(gm->gameTimestep);
-    }
-    else
-    {
-        PauseGameTimestep(gm->gameTimestep);
-    }
+    *value = !*value;
 }
 
-void ToggleEditMode(GameMetadata *gm)
+void ResetCommandPrompt(GameMetadata *gm)
 {
-    gm->isEditMode = !gm->isEditMode;
+    for(memory_index i = 0; i < ARRAY_SIZE(gm->commandPrompt); i++)
+    {
+        gm->commandPrompt[i] = '\0';
+
+    }
+    gm->commandPromptCount = 0;
+
+}
+
+void ProcessCommand(GameMetadata *gm)
+{
+    if (strcmp(gm->commandPrompt, "SAVE") == 0)
+    {
+        ASSERT(!"SAVING");
+    }
+    ResetCommandPrompt(gm);
+
 }
 
 void ProcessInputDown(
@@ -27,25 +36,55 @@ void ProcessInputDown(
         GameMetadata *gm,
         b32 *continueRunning)
 {
-    switch (sym)
+    if (gm->isCommandPrompt)
     {
-    case SDLK_ESCAPE:
-        *continueRunning = false;
-        break;
-    case  SDLK_1:
-        break;
-    case SDLK_p:
-        TogglePauseGame(gm);
-        break;
-    case SDLK_e:
-        ToggleEditMode(gm);
-    default:
-        /* TODO: differentiate different types of input
-         * something like...  if (mode == movement)
-         */
-        ProcessInputToMovement(sym);
-        /* TODO: ProcessInputToMenu() */
-        break;
+        switch (sym)
+        {
+            case SDLK_ESCAPE:
+                ResetCommandPrompt(gm);
+                Toggle(&gm->isCommandPrompt);
+                break;
+            case SDLK_RETURN:
+                ProcessCommand(gm);
+                break;
+            case SDLK_BACKSPACE:
+                if(gm->commandPromptCount > 0)
+                {
+                    gm->commandPrompt[--gm->commandPromptCount] = '\0';
+                }
+                break;
+            default:
+                ASSERT(gm->commandPromptCount < sizeof(gm->commandPrompt));
+                gm->commandPrompt[gm->commandPromptCount++] = *SDL_GetKeyName(sym);
+                break;
+        }
+    }
+    else
+    {
+        switch (sym)
+        {
+            case SDLK_ESCAPE:
+                *continueRunning = false;
+                break;
+            case SDLK_1:
+                break;
+            case SDLK_p:
+                Toggle(&gm->gameTimestep->isPaused);
+                break;
+            case SDLK_e:
+                Toggle(&gm->isEditMode);
+                break;
+            case SDLK_RETURN:
+                Toggle(&gm->isCommandPrompt);
+                break;
+            default:
+                /* TODO: differentiate different types of input
+                 * something like...  if (mode == movement)
+                 */
+                ProcessInputToMovement(sym);
+                /* TODO: ProcessInputToMenu() */
+                break;
+        }
     }
 }
 

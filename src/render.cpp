@@ -430,7 +430,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
      * on their computer, so not reliable.
      */
     const u8 *keystate = SDL_GetKeyboardState(nullptr);
-    ProcessKeysHeldDown(g_player, keystate);
+    if (gameMetadata->isEditMode == false)
+    {
+        ProcessKeysHeldDown(g_player, keystate);
+    }
 
     while (SDL_PollEvent(&event) != 0)
     {
@@ -879,6 +882,26 @@ void DrawUI(
         startingPosition = v3{ -1 + padding, -1 + rectHeight * 0.5f, 0 };
         PushStringRectToRenderGroup(
                 perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
+
+        if (gameMetadata->isCommandPrompt)
+        {
+            f32 scale = 0.50f;
+            f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
+            startingPosition =
+                v3{ 0.0f, -0.35f + rectHeight * 0.5f, 0 };
+            Rect *commandPromptBar =
+                CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 2, rectHeight);
+            commandPromptBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+            commandPromptBar->bitmap = &gameMetadata->whiteBitmap;
+            PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar);
+
+            startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
+            PushStringRectToRenderGroup(
+                    perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor,
+                    gameMetadata->commandPrompt);
+
+            /* TODO: Draw letters */
+        }
     }
 
     perFrameRenderGroup->rectCount = 0;
