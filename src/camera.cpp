@@ -82,29 +82,9 @@ Camera *CreateCamera(GameMemory *gm)
     return CreateCamera(gm, pos, target, up);
 }
 
-void CameraZoomOut(Camera *camera)
+void CameraZoom(Camera *camera, f32 zoomAmount)
 {
-    printf("down! zooming out\n");
-
-    GLfloat zoomAmount = 1;
-    camera->pos += glm::vec3(0, 0, zoomAmount);
-
-#if USE_GLM_LOOKAT
-    camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
-#else
-    glm::vec3 from = camera->pos;
-    glm::vec3 to = camera->target;
-
-    camera->view = LookAt(from, to);
-#endif
-}
-
-void CameraZoomIn(Camera *camera)
-{
-    printf("up! zooming in\n");
-    GLfloat zoomAmount = 1;
-
-    if ((camera->pos[2] - zoomAmount) < 0)
+    if ((camera->pos[2] + zoomAmount) < 0)
     {
         printf("can no longer zoom out reached max zoom!\n"
                "current camera z-axis value: %f\n",
@@ -112,12 +92,11 @@ void CameraZoomIn(Camera *camera)
         return;
     }
 
-    camera->pos += glm::vec3(0, -0, -zoomAmount);
+    camera->pos += glm::vec3(0, 0, zoomAmount);
 
 #if USE_GLM_LOOKAT
     camera->view = glm::lookAt(camera->pos, camera->target, camera->up);
 #else
-
     glm::vec3 from = camera->pos;
     glm::vec3 to = camera->target;
 

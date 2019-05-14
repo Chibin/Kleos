@@ -165,11 +165,11 @@ void ProcessMouseInput(const SDL_Event &event, Camera *camera)
 {
     if (event.wheel.y == 1) /* scroll up */
     {
-        CameraZoomIn(camera);
+        CameraZoom(camera, -1.0f);
     }
     else if (event.wheel.y == -1) /* scroll down */
     {
-        CameraZoomOut(camera);
+        CameraZoom(camera, 1.0f);
     }
 }
 
