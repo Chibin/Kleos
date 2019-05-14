@@ -9,5 +9,7 @@
 
 #include "string.h"
 
+#include "commands.cpp"
+
 void ProcessInputToMovement(SDL_Keycode sym);
 void ProcessMouseInput(const SDL_Event &event, Camera *camera);
