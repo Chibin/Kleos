@@ -52,6 +52,7 @@ struct GameMetadata
     b32 isCommandPrompt;
 
     char commandPrompt[256];
+    char backupCommandPrompt[256];
     memory_index commandPromptCount;
 };
 

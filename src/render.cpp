@@ -74,7 +74,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "render_group.h"
 #include "asset.cpp"
 #include "sort.cpp"
-#include "string.cpp"
+#include "string.h"
 
 #include "hashtable.cpp"
 
@@ -457,6 +457,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             ProcessInputDown(
                     event.key.keysym.sym,
                     gameMetadata,
+                    g_camera,
                     &continueRunning);
             break;
         case SDL_KEYUP:

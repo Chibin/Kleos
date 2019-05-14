@@ -18,34 +18,63 @@ void ResetCommandPrompt(GameMetadata *gm)
 
     }
     gm->commandPromptCount = 0;
-
 }
 
-void ProcessCommand(GameMetadata *gm)
+void ProcessCommand(GameMetadata *gm, Camera *camera)
 {
+    if (gm->commandPromptCount == 0)
+    {
+        return;
+    }
+
+    char *command = nullptr;
+    char *option = nullptr;
+
+    StringCopy(gm->commandPrompt, gm->backupCommandPrompt, StringLen(gm->commandPrompt));
+
+    char *nextToken = nullptr;
+    char *token = strtok_s(gm->commandPrompt, " ", &nextToken);
+    ASSERT(token != nullptr);
+
     if (strcmp(gm->commandPrompt, "SAVE") == 0)
     {
         ASSERT(!"SAVING");
     }
-    ResetCommandPrompt(gm);
+    else if (strcmp(token, "SAVE") == 0)
+    {
+        ASSERT(!"SAVING with a location");
+    }
+    else if (strcmp(token, "ZOOM") == 0)
+    {
+        if (nextToken)
+        {
+            /* TODO: create a safe cast */
+            CameraZoom(camera, (f32)strtol(nextToken, NULL, 10));
+        }
+    }
 
+    ResetCommandPrompt(gm);
 }
 
 void ProcessInputDown(
         SDL_Keycode sym,
         GameMetadata *gm,
+        Camera *camera,
         b32 *continueRunning)
 {
-    if (gm->isCommandPrompt)
+    if (gm->isCommandPrompt && gm->isEditMode)
     {
         switch (sym)
         {
             case SDLK_ESCAPE:
                 ResetCommandPrompt(gm);
-                Toggle(&gm->isCommandPrompt);
                 break;
             case SDLK_RETURN:
-                ProcessCommand(gm);
+                if(gm->isEditMode)
+                {
+                    ProcessCommand(gm, camera);
+                    Toggle(&gm->isCommandPrompt);
+                }
                 break;
             case SDLK_BACKSPACE:
                 if(gm->commandPromptCount > 0)
@@ -55,7 +84,14 @@ void ProcessInputDown(
                 break;
             default:
                 ASSERT(gm->commandPromptCount < sizeof(gm->commandPrompt));
-                gm->commandPrompt[gm->commandPromptCount++] = *SDL_GetKeyName(sym);
+                if (sym == SDLK_SPACE)
+                {
+                    gm->commandPrompt[gm->commandPromptCount++] = ' ';
+                }
+                else
+                {
+                    gm->commandPrompt[gm->commandPromptCount++] = *SDL_GetKeyName(sym);
+                }
                 break;
         }
     }

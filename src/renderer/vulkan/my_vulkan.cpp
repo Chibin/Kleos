@@ -3,7 +3,7 @@
 
 #include "./vulkan.h"
 #include "stddef.h"
-#include "../../string.cpp"
+#include "../../string.h"
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
 #define GET_INSTANCE_PROC_ADDR(inst, entrypoint)                               \
