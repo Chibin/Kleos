@@ -44,6 +44,10 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
     {
         ASSERT(!"SAVING with a location");
     }
+    else if (strcmp(token, "LOAD") == 0)
+    {
+        ASSERT(!"Load stump");
+    }
     else if (strcmp(token, "ZOOM") == 0)
     {
         if (nextToken)
