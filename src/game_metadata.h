@@ -8,6 +8,7 @@
 #include "renderer/vulkan/vulkan.h"
 
 #include "asset.h"
+#include "rect_manager.h"
 
 struct GameMetadata
 {
