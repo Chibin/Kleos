@@ -47,6 +47,32 @@ enum FrameDataReadState
     FRAMES,
 };
 
+struct MapData
+{
+    char name[16];
+    char textureName[16];
+    RectUVCoords uvCoords;
+    v2 dim;
+    u32 count;
+    v2 *basePoints;
+
+    MapData *next;
+
+    MinMax aabbMinMax;
+};
+
+enum MapDataReadState
+{
+    MAP_NAME,
+    MAP_TEXTURE_NAME,
+    MAP_UV_COORDINATES,
+    MAP_RECT_HEIGHT,
+    MAP_RECT_WIDTH,
+    MAP_OBJECT_COUNT,
+    MAP_BASE_POINTS,
+};
+
 void AddFrameAnimationNode(FrameAnimation *oldNode, FrameAnimation *newNode);
+MapData *LoadAssetMap(const char *file);
 
 #endif

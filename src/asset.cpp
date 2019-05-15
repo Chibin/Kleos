@@ -315,31 +315,6 @@ Animation2D *GetSpriteAnimationInfo(FrameAnimation *fa, const char *name)
     return nullptr;
 }
 
-struct MapData
-{
-    char name[16];
-    char textureName[16];
-    RectUVCoords uvCoords;
-    v2 dim;
-    u32 count;
-    v2 *basePoints;
-
-    MapData *next;
-
-    MinMax aabbMinMax;
-};
-
-enum MapDataReadState
-{
-    MAP_NAME,
-    MAP_TEXTURE_NAME,
-    MAP_UV_COORDINATES,
-    MAP_RECT_HEIGHT,
-    MAP_RECT_WIDTH,
-    MAP_OBJECT_COUNT,
-    MAP_BASE_POINTS,
-};
-
 /* MAP asset reader */
 MapData *LoadAssetMap(const char *file)
 {
