@@ -36,6 +36,9 @@ void ProcessInputDown(
                     gm->commandPrompt[--gm->commandPromptCount] = '\0';
                 }
                 break;
+            case SDLK_UP:
+                StringCopy(gm->backupCommandPrompt, gm->commandPrompt, sizeof(gm->backupCommandPrompt));
+                break;
             default:
                 ASSERT(gm->commandPromptCount < sizeof(gm->commandPrompt));
                 if (sym == SDLK_SPACE)
