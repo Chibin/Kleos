@@ -62,7 +62,6 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "entity_manager.cpp"
 #include "font.cpp"
 #include "game_time.cpp"
-#include "input.cpp"
 #include "shaders.cpp"
 
 #include "collision.cpp"
@@ -77,6 +76,8 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "string.h"
 
 #include "hashtable.cpp"
+
+#include "input.cpp"
 
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"

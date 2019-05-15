@@ -1,6 +1,8 @@
 #ifndef __COMMANDS__
 #define __COMMANDS__
 
+#include "asset.h"
+
 void ResetCommandPrompt(GameMetadata *gm)
 {
     for(memory_index i = 0; i < ARRAY_SIZE(gm->commandPrompt); i++)
@@ -104,6 +106,36 @@ void SaveScene(GameMetadata *gm, const char *fileName)
     SDL_RWclose(file);
 }
 
+void LoadScene(GameMetadata *gm, const char *fileName)
+{
+    GameMemory *reservedMemory = &gm->reservedMemory;
+    MapData *rootMDNode = LoadAssetMap(fileName);
+    ASSERT(rootMDNode->next != nullptr);
+
+    RectDynamicArray *rda = &gm->rectManager->NonTraversable.rda;
+    rda->size = 0; /* Reset rda */
+
+    for(MapData *currentNode = rootMDNode->next; currentNode != nullptr; currentNode = currentNode->next)
+    {
+        v4 color = { 0.1f, 0.1f, 0.1f, 1.0f };
+        for (memory_index i = 0; i < currentNode->count; i++)
+        {
+
+            v3 startingPosition = V3(currentNode->basePoints[i], 0);
+
+            Rect *collissionRect =
+                CreateRectangle(reservedMemory, startingPosition, color, currentNode->dim);
+
+            collissionRect->type = COLLISION;
+            collissionRect->renderLayer = FRONT_STATIC;
+
+            Bitmap *findBoxBitmap = FindBitmap(&gm->bitmapSentinelNode, currentNode->textureName);
+            collissionRect->bitmapID = findBoxBitmap->bitmapID;
+            PushBack(rda, collissionRect);
+        }
+    }
+}
+
 void ProcessCommand(GameMetadata *gm, Camera *camera)
 {
     if (gm->commandPromptCount == 0)
@@ -132,7 +164,16 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
     }
     else if (strcmp(token, "LOAD") == 0)
     {
-        ASSERT(!"Load stump");
+        if (strcmp(nextToken, "") == 0)
+        {
+            ASSERT(!"Load failed!");
+        }
+        else
+        {
+            char buffer[256] = {};
+            StringCopy(nextToken, buffer, StringLen(nextToken));
+            LoadScene(gm, buffer);
+        }
     }
     else if (strcmp(token, "ZOOM") == 0)
     {
