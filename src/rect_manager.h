@@ -44,4 +44,6 @@ struct RectManager
 };
 #pragma warning(pop)
 
+void PushBack(RectDynamicArray *rda, Rect *rect);
+
 #endif

@@ -42,4 +42,7 @@ struct Bitmap
     Bitmap *next;
     Bitmap *prev;
 };
+
+inline Bitmap *FindBitmap(Bitmap *sentinelNode, memory_index bitmapID);
+inline Bitmap *FindBitmap(Bitmap *sentinelNode, const char *bitmapName);
 #endif
