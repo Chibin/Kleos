@@ -55,6 +55,8 @@ struct GameMetadata
     char commandPrompt[256];
     char backupCommandPrompt[256];
     memory_index commandPromptCount;
+
+    struct RectManager *rectManager;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

@@ -421,7 +421,7 @@ MapData *LoadAssetMap(const char *file)
                 {
                     tmp = fileData + counter;
 
-                    char tmpBuffer[8];
+                    char tmpBuffer[256];
                     char *pch = strchr(tmp, ',');
                     memory_index bytesRead = 0;
                     memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));
@@ -532,7 +532,7 @@ MapData *LoadAssetMap(const char *file)
                 {
                     tmp = fileData + counter;
 
-                    char tmpBuffer[8];
+                    char tmpBuffer[256];
                     char *pch = strchr(tmp, ',');
                     memory_index bytesRead = 0;
                     memcpy((void *)tmpBuffer, (const void *)tmp, (memory_index)(pch - tmp));

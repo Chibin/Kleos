@@ -11,16 +11,95 @@ void ResetCommandPrompt(GameMetadata *gm)
     gm->commandPromptCount = 0;
 }
 
-void SaveScene(GameMetadata *gm)
+void WriteToFile(SDL_RWops *file, const char *str)
 {
-    SDL_RWops *file = SDL_RWFromFile("save.txt", "w+");
+    memory_index len = SDL_strlen(str);
+    memory_index bytesWritten = SDL_RWwrite(file, str, 1, len);
+    ASSERT(bytesWritten == len);
+}
+
+s32 ToChar(char *buffer, memory_index bufSize, v2 a)
+{
+    return snprintf(buffer, bufSize, "%f, %f", a.x, a.y);
+}
+
+s32 ToChar(char *buffer, memory_index bufSize, f32 a)
+{
+    return snprintf(buffer, bufSize, "%f", a);
+}
+
+void SaveScene(GameMetadata *gm, const char *fileName)
+{
+    SDL_RWops *file = SDL_RWFromFile(fileName, "w+");
     if (file)
     {
-        const char *str = "Writing to a file\n";
-        memory_index len = SDL_strlen(str);
-        memory_index bytesWritten = SDL_RWwrite(file, str, 1, len);
-        ASSERT( bytesWritten == len);
-        printf("Wrote %zu 1-byte blocks\n", len);
+        for(memory_index i = 0; i < gm->rectManager->NonTraversable.rda.size; i++)
+        {
+            Rect *rect = gm->rectManager->NonTraversable.rda.rects[i];
+
+            const char *nameTag = "name:\n";
+            WriteToFile(file, nameTag);
+
+            char *name = "saveMap\n";
+            WriteToFile(file, name);
+
+            char *textureTag = "texture:\n";
+            WriteToFile(file, textureTag);
+
+            char *texture = "box\n";
+            WriteToFile(file, texture);
+
+            char *uvCoordsTag = "uv coordinates:\n";
+            WriteToFile(file, uvCoordsTag);
+
+            char *uvStart = "[\n";
+            WriteToFile(file, uvStart);
+
+            /* TODO: This might turn to some dynamic uv coords later on */
+            char *uvCoords = "1, 1,\n1, 0,\n0, 0,\n0, 1,\n";
+            WriteToFile(file, uvCoords);
+
+            char *uvEnd = "]\n";
+            WriteToFile(file, uvEnd);
+
+            char *widthTag = "width:\n";
+            WriteToFile(file, widthTag);
+
+            char dimBuffer[256] = {};
+            s32 bytesWritten = ToChar(dimBuffer, sizeof(dimBuffer), rect->width);
+            dimBuffer[bytesWritten] = '\n';
+            WriteToFile(file, dimBuffer);
+
+            char *heightTag = "height:\n";
+            WriteToFile(file, heightTag);
+
+            memset(dimBuffer, 0, sizeof(dimBuffer));
+            bytesWritten = ToChar(dimBuffer, sizeof(dimBuffer), rect->height);
+            dimBuffer[bytesWritten] = '\n';
+            WriteToFile(file, dimBuffer);
+
+            char *objectCountTag = "object count:\n";
+            WriteToFile(file, objectCountTag);
+
+            char *object = "1\n";
+            WriteToFile(file, object);
+
+            char *pointsTag = "points:\n";
+            WriteToFile(file, pointsTag);
+
+            char *pointsStart = "[\n";
+            WriteToFile(file, pointsStart);
+
+            /* TODO: Write points here */
+            char pointBuf[256] = {};
+            bytesWritten = ToChar(pointBuf, sizeof(pointBuf), V2(rect->basePosition));
+            WriteToFile(file, pointBuf);
+            WriteToFile(file, ",\n");
+
+            char *pointsEnd = "]\n";
+            WriteToFile(file, pointsEnd);
+
+        }
     }
     SDL_RWclose(file);
 }
@@ -41,13 +120,15 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
     char *token = strtok_s(gm->commandPrompt, " ", &nextToken);
     ASSERT(token != nullptr);
 
-    if (strcmp(gm->commandPrompt, "SAVE") == 0)
+    if (strcmp(token, "SAVE") == 0 && strcmp(nextToken, "") == 0)
     {
-        SaveScene(gm);
+        SaveScene(gm, "save.txt");
     }
     else if (strcmp(token, "SAVE") == 0)
     {
-        ASSERT(!"SAVING with a location");
+        char buffer[256] = {};
+        StringCopy(nextToken, buffer, StringLen(nextToken));
+        SaveScene(gm, buffer);
     }
     else if (strcmp(token, "LOAD") == 0)
     {
@@ -55,11 +136,10 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
     }
     else if (strcmp(token, "ZOOM") == 0)
     {
-        if (nextToken)
-        {
-            /* TODO: create a safe cast */
-            CameraZoom(camera, (f32)strtol(nextToken, NULL, 10));
-        }
+        ASSERT(nextToken != nullptr);
+
+        /* TODO: create a safe cast */
+        CameraZoom(camera, (f32)strtol(nextToken, NULL, 10));
     }
 
     ResetCommandPrompt(gm);

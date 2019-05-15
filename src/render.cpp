@@ -343,6 +343,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             glm::mat4(PerspectiveProjectionMatrix(Radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f));
 
         g_rectManager = CreateRectManager(reservedMemory);
+        gameMetadata->rectManager = g_rectManager;
 
         /* TODO: May be the entity manager should be the only one creating the
          * entities?
