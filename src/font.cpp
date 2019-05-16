@@ -171,6 +171,7 @@ void StringToBitmap(Bitmap *bitmap, TTF_Font *font, const char *msg)
 
     SDLSurfaceToBitmap(surface, bitmap);
 
+    /* TODO: Needs some fixing -- this cuases memory leaks */
     //SDL_FreeSurface(surface);
 }
 
