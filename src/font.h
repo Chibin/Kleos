@@ -37,3 +37,9 @@ struct Texture
     unsigned int height;
     GLenum format;
 };
+
+struct FontBitmapInfo
+{
+    v2 pixelStart;
+    v2 pixelEnd;
+};

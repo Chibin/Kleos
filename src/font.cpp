@@ -174,349 +174,228 @@ void StringToBitmap(Bitmap *bitmap, TTF_Font *font, const char *msg)
     //SDL_FreeSurface(surface);
 }
 
-v2 GetFontPixelStart(s32 character)
+FontBitmapInfo GetFontPixelInfo(s32 character)
 {
     const f32 fontMaxPixelHeight = 174;
-    v2 result = {};
+    FontBitmapInfo result = {};
 
     switch(character)
     {
         case '0':
-            result = v2{0, fontMaxPixelHeight};
+            result.pixelStart = v2{0, fontMaxPixelHeight};
+            result.pixelEnd = v2{83, fontMaxPixelHeight};
             break;
         case '1':
-            result = v2{84, fontMaxPixelHeight};
+            result.pixelStart = v2{84, fontMaxPixelHeight};
+            result.pixelEnd = v2{166, fontMaxPixelHeight};
             break;
         case '2':
-            result = v2{167, fontMaxPixelHeight};
+            result.pixelStart = v2{167, fontMaxPixelHeight};
+            result.pixelEnd = v2{249, fontMaxPixelHeight};
             break;
         case '3':
-            result = v2{250, fontMaxPixelHeight};
+            result.pixelStart = v2{250, fontMaxPixelHeight};
+            result.pixelEnd = v2{332, fontMaxPixelHeight};
             break;
         case '4':
-            result = v2{333, fontMaxPixelHeight};
+            result.pixelStart = v2{333, fontMaxPixelHeight};
+            result.pixelEnd = v2{415, fontMaxPixelHeight};
             break;
         case '5':
-            result = v2{416, fontMaxPixelHeight};
+            result.pixelStart = v2{416, fontMaxPixelHeight};
+            result.pixelEnd = v2{498, fontMaxPixelHeight};
             break;
         case '6':
-            result = v2{499, fontMaxPixelHeight};
+            result.pixelStart = v2{499, fontMaxPixelHeight};
+            result.pixelEnd = v2{581, fontMaxPixelHeight};
             break;
         case '7':
-            result = v2{588, fontMaxPixelHeight};
+            result.pixelStart = v2{588, fontMaxPixelHeight};
+            result.pixelEnd = v2{671, fontMaxPixelHeight};
             break;
         case '8':
-            result = v2{671, fontMaxPixelHeight};
+            result.pixelStart = v2{671, fontMaxPixelHeight};
+            result.pixelEnd = v2{753, fontMaxPixelHeight};
             break;
         case '9':
-            result = v2{754, fontMaxPixelHeight};
+            result.pixelStart = v2{754, fontMaxPixelHeight};
+            result.pixelEnd = v2{836, fontMaxPixelHeight};
             break;
         case 'A':
-            result = v2{831, fontMaxPixelHeight};
+            result.pixelStart = v2{831, fontMaxPixelHeight};
+            result.pixelEnd = v2{945, fontMaxPixelHeight};
             break;
         case 'B':
-            result = v2{946, fontMaxPixelHeight};
+            result.pixelStart = v2{946, fontMaxPixelHeight};
+            result.pixelEnd = v2{1025, fontMaxPixelHeight};
             break;
         case 'C':
-            result = v2{1026, fontMaxPixelHeight};
+            result.pixelStart = v2{1026, fontMaxPixelHeight};
+            result.pixelEnd = v2{1130, fontMaxPixelHeight};
             break;
         case 'D':
-            result = v2{1140, fontMaxPixelHeight};
+            result.pixelStart = v2{1140, fontMaxPixelHeight};
+            result.pixelEnd = v2{1230, fontMaxPixelHeight};
             break;
         case 'E':
-            result = v2{1247, fontMaxPixelHeight};
+            result.pixelStart = v2{1247, fontMaxPixelHeight};
+            result.pixelEnd = v2{1325, fontMaxPixelHeight};
             break;
         case 'F':
-            result = v2{1320, fontMaxPixelHeight};
+            result.pixelStart = v2{1320, fontMaxPixelHeight};
+            result.pixelEnd = v2{1405, fontMaxPixelHeight};
             break;
         case 'G':
-            result = v2{1400, fontMaxPixelHeight};
+            result.pixelStart = v2{1400, fontMaxPixelHeight};
+            result.pixelEnd = v2{1505, fontMaxPixelHeight};
             break;
         case 'H':
-            result = v2{1506, fontMaxPixelHeight};
+            result.pixelStart = v2{1506, fontMaxPixelHeight};
+            result.pixelEnd = v2{1615, fontMaxPixelHeight};
             break;
         case 'I':
-            result = v2{1616, fontMaxPixelHeight};
+            result.pixelStart = v2{1616, fontMaxPixelHeight};
+            result.pixelEnd = v2{1655, fontMaxPixelHeight};
             break;
         case 'J':
-            result = v2{1650, fontMaxPixelHeight};
+            result.pixelStart = v2{1650, fontMaxPixelHeight};
+            result.pixelEnd = v2{1720, fontMaxPixelHeight};
             break;
         case 'K':
-            result = v2{1721, fontMaxPixelHeight};
+            result.pixelStart = v2{1721, fontMaxPixelHeight};
+            result.pixelEnd = v2{1815, fontMaxPixelHeight};
             break;
         case 'L':
-            result = v2{1816, fontMaxPixelHeight};
+            result.pixelStart = v2{1816, fontMaxPixelHeight};
+            result.pixelEnd = v2{1895, fontMaxPixelHeight};
             break;
         case 'M':
-            result = v2{1887, fontMaxPixelHeight};
+            result.pixelStart = v2{1887, fontMaxPixelHeight};
+            result.pixelEnd = v2{2015, fontMaxPixelHeight};
             break;
         case 'N':
-            result = v2{2020, fontMaxPixelHeight};
+            result.pixelStart = v2{2020, fontMaxPixelHeight};
+            result.pixelEnd = v2{2130, fontMaxPixelHeight};
             break;
         case 'O':
-            result = v2{2136, fontMaxPixelHeight};
+            result.pixelStart = v2{2136, fontMaxPixelHeight};
+            result.pixelEnd = v2{2245, fontMaxPixelHeight};
             break;
         case 'P':
-            result = v2{2246, fontMaxPixelHeight};
+            result.pixelStart = v2{2246, fontMaxPixelHeight};
+            result.pixelEnd = v2{2333, fontMaxPixelHeight};
             break;
         case 'Q':
-            result = v2{2325, fontMaxPixelHeight};
+            result.pixelStart = v2{2325, fontMaxPixelHeight};
+            result.pixelEnd = v2{2450, fontMaxPixelHeight};
             break;
         case 'R':
-            result = v2{2445, fontMaxPixelHeight};
+            result.pixelStart = v2{2445, fontMaxPixelHeight};
+            result.pixelEnd = v2{2535, fontMaxPixelHeight};
             break;
         case 'S':
-            result = v2{2535, fontMaxPixelHeight};
+            result.pixelStart = v2{2535, fontMaxPixelHeight};
+            result.pixelEnd = v2{2615, fontMaxPixelHeight};
             break;
         case 'T':
-            result = v2{2610, fontMaxPixelHeight};
+            result.pixelStart = v2{2610, fontMaxPixelHeight};
+            result.pixelEnd = v2{2701, fontMaxPixelHeight};
             break;
         case 'U':
-            result = v2{2701, fontMaxPixelHeight};
+            result.pixelStart = v2{2701, fontMaxPixelHeight};
+            result.pixelEnd = v2{2801, fontMaxPixelHeight};
             break;
         case 'V':
-            result = v2{2798, fontMaxPixelHeight};
+            result.pixelStart = v2{2798, fontMaxPixelHeight};
+            result.pixelEnd = v2{2904, fontMaxPixelHeight};
             break;
         case 'W':
-            result = v2{2904, fontMaxPixelHeight};
+            result.pixelStart = v2{2904, fontMaxPixelHeight};
+            result.pixelEnd = v2{3052, fontMaxPixelHeight};
             break;
         case 'X':
-            result = v2{3052, fontMaxPixelHeight};
+            result.pixelStart = v2{3052, fontMaxPixelHeight};
+            result.pixelEnd = v2{3142, fontMaxPixelHeight};
             break;
         case 'Y':
-            result = v2{3142, fontMaxPixelHeight};
+            result.pixelStart = v2{3142, fontMaxPixelHeight};
+            result.pixelEnd = v2{3237, fontMaxPixelHeight};
             break;
         case 'Z':
-            result = v2{3233, fontMaxPixelHeight};
+            result.pixelStart = v2{3233, fontMaxPixelHeight};
+            result.pixelEnd = v2{3321, fontMaxPixelHeight};
             break;
         case 'a':
-            result = v2{3321, fontMaxPixelHeight};
+            result.pixelStart = v2{3321, fontMaxPixelHeight};
+            result.pixelEnd = v2{3401, fontMaxPixelHeight};
             break;
         case 'b':
-            result = v2{3401, fontMaxPixelHeight};
+            result.pixelStart = v2{3401, fontMaxPixelHeight};
+            result.pixelEnd = v2{3476, fontMaxPixelHeight};
             break;
         case 'c':
-            result = v2{3481, fontMaxPixelHeight};
+            result.pixelStart = v2{3481, fontMaxPixelHeight};
+            result.pixelEnd = v2{3538, fontMaxPixelHeight};
             break;
         case 'd':
-            result = v2{3548, fontMaxPixelHeight};
+            result.pixelStart = v2{3548, fontMaxPixelHeight};
+            result.pixelEnd = v2{3615, fontMaxPixelHeight};
             break;
         case 'e':
-            result = v2{3629, fontMaxPixelHeight};
+            result.pixelStart = v2{3629, fontMaxPixelHeight};
+            result.pixelEnd = v2{3700, fontMaxPixelHeight};
             break;
         case 'f':
-            result = v2{3703, fontMaxPixelHeight};
+            result.pixelStart = v2{3703, fontMaxPixelHeight};
+            result.pixelEnd = v2{3753, fontMaxPixelHeight};
             break;
         case 'i':
-            result = v2{3902, fontMaxPixelHeight};
+            result.pixelStart = v2{3902, fontMaxPixelHeight};
+            result.pixelEnd = v2{3933, fontMaxPixelHeight};
             break;
         case 'l':
-            result = v2{4055, fontMaxPixelHeight};
+            result.pixelStart = v2{4055, fontMaxPixelHeight};
+            result.pixelEnd = v2{4083, fontMaxPixelHeight};
             break;
         case 'm':
-            result = v2{4083, fontMaxPixelHeight};
+            result.pixelStart = v2{4083, fontMaxPixelHeight};
+            result.pixelEnd = v2{4203, fontMaxPixelHeight};
             break;
         case 'r':
-            result = v2{4503, fontMaxPixelHeight};
-            break;
+            result.pixelStart = v2{4503, fontMaxPixelHeight};
+            result.pixelEnd = v2{4503, fontMaxPixelHeight};
         case 's':
-            result = v2{4583, fontMaxPixelHeight};
+            result.pixelStart = v2{4583, fontMaxPixelHeight};
+            result.pixelEnd = v2{4632, fontMaxPixelHeight};
             break;
         case 't':
-            result = v2{4633, fontMaxPixelHeight};
+            result.pixelStart = v2{4633, fontMaxPixelHeight};
+            result.pixelEnd = v2{4693, fontMaxPixelHeight};
             break;
         case 'y':
-            result = v2{5033, fontMaxPixelHeight};
+            result.pixelStart = v2{5033, fontMaxPixelHeight};
+            result.pixelEnd = v2{5103, fontMaxPixelHeight};
             break;
         case '/':
-            result = v2{5163, fontMaxPixelHeight};
+            result.pixelStart = v2{5163, fontMaxPixelHeight};
+            result.pixelEnd = v2{5240, fontMaxPixelHeight};
             break;
         case '.':
-            result = v2{5240, fontMaxPixelHeight};
+            result.pixelStart = v2{5240, fontMaxPixelHeight};
+            result.pixelEnd = v2{5260, fontMaxPixelHeight};
             break;
         case ',':
-            result = v2{5300, fontMaxPixelHeight};
+            result.pixelStart = v2{5300, fontMaxPixelHeight};
+            result.pixelEnd = v2{5300, fontMaxPixelHeight};
             break;
         case '!':
-            result = v2{5300, fontMaxPixelHeight};
+            result.pixelStart = v2{5300, fontMaxPixelHeight};
+            result.pixelEnd = v2{5345, fontMaxPixelHeight};
             break;
         case '-':
-            result = v2{5350, fontMaxPixelHeight};
+            result.pixelStart = v2{5350, fontMaxPixelHeight};
+            result.pixelEnd = v2{5390, fontMaxPixelHeight};
             break;
-        default:
-            break;
-    }
-
-    return result;
-}
-
-v2 GetFontPixelEnd(s32 character)
-{
-    const f32 fontMaxPixelHeight = 174;
-    v2 result = {};
-
-    switch(character)
-    {
-        case '0':
-            result = v2{83, fontMaxPixelHeight};
-            break;
-        case '1':
-            result = v2{166, fontMaxPixelHeight};
-            break;
-        case '2':
-            result = v2{249, fontMaxPixelHeight};
-            break;
-        case '3':
-            result = v2{332, fontMaxPixelHeight};
-            break;
-        case '4':
-            result = v2{415, fontMaxPixelHeight};
-            break;
-        case '5':
-            result = v2{498, fontMaxPixelHeight};
-            break;
-        case '6':
-            result = v2{581, fontMaxPixelHeight};
-            break;
-        case '7':
-            result = v2{671, fontMaxPixelHeight};
-            break;
-        case '8':
-            result = v2{753, fontMaxPixelHeight};
-            break;
-        case '9':
-            result = v2{836, fontMaxPixelHeight};
-            break;
-        case 'A':
-            result = v2{945, fontMaxPixelHeight};
-            break;
-        case 'B':
-            result = v2{1025, fontMaxPixelHeight};
-            break;
-        case 'C':
-            result = v2{1130, fontMaxPixelHeight};
-            break;
-        case 'D':
-            result = v2{1230, fontMaxPixelHeight};
-            break;
-        case 'E':
-            result = v2{1325, fontMaxPixelHeight};
-            break;
-        case 'F':
-            result = v2{1405, fontMaxPixelHeight};
-            break;
-        case 'G':
-            result = v2{1505, fontMaxPixelHeight};
-            break;
-        case 'H':
-            result = v2{1615, fontMaxPixelHeight};
-            break;
-        case 'I':
-            result = v2{1655, fontMaxPixelHeight};
-            break;
-        case 'J':
-            result = v2{1720, fontMaxPixelHeight};
-            break;
-        case 'K':
-            result = v2{1815, fontMaxPixelHeight};
-            break;
-        case 'L':
-            result = v2{1895, fontMaxPixelHeight};
-            break;
-        case 'M':
-            result = v2{2015, fontMaxPixelHeight};
-            break;
-        case 'N':
-            result = v2{2130, fontMaxPixelHeight};
-            break;
-        case 'O':
-            result = v2{2245, fontMaxPixelHeight};
-            break;
-        case 'P':
-            result = v2{2333, fontMaxPixelHeight};
-            break;
-        case 'Q':
-            result = v2{2450, fontMaxPixelHeight};
-            break;
-        case 'R':
-            result = v2{2535, fontMaxPixelHeight};
-            break;
-        case 'S':
-            result = v2{2615, fontMaxPixelHeight};
-            break;
-        case 'T':
-            result = v2{2701, fontMaxPixelHeight};
-            break;
-        case 'U':
-            result = v2{2801, fontMaxPixelHeight};
-            break;
-        case 'V':
-            result = v2{2904, fontMaxPixelHeight};
-            break;
-        case 'W':
-            result = v2{3052, fontMaxPixelHeight};
-            break;
-        case 'X':
-            result = v2{3142, fontMaxPixelHeight};
-            break;
-        case 'Y':
-            result = v2{3237, fontMaxPixelHeight};
-            break;
-        case 'Z':
-            result = v2{3321, fontMaxPixelHeight};
-            break;
-        case 'a':
-            result = v2{3401, fontMaxPixelHeight};
-            break;
-        case 'b':
-            result = v2{3476, fontMaxPixelHeight};
-            break;
-        case 'c':
-            result = v2{3538, fontMaxPixelHeight};
-            break;
-        case 'd':
-            result = v2{3615, fontMaxPixelHeight};
-            break;
-        case 'e':
-            result = v2{3700, fontMaxPixelHeight};
-            break;
-        case 'f':
-            result = v2{3753, fontMaxPixelHeight};
-            break;
-        case 'i':
-            result = v2{3933, fontMaxPixelHeight};
-            break;
-        case 'l':
-            result = v2{4083, fontMaxPixelHeight};
-            break;
-        case 'm':
-            result = v2{4203, fontMaxPixelHeight};
-            break;
-        case 's':
-            result = v2{4632, fontMaxPixelHeight};
-            break;
-        case 't':
-            result = v2{4693, fontMaxPixelHeight};
-            break;
-        case 'y':
-            result = v2{5103, fontMaxPixelHeight};
-            break;
-        case '/':
-            result = v2{5240, fontMaxPixelHeight};
-            break;
-        case '.':
-            result = v2{5260, fontMaxPixelHeight};
-            break;
-        case ',':
-            result = v2{5300, fontMaxPixelHeight};
-            break;
-        case '!':
-            result = v2{5345, fontMaxPixelHeight};
-            break;
-        case '-':
-            result = v2{5390, fontMaxPixelHeight};
-            break;
-
         default:
             break;
     }

@@ -393,8 +393,9 @@ void SetUVForCharacter(Rect *rect, s32 character)
     Vertex *vBottomLeft = &(rect->vertices[2]);
     Vertex *topLeft = &(rect->vertices[3]);
 
-    v2 start = GetFontPixelStart(character);
-    v2 end = GetFontPixelEnd(character);
+    FontBitmapInfo fontInfo = GetFontPixelInfo(character);
+    v2 start = fontInfo.pixelStart;
+    v2 end = fontInfo.pixelEnd;
 
     vTopRight->vUv = PixelToUV(
             end,
@@ -427,8 +428,9 @@ void PushStringRectToRenderGroup(RenderGroup *perFrameRenderGroup, GameMetadata 
             continue;
         }
 
-        v2 start = GetFontPixelStart(character);
-        v2 end = GetFontPixelEnd(character);
+        FontBitmapInfo fontInfo = GetFontPixelInfo(character);
+        v2 start = fontInfo.pixelStart;
+        v2 end = fontInfo.pixelEnd;
         f32 xWidth = end.x - start.x;
 
         if (character == 'a' || character == 'f' || character == 'd' || character == 'i' || character == 'c' || character == 's' || character == 'l' || character == 'I')
