@@ -338,7 +338,7 @@ void SetFontBitmap(GameMetadata *gm)
     char buffer[256];
     u8 capitalLetters[27] = {};
     u8 lowercaseLetters[27] = {};
-    u8 specialCharacters[5] = {'/', '.', ',', '!', };
+    u8 specialCharacters[6] = {'/', '.', ',', '!', '-', };
     u8 numbers[11] = {}; /* extra byte for '\n' */
 
     for(memory_index i = 0; i < 26; i++)

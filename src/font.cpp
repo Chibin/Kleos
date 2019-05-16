@@ -334,7 +334,15 @@ v2 GetFontPixelStart(s32 character)
         case '.':
             result = v2{5240, fontMaxPixelHeight};
             break;
-
+        case ',':
+            result = v2{5300, fontMaxPixelHeight};
+            break;
+        case '!':
+            result = v2{5300, fontMaxPixelHeight};
+            break;
+        case '-':
+            result = v2{5350, fontMaxPixelHeight};
+            break;
         default:
             break;
     }
@@ -503,7 +511,10 @@ v2 GetFontPixelEnd(s32 character)
             result = v2{5300, fontMaxPixelHeight};
             break;
         case '!':
-            result = v2{5350, fontMaxPixelHeight};
+            result = v2{5345, fontMaxPixelHeight};
+            break;
+        case '-':
+            result = v2{5390, fontMaxPixelHeight};
             break;
 
         default:
