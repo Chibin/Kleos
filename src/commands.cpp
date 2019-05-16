@@ -146,6 +146,7 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
     char *command = nullptr;
     char *option = nullptr;
 
+    memset(gm->backupCommandPrompt, 0, sizeof(gm->backupCommandPrompt));
     StringCopy(gm->commandPrompt, gm->backupCommandPrompt, StringLen(gm->commandPrompt));
 
     char *nextToken = nullptr;
