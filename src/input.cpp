@@ -22,6 +22,7 @@ void ProcessInputDown(
         {
             case SDLK_ESCAPE:
                 ResetCommandPrompt(gm);
+                gm->isCommandPrompt = false;
                 break;
             case SDLK_RETURN:
                 if(gm->isEditMode)
