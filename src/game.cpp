@@ -49,6 +49,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
 
     gameMetadata.isRightButtonReleased = true;
     gameMetadata.willSelectObject = false;
+    gameMetadata.selectedRect = nullptr;
 
     FindFile(GetProgramPath(), "render*dll");
 

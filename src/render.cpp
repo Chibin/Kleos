@@ -436,6 +436,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     {
         ProcessKeysHeldDown(g_player, keystate);
     }
+    else if(gameMetadata->isEditMode && gameMetadata->selectedRect != nullptr)
+    {
+        ProcessKeysHeldDownEditMode(gameMetadata, keystate);
+    }
 
     while (SDL_PollEvent(&event) != 0)
     {
@@ -784,6 +788,7 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
 
     if (gameMetadata->willSelectObject)
     {
+        gameMetadata->willSelectObject = false;
         range.center = V2(gameMetadata->rightMouseButton);
         f32 arbitraryPadding = 15.0f;
         range.halfDim = range.halfDim + arbitraryPadding;
@@ -791,12 +796,15 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
 #if 0
         AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
 #endif
+        gameMetadata->selectedRect = nullptr;
         for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
         {
             Rect *rect = arr[i];
             if (ContainsPoint(rect, range.center))
             {
                 AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
+                gameMetadata->selectedRect = rect;
+                break;
             }
         }
     }

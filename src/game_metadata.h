@@ -62,6 +62,7 @@ struct GameMetadata
     glm::vec3 rightMouseButton;
 
     b32 willSelectObject;
+    Rect *selectedRect;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

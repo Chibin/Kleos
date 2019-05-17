@@ -185,6 +185,33 @@ void ProcessKeysHeldDown(Entity *entity, const u8 *keystate)
     }
 }
 
+void ProcessKeysHeldDownEditMode(GameMetadata *gm, const u8 *keystate)
+{
+    Rect *rect = gm->selectedRect;
+    v3 positionOffset = {0,0,0};
+    f32 moveBy = 0.05f;
+
+    if (keystate[SDL_SCANCODE_UP] != 0u)
+    {
+        positionOffset += v3{0.0f, moveBy, 0.0f};
+    }
+    if (keystate[SDL_SCANCODE_DOWN] != 0u)
+    {
+        positionOffset += v3{0.0f, -moveBy, 0.0f};
+    }
+    if (keystate[SDL_SCANCODE_LEFT] != 0u)
+    {
+        positionOffset += v3{-moveBy, 0.0f, 0.0f};
+    }
+    if (keystate[SDL_SCANCODE_RIGHT] != 0u)
+    {
+        positionOffset += v3{moveBy, 0.0f, 0.0f};
+    }
+
+    rect->basePosition += positionOffset;
+    UpdatePosition(rect, rect->basePosition);
+}
+
 void ProcessInputToMovement(SDL_Keycode sym)
 {
 /* TODO: Replace this with non-repeatable key stroke.
