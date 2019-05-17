@@ -446,7 +446,6 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
             break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-            ProcessMouseButton(event.button);
             ProcessMouseEditMode(gameMetadata, g_camera, g_projection, event);
         case SDL_MOUSEWHEEL:
             ProcessMouseInput(event, g_camera);

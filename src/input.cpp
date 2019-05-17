@@ -131,18 +131,6 @@ void ProcessMouseButtonPressed(u8 button)
     }
 }
 
-void ProcessMouseButton(const SDL_MouseButtonEvent &mbe)
-{
-    if (mbe.state == SDL_RELEASED)
-    {
-        ProcessMouseButtonReleased(mbe.button);
-    }
-    else if (mbe.state == SDL_PRESSED)
-    {
-        ProcessMouseButtonPressed(mbe.button);
-    }
-}
-
 #define SCREEN_WIDTH 1366
 #define SCREEN_HEIGHT 768
 
