@@ -588,7 +588,6 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         {
             AddDebugRect(gameMetadata, rect, COLOR_BLACK_TRANSPARENT);
         }
-
 #if 0
         real32 dX = e->velocity.x * dt;
         real32 dY = e->velocity.y + (gravity + e->acceleration.y) * dt;
@@ -1206,16 +1205,8 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         {
 
             v3 startingPosition = V3(currentNode->basePoints[i], 0);
-
-            Entity *collisionEntity =
-                AddNewEntity(reservedMemory, g_entityManager, startingPosition);
-            ASSERT(collisionEntity != nullptr);
-            collisionEntity->isTraversable = false;
-            collisionEntity->isPlayer = false;
-
             Rect *collissionRect =
                 CreateRectangle(reservedMemory, startingPosition, color, currentNode->dim);
-            AssociateEntity(collissionRect, collisionEntity, false);
 
             collissionRect->type = COLLISION;
             collissionRect->renderLayer = FRONT_STATIC;
