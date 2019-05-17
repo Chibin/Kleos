@@ -84,10 +84,10 @@ b32 InsertToScenePartition(SceneManager *sm, SceneNode *sn, Rect *rect)
     }
 
 #if 0
-    AddDebugRect(sm->gameMetadata, &sn->northWest->aabb, COLOR_BLUE);
-    AddDebugRect(sm->gameMetadata, &sn->northEast->aabb, COLOR_GREEN);
-    AddDebugRect(sm->gameMetadata, &sn->southWest->aabb, COLOR_YELLOW);
-    AddDebugRect(sm->gameMetadata, &sn->southEast->aabb, COLOR_RED);
+    AddDebugRect(sm->gameMetadata, &sn->northWest->aabb, COLOR_BLUE_TRANSPARENT);
+    AddDebugRect(sm->gameMetadata, &sn->northEast->aabb, COLOR_GREEN_TRANSPARENT);
+    AddDebugRect(sm->gameMetadata, &sn->southWest->aabb, COLOR_YELLOW_TRANSPARENT);
+    AddDebugRect(sm->gameMetadata, &sn->southEast->aabb, COLOR_RED_TRANSPARENT);
 #endif
 
     if(InsertToScenePartition(sm, sn->northWest, rect))
@@ -115,7 +115,7 @@ void CreateScenePartition(SceneManager *sm, RectStorage *rs)
     sm->aabb = MinMaxToSquareAABB(&rs->aabbMinMax);
 
 #if 0
-    AddDebugRect(sm->gameMetadata, &sm->aabb, COLOR_YELLOW);
+    AddDebugRect(sm->gameMetadata, &sm->aabb, COLOR_YELLOW_TRANSPARENT);
 #endif
 
     sm->rootSceneNode = CreateSceneNode(sm->perFrameMemory, &sm->aabb);
