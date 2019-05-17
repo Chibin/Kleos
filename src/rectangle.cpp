@@ -208,6 +208,9 @@ inline void UpdatePosition(Rect *r, v3 newPosition)
     r->vertices[1].vPosition = bottomRight;
     r->vertices[2].vPosition = bottomLeft;
     r->vertices[3].vPosition = topLeft;
+
+    r->min = min;
+    r->max = max;
 }
 
 inline void UpdateUV(Rect *r, RectUVCoords uv)
