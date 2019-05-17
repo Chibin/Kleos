@@ -755,6 +755,34 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     /* physics */
     UpdateGameTimestep(gameTimestep);
 
+    AABB range = {};
+    range.halfDim = V2(gameMetadata->leftMouseDrag[0] - gameMetadata->leftMouseDrag[1]) * 0.5f;
+    range.center = V2(gameMetadata->leftMouseDrag[0]) - range.halfDim;
+    /* sometimes we're going to the negative value when calculating the
+     * dimension. This needs to be positive in order to work.
+     * We also need to use the negative dimension to calculate two out of the four quadrants.
+     */
+    range.halfDim = abs(range.halfDim);
+
+    if (gameMetadata->createNewRect)
+    {
+
+        gameMetadata->createNewRect = false;
+
+        Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
+        permanentRect->type = COLLISION;
+        permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
+        permanentRect->renderLayer = FRONT_STATIC;
+        PushBack(&g_rectManager->NonTraversable.rda, permanentRect);
+
+        SetAABB(&g_rectManager->NonTraversable);
+    }
+
+    if (gameMetadata->isLeftButtonReleased == false)
+    {
+        AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
+    }
+
     const GLfloat gravity = -9.81f;
     UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
 
@@ -776,32 +804,7 @@ void DrawScene(
 
     ASSERT(g_rectManager->Traversable.rda.size > 0);
 
-    AABB range = {};
-    range.halfDim = V2(gameMetadata->mouseDrag[0] - gameMetadata->mouseDrag[1]) * 0.5f;
-    range.center = V2(gameMetadata->mouseDrag[0]) - range.halfDim;
-    /* sometimes we're going to the negative value when calculating the
-     * dimension. This needs to be positive in order to work.
-     * We also need to use the negative dimension to calculate two out of the four quadrants.
-     */
-    range.halfDim = abs(range.halfDim);
-    Rect *dragCreatedRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
-
     RectDynamicArray *newWorldObjects = CreateRDAForNewWorldObjects(gameMetadata);
-
-    if (gameMetadata->createNewRect)
-    {
-        gameMetadata->createNewRect = false;
-
-        Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
-        permanentRect->type = COLLISION;
-        permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
-        permanentRect->renderLayer = FRONT_STATIC;
-        PushBack(&g_rectManager->NonTraversable.rda, permanentRect);
-
-        SetAABB(&g_rectManager->NonTraversable);
-    }
-
-    AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
 
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda);
