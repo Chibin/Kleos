@@ -44,7 +44,7 @@ struct GameMetadata
     struct SceneManager *sm;
 
     glm::vec3 *objectsToBeAddedTotheWorld;
-    glm::vec3 mouseDrag[2];
+    glm::vec3 leftMouseDrag[2];
     v2 screenCoordinates[2];
     b32 isLeftButtonReleased;
     b32 createNewRect;
