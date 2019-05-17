@@ -74,5 +74,6 @@ enum MapDataReadState
 
 void AddFrameAnimationNode(FrameAnimation *oldNode, FrameAnimation *newNode);
 MapData *LoadAssetMap(const char *file);
+void SetAABB(MapData *rootMDNode);
 
 #endif

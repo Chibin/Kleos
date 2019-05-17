@@ -113,6 +113,7 @@ void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable);
 inline void UpdateColors(Rect *r, v4 color);
 void PushRectInfo(GameMemory *gm, Rect *rect);
 void PushRectVertex(GameMemory *gm, Rect *rect);
+inline void UpdatePosition(Rect *r, v3 newPosition);
 
 static GLuint g_rectIndices[] = {
     // Note that we start from 0!
