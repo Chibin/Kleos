@@ -183,6 +183,10 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
         /* TODO: create a safe cast */
         CameraZoom(camera, (f32)strtol(nextToken, NULL, 10));
     }
+    else if (strcmp(token, "BREAK") == 0)
+    {
+        ASSERT(!"break");
+    }
 
     ResetCommandPrompt(gm);
 }
