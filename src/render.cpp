@@ -783,6 +783,25 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
         AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
     }
 
+    if (gameMetadata->willSelectObject)
+    {
+        range.center = V2(gameMetadata->rightMouseButton);
+        f32 arbitraryPadding = 15.0f;
+        range.halfDim = range.halfDim + arbitraryPadding;
+        Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+#if 0
+        AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
+#endif
+        for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
+        {
+            Rect *rect = arr[i];
+            if (ContainsPoint(rect, range.center))
+            {
+                AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
+            }
+        }
+    }
+
     const GLfloat gravity = -9.81f;
     UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
 

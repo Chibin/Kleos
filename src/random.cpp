@@ -294,6 +294,26 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                 gm->createNewRect = true;
             }
             break;
+        case SDL_BUTTON_RIGHT:
+            if (mbe.state == SDL_PRESSED && gm->isLeftButtonReleased)
+            {
+                gm->isRightButtonReleased = false;
+            }
+            else if (mbe.state == SDL_RELEASED)
+            {
+                worldPos =
+                    GetWorldPointFromMouse(
+                            camera,
+                            projection,
+                            screenCoordinates,
+                            gm->screenResolution,
+                            infinitePlaneNormal);
+                gm->rightMouseButton = worldPos;
+                gm->isRightButtonReleased = true;
+
+                gm->willSelectObject = true;
+            }
+            break;
         default:
             break;
     }

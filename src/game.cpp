@@ -47,6 +47,9 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
 
     gameMetadata.isEditMode = true;
 
+    gameMetadata.isRightButtonReleased = true;
+    gameMetadata.willSelectObject = false;
+
     FindFile(GetProgramPath(), "render*dll");
 
     /* We still want to initialize vulkan. This is so that we have the

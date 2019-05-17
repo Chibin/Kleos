@@ -57,6 +57,11 @@ struct GameMetadata
     memory_index commandPromptCount;
 
     struct RectManager *rectManager;
+
+    b32 isRightButtonReleased;
+    glm::vec3 rightMouseButton;
+
+    b32 willSelectObject;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)
