@@ -41,6 +41,12 @@ inline MinMax GetMinMax(Rect *rect)
     return result;
 }
 
+b32 ContainsPoint(Rect *rect, v2 p)
+{
+    MinMax minMax = GetMinMax(rect);
+    return minMax.min.x <= p.x && p.x <= minMax.max.x && minMax.min.y <= p.y && p.y <= minMax.max.y;
+}
+
 b32 ContainsPoint(AABB *aabb, v2 p)
 {
     MinMax minMax = {};
