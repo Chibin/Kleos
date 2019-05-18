@@ -750,12 +750,12 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
                                       (s32)gameMetadata->gameTimestep->deltaTime);
 }
 
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup)
+void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 {
-
-    /* update logics and data here */
-    /* physics */
-    UpdateGameTimestep(gameTimestep);
+    if (gameMetadata->isEditMode == false)
+    {
+        return;
+    }
 
     AABB range = {};
     range.halfDim = V2(gameMetadata->leftMouseDrag[0] - gameMetadata->leftMouseDrag[1]) * 0.5f;
@@ -807,6 +807,16 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
             }
         }
     }
+}
+
+void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup)
+{
+
+    /* update logics and data here */
+    /* physics */
+    UpdateGameTimestep(gameTimestep);
+
+    UpdateBasedOnEditModeChanges(gameMetadata);
 
     const GLfloat gravity = -9.81f;
     UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
