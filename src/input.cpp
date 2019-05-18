@@ -59,7 +59,16 @@ void ProcessInputDown(
         switch (sym)
         {
             case SDLK_ESCAPE:
-                *continueRunning = false;
+                if (gm->isEditMode)
+                {
+                    Toggle(&gm->isEditMode);
+                    ResetCommandPrompt(gm);
+                    gm->isCommandPrompt = false;
+                }
+                else
+                {
+                    *continueRunning = false;
+                }
                 break;
             case SDLK_1:
                 break;
@@ -70,7 +79,11 @@ void ProcessInputDown(
                 Toggle(&gm->isEditMode);
                 break;
             case SDLK_RETURN:
-                Toggle(&gm->isCommandPrompt);
+                /* only activatecommand prompt when edit mode is active */
+                if (gm->isEditMode)
+                {
+                    Toggle(&gm->isCommandPrompt);
+                }
                 break;
             default:
                 /* TODO: differentiate different types of input
