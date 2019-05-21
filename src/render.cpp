@@ -76,6 +76,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "string.h"
 
 #include "hashtable.cpp"
+#include "hash.h"
 
 #include "input.cpp"
 
