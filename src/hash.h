@@ -29,7 +29,11 @@ void SetValues(HashKeyValue *v, u32 key, u32 value, HashKeyValue *next)
 void SetValues(HashKeyCharValueU32 *v, const char *key, u32 value, HashKeyCharValueU32 *next)
 {
     memory_index strLen = StringLen(key);
+#if 0
+    snprintf(v->key, sizeof(v->key), "%s", key);
+#else
     memcpy(v->key, key, sizeof(v->key));
+#endif
     v->val = value;
     v->next = next;
 }
@@ -48,7 +52,7 @@ b32 KeyCompare(u32 a, u32 b)
     return a == b;
 }
 
-b32 KeyCompare(char *a, char *b)
+b32 KeyCompare(const char *a, const char *b)
 {
     return strcmp(a, b) == 0;
 }
@@ -78,7 +82,7 @@ b32 KeyCompare(char *a, char *b)
         }                                                                                     \
         else if (KeyCompare(tmp->key, k))                                                     \
         {                                                                                     \
-            SetValues(tmp, k, value, 0);                                                      \
+            SetValues(tmp, k, value, tmp->next);                                                      \
         }                                                                                     \
         else                                                                                  \
         {                                                                                     \

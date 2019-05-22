@@ -40,7 +40,6 @@ memory_index HashCharKeyToIndex(Hash *hash, void *key)
     return index;
 }
 
-#if 0
 void testIntHash(GameMemory *gm)
 {
     b32 failed = false;
@@ -67,7 +66,6 @@ void testIntHash(GameMemory *gm)
 
     REPORT_TEST(result, __func__);
 }
-#endif
 
 void testCharHash(GameMemory *gm)
 {
@@ -76,14 +74,16 @@ void testCharHash(GameMemory *gm)
     memory_index count = 200;
     for(memory_index i = 0; i < count; i++)
     {
-        char key[24] = {(char)('a' + SafeCastToU32(i))};
+        char key[24] = {};
+        snprintf(key, sizeof(key), "%s%zu", "a", i);
         u32 value = SafeCastToU32(i+1);
         ADD_HASH(HashKeyCharValueU32, hash, key, value);
     }
     b32 result = false;
     for(memory_index i = 0; i < count; i++)
     {
-        char key[24] = {(char)('a' + SafeCastToU32(i))};
+        char key[24] = {};
+        snprintf(key, sizeof(key), "%s%zu", "a", i);
         GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
         result = valueOut == (i+1);
         if (result == false)
@@ -96,6 +96,35 @@ void testCharHash(GameMemory *gm)
     REPORT_TEST(result, __func__);
 }
 
+void testCharWithaCollission(GameMemory *gm)
+{
+    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3, &HashCharKeyToIndex);
+
+    memory_index count = 200;
+    const char *multipleKey[] = {"hello", "hella", "food", "hello", "hi", "hello", 0};
+    b32 result = false;
+    for(memory_index i = 0; multipleKey[i]; i++)
+    {
+        const char *key = multipleKey[i];
+        u32 value = SafeCastToU32(i+1);
+        ADD_HASH(HashKeyCharValueU32, hash, key, value);
+
+        GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
+        result = valueOut == (i+1);
+        if (result == false)
+        {
+            printf("failed at key '%s' for expected value '%d' vs '%d'\n", key, SafeCastToU32(i+1), valueOut);
+            break;
+        }
+    }
+
+    GET_VALUE_HASH(HashKeyCharValueU32, hash, "hello", valueOut);
+    result = valueOut != 0;
+    printf("value %d\n", valueOut);
+
+    REPORT_TEST(result, __func__);
+}
+
 int main()
 {
     GameMemory gameMemory;
@@ -104,8 +133,9 @@ int main()
     gameMemory.maxSize = tempSize;
 
 
-    //testIntHash(&gameMemory);
+    testIntHash(&gameMemory);
     testCharHash(&gameMemory);
+    testCharWithaCollission(&gameMemory);
 
     return 0;
 }
