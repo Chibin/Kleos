@@ -22,28 +22,10 @@
     }                                      \
 }
 
-memory_index HashIntKeyToIndex(Hash *hash, void *key)
-{
-    return *(u32 *)key % hash->bucketCount;
-}
-
-memory_index HashCharKeyToIndex(Hash *hash, void *key)
-{
-    char *charKey = (char *)key;
-    memory_index strLen = StringLen(charKey);
-    memory_index count = 0;
-    for (memory_index i = 0; i < strLen; i++)
-    {
-        count += (u32)charKey[i];
-    }
-    memory_index index = count % hash->bucketCount;
-    return index;
-}
-
 void testIntHash(GameMemory *gm)
 {
     b32 failed = false;
-    CREATE_HASH(HashKeyValue, gm, hash, MAX_HASH_SIZE, &HashIntKeyToIndex);
+    CREATE_HASH(HashKeyValue, gm, hash, MAX_HASH_SIZE);
 
     memory_index count = 200;
     for(memory_index i = 0; i < count; i++)
@@ -69,9 +51,9 @@ void testIntHash(GameMemory *gm)
 
 void testCharHash(GameMemory *gm)
 {
-    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3, &HashCharKeyToIndex);
+    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3);
 
-    memory_index count = 200;
+    memory_index count = 50;
     for(memory_index i = 0; i < count; i++)
     {
         char key[24] = {};
@@ -98,29 +80,26 @@ void testCharHash(GameMemory *gm)
 
 void testCharWithaCollission(GameMemory *gm)
 {
-    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3, &HashCharKeyToIndex);
+    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3);
 
-    memory_index count = 200;
-    const char *multipleKey[] = {"hello", "hella", "food", "hello", "hi", "hello", 0};
+    const char *multipleKey[] = {"hello", "hella", "food", "hello", "hi", "hello", NULL};
     b32 result = false;
-    for(memory_index i = 0; multipleKey[i]; i++)
+    memory_index i = 0;
+    while(multipleKey[i])
     {
         const char *key = multipleKey[i];
         u32 value = SafeCastToU32(i+1);
         ADD_HASH(HashKeyCharValueU32, hash, key, value);
 
         GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
-        result = valueOut == (i+1);
+        result = valueOut == value;
         if (result == false)
         {
             printf("failed at key '%s' for expected value '%d' vs '%d'\n", key, SafeCastToU32(i+1), valueOut);
             break;
         }
+        i++;
     }
-
-    GET_VALUE_HASH(HashKeyCharValueU32, hash, "hello", valueOut);
-    result = valueOut != 0;
-    printf("value %d\n", valueOut);
 
     REPORT_TEST(result, __func__);
 }
@@ -131,7 +110,6 @@ int main()
     u32 tempSize = MEGABYTE(50);
     gameMemory.base = (u8 *)malloc(tempSize);
     gameMemory.maxSize = tempSize;
-
 
     testIntHash(&gameMemory);
     testCharHash(&gameMemory);
