@@ -9,6 +9,7 @@
 
 #include "asset.h"
 #include "rect_manager.h"
+#include "hash.h"
 
 struct GameMetadata
 {
@@ -26,7 +27,7 @@ struct GameMetadata
     Bitmap whiteBitmap;
     Bitmap fontBitmap;
 
-    BitmapDescriptorMap bitmapToDescriptorSetMap;
+    Hash *hash;
 
     FrameAnimation frameAnimationSentinelNode;
 

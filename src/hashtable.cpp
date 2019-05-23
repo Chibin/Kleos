@@ -1,20 +1,26 @@
 #include "hashtable.h"
-
-void HashInsert(BitmapDescriptorMap *b2d, Bitmap *key, VkDescriptorSet *value)
+void SetValue(VkDescriptorSet *value, VkDescriptorSet **o_value)
 {
-    ASSERT(b2d->hashTable[key->bitmapID % MAX_HASH] == NULL);
-    b2d->hashTable[key->bitmapID % MAX_HASH] = value;
+    *o_value = value;
 }
 
-void HashUpdate(BitmapDescriptorMap *b2d, Bitmap *key, VkDescriptorSet *value)
+b32 KeyCompare(Bitmap *a, Bitmap *b)
 {
-    ASSERT(b2d->hashTable[key->bitmapID % MAX_HASH] != NULL);
-    b2d->hashTable[key->bitmapID % MAX_HASH] = value;
+    return a->bitmapID == b->bitmapID;
 }
 
-VkDescriptorSet *GetHashValue(BitmapDescriptorMap *b2d, Bitmap *key)
+void SetHash(
+        HashKeyBitmapValueVkDescriptorSet *v,
+        Bitmap *key,
+        VkDescriptorSet *value,
+        HashKeyBitmapValueVkDescriptorSet *next)
 {
-    ASSERT(b2d->hashTable[key->bitmapID % MAX_HASH] != NULL);
+    v->key = key;
+    v->val = value;
+    v->next = next;
+}
 
-    return b2d->hashTable[key->bitmapID % MAX_HASH];
+memory_index KeyToHashIndex(Hash *hash, Bitmap *key)
+{
+    return key->bitmapID % hash->bucketCount;
 }

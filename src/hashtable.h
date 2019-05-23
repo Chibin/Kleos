@@ -5,8 +5,9 @@
 #include "renderer/vulkan/vulkan.h"
 
 #define MAX_HASH 17
-struct BitmapDescriptorMap {
-    VkDescriptorSet *hashTable[MAX_HASH];
+struct HashKeyBitmapValueVkDescriptorSet {
+    Bitmap *key;
+    VkDescriptorSet *val;
+    HashKeyBitmapValueVkDescriptorSet *next;
 };
-
 #endif
