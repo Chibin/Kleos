@@ -358,56 +358,6 @@ RectDynamicArray *CreateRDAForNewWorldObjects(GameMetadata *gm)
     return result;
 }
 
-void SetFontBitmap(GameMetadata *gm)
-{
-    char buffer[256];
-    u8 capitalLetters[27] = {};
-    u8 lowercaseLetters[27] = {};
-    u8 specialCharacters[6] = {'/', '.', ',', '!', '-', };
-    u8 numbers[11] = {}; /* extra byte for '\n' */
-
-    for(memory_index i = 0; i < 26; i++)
-    {
-        capitalLetters[i] = 'A' + SafeCastToU32(i);
-        lowercaseLetters[i] = 'a' + SafeCastToU32(i);
-    }
-
-    for(memory_index i = 0; i < 10; i++)
-    {
-        numbers[i] = '0' + SafeCastToU32(i);
-    }
-    sprintf_s(buffer, sizeof(char) * 150, "%s%s%s%s",
-            numbers, capitalLetters, lowercaseLetters, specialCharacters);
-
-    StringToBitmap(&gm->fontBitmap, gm->font, buffer);                                // NOLINT
-
-    snprintf(gm->fontBitmap.name, sizeof(gm->fontBitmap.name), "%s", "font");
-    gm->fontBitmap.bitmapID = MAX_HASH - 3; // XXX: needs to be changed somewhere
-    gm->fontBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
-    ASSERT(gm->fontBitmap.data != nullptr);
-}
-
-void SetWhiteBitmap(GameMetadata *gm)
-{
-    snprintf(gm->whiteBitmap.name, sizeof(gm->whiteBitmap.name), "%s", "white");
-    gm->whiteBitmap.width = 1;
-    gm->whiteBitmap.height = 1;
-    gm->whiteBitmap.format = GL_RGBA;
-    gm->whiteBitmap.bitmapID = MAX_HASH - 1; // XXX: needs to be changed somewhere
-    gm->whiteBitmap.textureParam = TextureParam{ GL_NEAREST, GL_NEAREST };
-    gm->whiteBitmap.data =
-        (u8 *)AllocateMemory(&gm->reservedMemory, gm->whiteBitmap.width * gm->whiteBitmap.height * sizeof(u32));
-    for (memory_index i = 0; i < gm->whiteBitmap.width * gm->whiteBitmap.height; i++)
-    {
-        /* alpha -> blue -> green -> red: 1 byte each */
-#if 0
-        *((u32 *)gm->whiteBitmap.data + i) = 0x33333333;
-#else
-        *((u32 *)gm->whiteBitmap.data + i) = 0xFF222222;
-#endif
-    }
-}
-
 void SetUVForCharacter(Rect *rect, s32 character)
 {
     Bitmap *bitmap = rect->bitmap;
