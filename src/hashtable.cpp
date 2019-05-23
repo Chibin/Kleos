@@ -24,3 +24,6 @@ memory_index KeyToHashIndex(Hash *hash, Bitmap *key)
 {
     return key->bitmapID % hash->bucketCount;
 }
+
+CREATE_HASH_ADD_FUNCTION(HashKeyBitmapValueVkDescriptorSet, Bitmap *, VkDescriptorSet *);
+CREATE_HASH_GET_VALUE_FUCTION(HashKeyBitmapValueVkDescriptorSet, Bitmap *, VkDescriptorSet *);

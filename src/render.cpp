@@ -350,15 +350,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         LoadAssets(gameMetadata);
         for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
         {
-            HASH_ADD(
-                    HashKeyBitmapValueVkDescriptorSet,
+            HashAdd(
                     gameMetadata->hash,
                     FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
                     &vc->vdsi[i].descSet);
         }
 
-        HASH_ADD(
-                HashKeyBitmapValueVkDescriptorSet,
+        HashAdd(
                 gameMetadata->hash,
                 &stringBitmap,
                 &vc->secondDescSet);
