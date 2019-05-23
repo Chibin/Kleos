@@ -22,16 +22,16 @@
     }                                      \
 }
 
-CREATE_HASH_ADD_FUNCTION(HashKeyValue, u32, u32);
-CREATE_HASH_GET_VALUE_FUCTION(HashKeyValue, u32, u32);
+CREATE_HASH_ADD_FUNCTION(HashU32U32, u32, u32);
+CREATE_HASH_GET_VALUE_FUCTION(HashU32U32, u32, u32);
 
-CREATE_HASH_ADD_FUNCTION(HashKeyCharValueU32, const char *, u32);
-CREATE_HASH_GET_VALUE_FUCTION(HashKeyCharValueU32, const char *, u32);
+CREATE_HASH_ADD_FUNCTION(HashCharU32, const char *, u32);
+CREATE_HASH_GET_VALUE_FUCTION(HashCharU32, const char *, u32);
 
 void testIntHash(GameMemory *gm)
 {
     b32 failed = false;
-    HASH_CREATE(HashKeyValue, gm, hash, MAX_HASH_SIZE);
+    HASH_CREATE(HashU32U32, gm, hash, MAX_HASH_SIZE);
 
     memory_index count = 200;
     for(memory_index i = 0; i < count; i++)
@@ -43,7 +43,7 @@ void testIntHash(GameMemory *gm)
     b32 result = false;
     for(memory_index i = 0; i < count; i++)
     {
-        u32 valueOut = HashGetValue(hash, i);
+        u32 valueOut = HashU32U32GetValue(hash, i);
         result = valueOut == SafeCastToU32(i+1);
         if (result == false)
         {
@@ -57,7 +57,7 @@ void testIntHash(GameMemory *gm)
 
 void testCharHash(GameMemory *gm)
 {
-    HASH_CREATE(HashKeyCharValueU32, gm, hash, 3);
+    HASH_CREATE(HashCharU32, gm, hash, 3);
 
     memory_index count = 50;
     for(memory_index i = 0; i < count; i++)
@@ -72,7 +72,7 @@ void testCharHash(GameMemory *gm)
     {
         char key[24] = {};
         snprintf(key, sizeof(key), "%s%zu", "a", i);
-        u32 valueOut = HashGetValue(hash, key);
+        u32 valueOut = HashCharU32GetValue(hash, key);
         result = valueOut == (i+1);
         if (result == false)
         {
@@ -86,7 +86,7 @@ void testCharHash(GameMemory *gm)
 
 void testCharWithaCollission(GameMemory *gm)
 {
-    HASH_CREATE(HashKeyCharValueU32, gm, hash, 3);
+    HASH_CREATE(HashCharU32, gm, hash, 3);
 
     const char *multipleKey[] = {"hello", "hella", "food", "hello", "hi", "hello", NULL};
     b32 result = false;
@@ -97,7 +97,7 @@ void testCharWithaCollission(GameMemory *gm)
         u32 value = SafeCastToU32(i+1);
         HashAdd(hash, key, value);
 
-        u32 valueOut = HashGetValue(hash, key);
+        u32 valueOut = HashCharU32GetValue(hash, key);
         result = valueOut == value;
         if (result == false)
         {

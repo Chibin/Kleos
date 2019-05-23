@@ -27,7 +27,8 @@ struct GameMetadata
     Bitmap whiteBitmap;
     Bitmap fontBitmap;
 
-    Hash *hash;
+    Hash *hashBitmapVkDescriptorSet;
+    Hash *hashBitmap;
 
     FrameAnimation frameAnimationSentinelNode;
 

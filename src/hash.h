@@ -13,18 +13,18 @@ struct Hash
     struct GameMemory *gm;
 };
 
-struct HashKeyValue
+struct HashU32U32
 {
     u32 key;
     u32 val;
-    HashKeyValue *next;
+    HashU32U32 *next;
 };
 
-struct HashKeyCharValueU32
+struct HashCharU32
 {
     char key[24];
     u32 val;
-    HashKeyCharValueU32 *next;
+    HashCharU32 *next;
 };
 
 void SetValue(u32 value, u32 *o_value)
@@ -32,7 +32,7 @@ void SetValue(u32 value, u32 *o_value)
     *o_value = value;
 }
 
-void SetHash(HashKeyValue *v, u32 key, u32 value, HashKeyValue *next)
+void SetHash(HashU32U32 *v, u32 key, u32 value, HashU32U32 *next)
 {
     v->key = key;
     SetValue(value, &v->val);
@@ -61,7 +61,7 @@ memory_index KeyToHashIndex(Hash *hash, const char *key)
     return index;
 }
 
-void SetHash(HashKeyCharValueU32 *v, const char *key, u32 value, HashKeyCharValueU32 *next)
+void SetHash(HashCharU32 *v, const char *key, u32 value, HashCharU32 *next)
 {
     memory_index strLen = StringLen(key);
 #if 0
@@ -169,7 +169,7 @@ b32 KeyCompare(const char *a, const char *b)
     }
 
 #define CREATE_HASH_GET_VALUE_FUCTION(T, keyType, valueType)                                      \
-    valueType HashGetValue(Hash *hash, keyType k)                                                 \
+    valueType T##GetValue(Hash *hash, keyType k)                                                 \
     {                                                                                             \
         valueType result = {};                                                                    \
         HASH_GET_VALUE(T, hash, k, result);                                                       \

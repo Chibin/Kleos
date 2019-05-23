@@ -165,8 +165,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         Bitmap stringBitmap = {};
 
-        HASH_CREATE(HashKeyBitmapValueVkDescriptorSet, &gameMetadata->reservedMemory, hash, MAX_HASH);
-        gameMetadata->hash = hash;
+        HASH_CREATE(HashBitmapBitmap, &gameMetadata->reservedMemory, hashBitmap, MAX_HASH);
+        HASH_CREATE(HashBitmapVkDescriptorSet, &gameMetadata->reservedMemory, hashBMPDescSet, MAX_HASH);
+        gameMetadata->hashBitmapVkDescriptorSet = hashBMPDescSet;
+        gameMetadata->hashBitmap = hashBitmap;
 
         bool useStagingBuffer = false;
         stbi_set_flip_vertically_on_load(1);
@@ -351,13 +353,13 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
         {
             HashAdd(
-                    gameMetadata->hash,
+                    gameMetadata->hashBitmapVkDescriptorSet,
                     FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
                     &vc->vdsi[i].descSet);
         }
 
         HashAdd(
-                gameMetadata->hash,
+                gameMetadata->hashBitmapVkDescriptorSet,
                 &stringBitmap,
                 &vc->secondDescSet);
 
