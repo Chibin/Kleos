@@ -37,6 +37,7 @@ void testIntHash(GameMemory *gm)
     b32 result = false;
     for(memory_index i = 0; i < count; i++)
     {
+        u32 valueOut = {};
         GET_VALUE_HASH(HashKeyValue, hash, i, valueOut);
         result = valueOut == SafeCastToU32(i+1);
         if (result == false)
@@ -66,6 +67,7 @@ void testCharHash(GameMemory *gm)
     {
         char key[24] = {};
         snprintf(key, sizeof(key), "%s%zu", "a", i);
+        u32 valueOut = {};
         GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
         result = valueOut == (i+1);
         if (result == false)
@@ -91,6 +93,7 @@ void testCharWithaCollission(GameMemory *gm)
         u32 value = SafeCastToU32(i+1);
         ADD_HASH(HashKeyCharValueU32, hash, key, value);
 
+        u32 valueOut = {};
         GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
         result = valueOut == value;
         if (result == false)

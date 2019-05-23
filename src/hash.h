@@ -137,7 +137,6 @@ b32 KeyCompare(const char *a, const char *b)
     }
 
 #define GET_VALUE_HASH(T, hash, k, result)                                                       \
-    typeof(T->val) result = {};                                                                  \
     {                                                                                            \
         memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                        \
         T *tmp = &((T *)hash->list)[index];                                                      \
