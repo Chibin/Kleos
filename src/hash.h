@@ -83,7 +83,7 @@ b32 KeyCompare(const char *a, const char *b)
     return strcmp(a, b) == 0;
 }
 
-#define CREATE_HASH(T, gameMemory, hash, bCount)                                                 \
+#define HASH_CREATE(T, gameMemory, hash, bCount)                                                 \
     Hash *hash = (Hash *)AllocateMemory(gameMemory, sizeof(Hash));                               \
     memset(hash, 0, sizeof(Hash));                                                               \
     {                                                                                            \
@@ -99,7 +99,7 @@ b32 KeyCompare(const char *a, const char *b)
         hash->gm = gameMemory;                                                                   \
     }
 
-#define ADD_HASH(T, hash, k, value)                                                              \
+#define HASH_ADD(T, hash, k, value)                                                              \
     {                                                                                            \
         memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                        \
         T *tmp = &((T *)hash->list)[index];                                                      \
@@ -136,7 +136,7 @@ b32 KeyCompare(const char *a, const char *b)
         }                                                                                        \
     }
 
-#define GET_VALUE_HASH(T, hash, k, result)                                                       \
+#define HASH_GET_VALUE(T, hash, k, result)                                                       \
     {                                                                                            \
         memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                        \
         T *tmp = &((T *)hash->list)[index];                                                      \

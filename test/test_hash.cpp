@@ -25,20 +25,20 @@
 void testIntHash(GameMemory *gm)
 {
     b32 failed = false;
-    CREATE_HASH(HashKeyValue, gm, hash, MAX_HASH_SIZE);
+    HASH_CREATE(HashKeyValue, gm, hash, MAX_HASH_SIZE);
 
     memory_index count = 200;
     for(memory_index i = 0; i < count; i++)
     {
         u32 key = SafeCastToU32(i);
         u32 value = SafeCastToU32(i+1);
-        ADD_HASH(HashKeyValue, hash, key, value);
+        HASH_ADD(HashKeyValue, hash, key, value);
     }
     b32 result = false;
     for(memory_index i = 0; i < count; i++)
     {
         u32 valueOut = {};
-        GET_VALUE_HASH(HashKeyValue, hash, i, valueOut);
+        HASH_GET_VALUE(HashKeyValue, hash, i, valueOut);
         result = valueOut == SafeCastToU32(i+1);
         if (result == false)
         {
@@ -52,7 +52,7 @@ void testIntHash(GameMemory *gm)
 
 void testCharHash(GameMemory *gm)
 {
-    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3);
+    HASH_CREATE(HashKeyCharValueU32, gm, hash, 3);
 
     memory_index count = 50;
     for(memory_index i = 0; i < count; i++)
@@ -60,7 +60,7 @@ void testCharHash(GameMemory *gm)
         char key[24] = {};
         snprintf(key, sizeof(key), "%s%zu", "a", i);
         u32 value = SafeCastToU32(i+1);
-        ADD_HASH(HashKeyCharValueU32, hash, key, value);
+        HASH_ADD(HashKeyCharValueU32, hash, key, value);
     }
     b32 result = false;
     for(memory_index i = 0; i < count; i++)
@@ -68,7 +68,7 @@ void testCharHash(GameMemory *gm)
         char key[24] = {};
         snprintf(key, sizeof(key), "%s%zu", "a", i);
         u32 valueOut = {};
-        GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
+        HASH_GET_VALUE(HashKeyCharValueU32, hash, key, valueOut);
         result = valueOut == (i+1);
         if (result == false)
         {
@@ -82,7 +82,7 @@ void testCharHash(GameMemory *gm)
 
 void testCharWithaCollission(GameMemory *gm)
 {
-    CREATE_HASH(HashKeyCharValueU32, gm, hash, 3);
+    HASH_CREATE(HashKeyCharValueU32, gm, hash, 3);
 
     const char *multipleKey[] = {"hello", "hella", "food", "hello", "hi", "hello", NULL};
     b32 result = false;
@@ -91,10 +91,10 @@ void testCharWithaCollission(GameMemory *gm)
     {
         const char *key = multipleKey[i];
         u32 value = SafeCastToU32(i+1);
-        ADD_HASH(HashKeyCharValueU32, hash, key, value);
+        HASH_ADD(HashKeyCharValueU32, hash, key, value);
 
         u32 valueOut = {};
-        GET_VALUE_HASH(HashKeyCharValueU32, hash, key, valueOut);
+        HASH_GET_VALUE(HashKeyCharValueU32, hash, key, valueOut);
         result = valueOut == value;
         if (result == false)
         {

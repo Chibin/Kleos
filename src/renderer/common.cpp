@@ -59,7 +59,7 @@ void UpdateSamplerImage(
 {
     Hash *hash = gameMetadata->hash;
     VkDescriptorSet *descSet = nullptr;
-    GET_VALUE_HASH(HashKeyBitmapValueVkDescriptorSet, hash, bitmap, descSet);
+    HASH_GET_VALUE(HashKeyBitmapValueVkDescriptorSet, hash, bitmap, descSet);
     ASSERT(descSet != NULL);
 
     vkCmdBindDescriptorSets(

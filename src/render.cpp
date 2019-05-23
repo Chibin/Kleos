@@ -165,7 +165,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
         Bitmap stringBitmap = {};
 
-        CREATE_HASH(HashKeyBitmapValueVkDescriptorSet, &gameMetadata->reservedMemory, hash, MAX_HASH);
+        HASH_CREATE(HashKeyBitmapValueVkDescriptorSet, &gameMetadata->reservedMemory, hash, MAX_HASH);
         gameMetadata->hash = hash;
 
         bool useStagingBuffer = false;
@@ -350,14 +350,14 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
         LoadAssets(gameMetadata);
         for(memory_index i = 0; i < ARRAY_LIST_SIZE(vc->vdsi); i++)
         {
-            ADD_HASH(
+            HASH_ADD(
                     HashKeyBitmapValueVkDescriptorSet,
                     gameMetadata->hash,
                     FindBitmap(&gameMetadata->bitmapSentinelNode, vc->vdsi[i].name),
                     &vc->vdsi[i].descSet);
         }
 
-        ADD_HASH(
+        HASH_ADD(
                 HashKeyBitmapValueVkDescriptorSet,
                 gameMetadata->hash,
                 &stringBitmap,
