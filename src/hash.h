@@ -169,11 +169,14 @@ b32 KeyCompare(const char *a, const char *b)
     }
 
 #define CREATE_HASH_GET_VALUE_FUCTION(T, keyType, valueType)                                      \
-    valueType T##GetValue(Hash *hash, keyType k)                                                 \
+    valueType T##GetValue(Hash *hash, keyType k)                                                  \
     {                                                                                             \
         valueType result = {};                                                                    \
         HASH_GET_VALUE(T, hash, k, result);                                                       \
         return result;                                                                            \
     }                                                                                             \
+
+#define HashGetValue(T, hash, key)                                                                \
+    T##GetValue(hash, key)
 
 #endif
