@@ -9,7 +9,7 @@ devenv src/main.vcxproj /build
 if NOT %errorlevel% == 0 goto :error
 
 copy src\Debug\main.* .
-copy src\Debug\render.* .
+copy src\Debug\update_and_render.* .
 goto :EOF
 
 :error

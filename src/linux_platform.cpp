@@ -163,7 +163,7 @@ static void LinuxUnloadLibrary(void *Handle)
 bool LoadDLLWindows(RenderAPI *renderAPI)
 {
 
-    const char *DLLName = "./librender.so";
+    const char *DLLName = "./libupdate_and_render.so";
     renderAPI->libHandle = LinuxLoadLibrary(DLLName);
     if (renderAPI->libHandle == nullptr)
     {

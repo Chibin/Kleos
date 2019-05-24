@@ -116,7 +116,7 @@ void WindowsCleanup(SDL_Window *mainWindow, SDL_GLContext *mainContext)
 
 bool LoadDLLWindows(RenderAPI *renderAPI)
 {
-    renderAPI->libHandle = LoadLibrary("render.dll");
+    renderAPI->libHandle = LoadLibrary("update_and_render.dll");
     if (!renderAPI->libHandle)
     {
         printf("Failed to load library! \n");

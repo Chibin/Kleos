@@ -4,8 +4,8 @@ add_executable (main
     opengl.cpp
     )
 
-add_library(render SHARED
-    render.cpp
+add_library(update_and_render SHARED
+    update_and_render.cpp
     )
 
 list (APPEND justtobuild
@@ -34,7 +34,7 @@ endif()
 add_library(dummy OBJECT ${justtobuild})
 
 set_target_properties(
-	render PROPERTIES
+	update_and_render PROPERTIES
 	ENABLE_EXPORTS 1
 	WINDOWS_EXPORT_ALL_SYMBOLS 1
 	)
@@ -54,7 +54,7 @@ target_link_libraries (main
     ${VULKAN_LIBRARY}
     )
 
-target_link_libraries (render
+target_link_libraries (update_and_render
     ${GLEW_LIBRARY}
     ${SDL2_LIBRARIES}
     ${OPENGL_LIBRARIES}
