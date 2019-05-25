@@ -42,6 +42,10 @@ struct GameMetadata
 
     struct RectDynamicArray *rdaDebug;
     struct RectDynamicArray *rdaDebugUI;
+    struct RectDynamicArray *hurtBoxes;
+    struct RectDynamicArray *hitBoxes;
+
+    RenderGroup *perFrameRenderGroup;
 
     struct SceneManager *sm;
 

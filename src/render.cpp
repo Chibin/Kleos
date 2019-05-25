@@ -54,6 +54,48 @@ void DrawScene(
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
 }
 
+void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
+{
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    f32 screenHeight = gameMetadata->screenResolution.v[1];
+
+    f32 scaleFactor = 0.50f;
+    f32 padding = 0.0f;
+    f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scaleFactor;
+
+    v3 startingPosition = v3{ 0.0f, -1 + rectHeight * 0.5f, 0 };
+    Rect *bottomUIBar =
+        CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.5f), 2, rectHeight);
+    bottomUIBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+    bottomUIBar->bitmap = &gameMetadata->whiteBitmap;
+    PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar);
+
+    padding = 0.02f;
+    startingPosition = v3{ -1 + padding, -1 + rectHeight * 0.5f, 0 };
+    PushStringRectToRenderGroup(
+            perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
+
+    if (gameMetadata->isCommandPrompt)
+    {
+        f32 scale = 0.50f;
+        f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
+        startingPosition =
+            v3{ 0.0f, -0.35f + rectHeight * 0.5f, 0 };
+        Rect *commandPromptBar =
+            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 2, rectHeight);
+        commandPromptBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+        commandPromptBar->bitmap = &gameMetadata->whiteBitmap;
+        PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar);
+
+        startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
+        PushStringRectToRenderGroup(
+                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor,
+                gameMetadata->commandPrompt);
+
+        /* TODO: Draw letters */
+    }
+}
+
 void DrawUI(
         GameMetadata *gameMetadata,
         RenderGroup *perFrameRenderGroup,
@@ -65,11 +107,8 @@ void DrawUI(
 {
 
     char buffer[256];
-    Bitmap stringBitmap = {};
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-
-    f32 screenWidth = gameMetadata->screenResolution.v[0];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
     sprintf_s(buffer, sizeof(char) * 150, "  %.02f ms/f    %.0ff/s    %.02fcycles/f  ", MSPerFrame, FPS, MCPF); // NOLINT
 
@@ -83,41 +122,7 @@ void DrawUI(
 
     if (gameMetadata->isEditMode)
     {
-        scaleFactor = 0.50f;
-        f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scaleFactor;
-        f32 padding = 0.0f;
-        startingPosition =
-            v3{ 0.0f, -1 + rectHeight * 0.5f, 0 };
-        Rect *bottomUIBar =
-            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.5f), 2, rectHeight);
-        bottomUIBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-        bottomUIBar->bitmap = &gameMetadata->whiteBitmap;
-        PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar);
-
-        padding = 0.02f;
-        startingPosition = v3{ -1 + padding, -1 + rectHeight * 0.5f, 0 };
-        PushStringRectToRenderGroup(
-                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
-
-        if (gameMetadata->isCommandPrompt)
-        {
-            f32 scale = 0.50f;
-            f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
-            startingPosition =
-                v3{ 0.0f, -0.35f + rectHeight * 0.5f, 0 };
-            Rect *commandPromptBar =
-                CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 2, rectHeight);
-            commandPromptBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-            commandPromptBar->bitmap = &gameMetadata->whiteBitmap;
-            PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar);
-
-            startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
-            PushStringRectToRenderGroup(
-                    perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor,
-                    gameMetadata->commandPrompt);
-
-            /* TODO: Draw letters */
-        }
+        DoEditModeUI(gameMetadata, perFrameRenderGroup);
     }
 
     perFrameRenderGroup->rectCount = 0;
@@ -156,12 +161,11 @@ void DrawUI(
             vkBuffers);
 }
 
-void Render(GameMetadata *gameMetadata,
-        RectDynamicArray *hitBoxes,
-        RectDynamicArray *hurtBoxes,
-        RenderGroup *perFrameRenderGroup,
-        VulkanContext *vc)
+void Render(GameMetadata *gameMetadata, VulkanContext *vc)
 {
+    RectDynamicArray *hitBoxes = gameMetadata->hitBoxes;
+    RectDynamicArray *hurtBoxes = gameMetadata->hurtBoxes;
+    RenderGroup *perFrameRenderGroup = gameMetadata->perFrameRenderGroup;
 
     f64 MSPerFrame = 0;
     f64 FPS = 0;

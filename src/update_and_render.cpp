@@ -91,10 +91,8 @@ inline void *RequestToReservedMemory(memory_index size)
 #define UPDATEANDRENDER(name) \
     bool name(GameMetadata *gameMetadata)
 
-void Render(GameMetadata *gameMetadata, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes,
-            RenderGroup *perFrameRenderGroup, VulkanContext *vc);
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes,
-            RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup);
+void Render(GameMetadata *gameMetadata, VulkanContext *vc);
+void Update(GameMetadata *gameMetadata);
 void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 
@@ -121,25 +119,15 @@ static NPC *g_enemyNPC = nullptr;
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
     b32 continueRunning = true;
-    v2 screenResolution = gameMetadata->screenResolution;
-    GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
-    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-
-    ClearMemoryUsed(perFrameMemory);
-
     VulkanContext *vc = gameMetadata->vulkanContext;
+
+    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
+    ClearMemoryUsed(perFrameMemory);
 
 #if 0
     DoVulkanDepthStencil(vc);
 #endif
-    //Wait for work to finish before updating MVP.
-    vkDeviceWaitIdle(vc->device);
-    vc->curFrame++;
-    if (vc->frameCount != INT32_MAX && vc->curFrame == vc->frameCount)
-    {
-        vc->quit = true;
-    }
+    DoVukanUpdateToNextFrame(vc);
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
@@ -148,21 +136,10 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     HandleInput(gameMetadata, &continueRunning);
 
-    RenderGroup *perFrameRenderGroup = CreateRenderGroup(perFrameMemory, 6 /*numOfPointsPerRect*/, 20001 /*maxEntityCount*/);
-    RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
-    RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
-    gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
-    gameMetadata->rdaDebugUI = CreateRectDynamicArray(perFrameMemory);
-    gameMetadata->sm = CreateSceneManager(gameMetadata, perFrameMemory);
-    SetAABB(&g_rectManager->NonTraversable);
-    CreateScenePartition(gameMetadata->sm, &g_rectManager->NonTraversable);
+    SetPerFrameData(gameMetadata, perFrameMemory);
 
-    Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup);
-    Render(gameMetadata,
-           hitBoxes,
-           hurtBoxes,
-           perFrameRenderGroup,
-           vc);
+    Update(gameMetadata);
+    Render(gameMetadata, vc);
 
     return continueRunning;
 }

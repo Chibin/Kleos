@@ -300,11 +300,12 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     }
 }
 
-void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup)
+void Update(GameMetadata *gameMetadata)
 {
 
     /* update logics and data here */
     /* physics */
+    GameTimestep *gameTimestep = gameMetadata->gameTimestep;
     UpdateGameTimestep(gameTimestep);
 
     UpdateBasedOnEditModeChanges(gameMetadata);
@@ -313,7 +314,7 @@ void Update(GameMetadata *gameMetadata, GameTimestep *gameTimestep, RectDynamicA
     UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
 
     /* Update entities */
-    UpdateEntities(gameMetadata, gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup, true);
+    UpdateEntities(gameMetadata, gameTimestep, gameMetadata->hitBoxes, gameMetadata->hurtBoxes, gameMetadata->perFrameRenderGroup, true);
 }
 
 #endif

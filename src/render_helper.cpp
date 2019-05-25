@@ -363,6 +363,29 @@ void DoVulkanDepthStencil(VulkanContext *vc)
     vc->depthStencil += vc->depthIncrement;
 }
 
+void DoVukanUpdateToNextFrame(VulkanContext *vc)
+{
+    //Wait for work to finish before updating MVP.
+    vkDeviceWaitIdle(vc->device);
+    vc->curFrame++;
+    if (vc->frameCount != INT32_MAX && vc->curFrame == vc->frameCount)
+    {
+        vc->quit = true;
+    }
+}
+
+void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory)
+{
+    gameMetadata->perFrameRenderGroup = CreateRenderGroup(perFrameMemory, 6 /*numOfPointsPerRect*/, 20001 /*maxEntityCount*/);
+    gameMetadata->hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
+    gameMetadata->hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
+    gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
+    gameMetadata->rdaDebugUI = CreateRectDynamicArray(perFrameMemory);
+    gameMetadata->sm = CreateSceneManager(gameMetadata, perFrameMemory);
+    SetAABB(&g_rectManager->NonTraversable);
+    CreateScenePartition(gameMetadata->sm, &g_rectManager->NonTraversable);
+}
+
 void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
 {
     START_DEBUG_TIMING();
