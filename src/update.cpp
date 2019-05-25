@@ -102,7 +102,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     e->position += e->velocity * dt + 0.5f * e->acceleration * dt * dt;
     e->velocity.y += e->acceleration.y *dt;
 
-    UpdatePositionBasedOnCollission(g_sceneManager, g_enemyNPC, gravity, dt);
+    UpdatePositionBasedOnCollission(gameMetadata->sm, g_enemyNPC, gravity, dt);
 
     /* TODO: can't let the player spam attack while we're still in an attack animation */
     if (e->willAttack)

@@ -113,7 +113,6 @@ static Animation2D *g_spriteAnimations = nullptr;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 static NPC *g_enemyNPC = nullptr;
-static SceneManager *g_sceneManager = nullptr;
 
 #include "render_helper.cpp"
 #include "update.cpp"
@@ -121,7 +120,7 @@ static SceneManager *g_sceneManager = nullptr;
 
 extern "C" UPDATEANDRENDER(UpdateAndRender)
 {
-    bool continueRunning = true;
+    b32 continueRunning = true;
     v2 screenResolution = gameMetadata->screenResolution;
     GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
@@ -132,16 +131,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
     VulkanContext *vc = gameMetadata->vulkanContext;
 
 #if 0
-    if (vc->depthStencil > 0.99f)
-    {
-        vc->depthIncrement = -0.001f;
-    }
-    if (vc->depthStencil < 0.8f)
-    {
-        vc->depthIncrement = 0.001f;
-    }
-
-    vc->depthStencil += vc->depthIncrement;
+    DoVulkanDepthStencil(vc);
 #endif
     //Wait for work to finish before updating MVP.
     vkDeviceWaitIdle(vc->device);
@@ -153,105 +143,25 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     if (!gameMetadata->initFromGameUpdateAndRender)
     {
-        START_DEBUG_TIMING();
-
-        stbi_set_flip_vertically_on_load(1);
-
-        ASSERT(!g_reservedMemory);
-        ASSERT(!g_rectManager);
-        ASSERT(!*gameTimestep);
-        ASSERT(!g_camera);
-        ASSERT(!g_eda);
-        ASSERT(!g_projection);
-        ASSERT(!g_entityManager);
-
-        g_reservedMemory = reservedMemory;
-
-        /* TODO: May be the entity manager should be the only one creating the
-         * entities?
-         */
-        g_entityManager = CreateEntityManger(reservedMemory);
-        g_eda = CreateEntityDynamicArray(reservedMemory);
-        g_rectManager = CreateRectManager(reservedMemory);
-        gameMetadata->rectManager = g_rectManager;
-
-        LoadAssets(gameMetadata);
-
-        ARRAY_CREATE(glm::vec3, &gameMetadata->reservedMemory, worldArr);
-        gameMetadata->objectsToBeAddedTotheWorld = worldArr;
-
-        SetFont(gameMetadata);
-        SetHash(gameMetadata);
-
-        g_vkBuffers.count = 0;
-        g_vkBuffers.maxNum = 100;
-
-        /* Creating pipeline layout, descriptor pool, and render pass can be done
-         * indenpendently
-         */
-        VulkanPrepareDescriptorPool(vc);
-
-        vc->pipelineLayout = {};
-        VulkanInitPipelineLayout(vc);
-
-        Bitmap stringBitmap = {};
-        SetBitmapToGPUForPipeline(vc, gameMetadata, &stringBitmap);
-
-        /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
-         * There might be a better way of doing this. This is just a hack.*/
-        vc->descSet = &vc->vdsi[0].descSet;
-        SetVulkanDescriptorSet(vc, gameMetadata, &stringBitmap);
-
-        VulkanInitRenderPass(vc);
-        VulkanInitFrameBuffers(vc);
-        SetPreparePipeline(vc);
-
-        SetGameTimeStep(gameMetadata);
-        SetCamera(gameMetadata);
-        SetPerspectiveProjection(gameMetadata);
-        SetPlayer(gameMetadata);
-        SetParticle(gameMetadata);
-
-        LoadStuff(gameMetadata);
-
-        gameMetadata->initFromGameUpdateAndRender = true;
-        END_DEBUG_TIMING();
+        InitGameUpdateAndRender(vc, gameMetadata);
     }
 
     HandleInput(gameMetadata, &continueRunning);
 
+    RenderGroup *perFrameRenderGroup = CreateRenderGroup(perFrameMemory, 6 /*numOfPointsPerRect*/, 20001 /*maxEntityCount*/);
     RectDynamicArray *hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     RectDynamicArray *hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
-
-    const u32 numOfPointsPerRect = 6;
-    const u16 maxEntityCount = 20001;
-    RenderGroup perFrameRenderGroup = {};
-    u32 vertexBlockSize = sizeof(Vertex) * numOfPointsPerRect * maxEntityCount;
-    perFrameRenderGroup.vertexMemory.base = (u8 *)AllocateMemory(perFrameMemory, vertexBlockSize);
-    perFrameRenderGroup.vertexMemory.maxSize = vertexBlockSize;
-
-    u32 rectMemoryBlockSize = sizeof(Rect) * maxEntityCount;
-    perFrameRenderGroup.rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
-    perFrameRenderGroup.rectMemory.maxSize = rectMemoryBlockSize;
-
     gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
     gameMetadata->rdaDebugUI = CreateRectDynamicArray(perFrameMemory);
-
-    SceneManager *sm = (SceneManager *)AllocateMemory(perFrameMemory, sizeof(SceneManager));
-    g_sceneManager = sm;
-    gameMetadata->sm = sm;
-    memset(sm, 0, sizeof(SceneManager));
-    sm->perFrameMemory = perFrameMemory;
-    sm->gameMetadata = gameMetadata;
-
+    gameMetadata->sm = CreateSceneManager(gameMetadata, perFrameMemory);
     SetAABB(&g_rectManager->NonTraversable);
-    CreateScenePartition(sm, &g_rectManager->NonTraversable);
+    CreateScenePartition(gameMetadata->sm, &g_rectManager->NonTraversable);
 
-    Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, &perFrameRenderGroup);
+    Update(gameMetadata, *gameTimestep, hitBoxes, hurtBoxes, perFrameRenderGroup);
     Render(gameMetadata,
            hitBoxes,
            hurtBoxes,
-           &perFrameRenderGroup,
+           perFrameRenderGroup,
            vc);
 
     return continueRunning;

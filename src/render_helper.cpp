@@ -348,3 +348,87 @@ void SetParticle(GameMetadata *gm)
     }
 
 }
+
+void DoVulkanDepthStencil(VulkanContext *vc)
+{
+    if (vc->depthStencil > 0.99f)
+    {
+        vc->depthIncrement = -0.001f;
+    }
+    if (vc->depthStencil < 0.8f)
+    {
+        vc->depthIncrement = 0.001f;
+    }
+
+    vc->depthStencil += vc->depthIncrement;
+}
+
+void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
+{
+    START_DEBUG_TIMING();
+    stbi_set_flip_vertically_on_load(1);
+
+    GameMemory *reservedMemory = &gameMetadata->reservedMemory;
+    GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
+
+    ASSERT(!g_reservedMemory);
+    ASSERT(!g_rectManager);
+    ASSERT(!*gameTimestep);
+    ASSERT(!g_camera);
+    ASSERT(!g_eda);
+    ASSERT(!g_projection);
+    ASSERT(!g_entityManager);
+
+    g_reservedMemory = reservedMemory;
+
+    /* TODO: May be the entity manager should be the only one creating the
+     * entities?
+     */
+    g_entityManager = CreateEntityManger(reservedMemory);
+    g_eda = CreateEntityDynamicArray(reservedMemory);
+    g_rectManager = CreateRectManager(reservedMemory);
+    gameMetadata->rectManager = g_rectManager;
+
+    LoadAssets(gameMetadata);
+
+    ARRAY_CREATE(glm::vec3, &gameMetadata->reservedMemory, worldArr);
+    gameMetadata->objectsToBeAddedTotheWorld = worldArr;
+
+    SetFont(gameMetadata);
+    SetHash(gameMetadata);
+
+    g_vkBuffers.count = 0;
+    g_vkBuffers.maxNum = 100;
+
+    /* Creating pipeline layout, descriptor pool, and render pass can be done
+     * indenpendently
+     */
+    VulkanPrepareDescriptorPool(vc);
+
+    vc->pipelineLayout = {};
+    VulkanInitPipelineLayout(vc);
+
+    Bitmap stringBitmap = {};
+    SetBitmapToGPUForPipeline(vc, gameMetadata, &stringBitmap);
+
+    /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
+     * There might be a better way of doing this. This is just a hack.*/
+    vc->descSet = &vc->vdsi[0].descSet;
+    SetVulkanDescriptorSet(vc, gameMetadata, &stringBitmap);
+
+    VulkanInitRenderPass(vc);
+    VulkanInitFrameBuffers(vc);
+    SetPreparePipeline(vc);
+
+    SetGameTimeStep(gameMetadata);
+    SetCamera(gameMetadata);
+    SetPerspectiveProjection(gameMetadata);
+    SetPlayer(gameMetadata);
+    SetParticle(gameMetadata);
+
+    LoadStuff(gameMetadata);
+
+    gameMetadata->initFromGameUpdateAndRender = true;
+    END_DEBUG_TIMING();
+
+}

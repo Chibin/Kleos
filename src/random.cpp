@@ -31,6 +31,16 @@ struct SceneManager
     GameMetadata *gameMetadata;
 };
 
+SceneManager *CreateSceneManager(GameMetadata *gameMetadata, GameMemory *gameMemory)
+{
+    SceneManager *result = (SceneManager *)AllocateMemory(gameMemory, sizeof(SceneManager));
+    memset(result, 0, sizeof(SceneManager));
+    result->perFrameMemory = gameMemory;
+    result->gameMetadata = gameMetadata;
+
+    return result;
+}
+
 AABB MinMaxToSquareAABB(MinMax *minMax)
 {
     AABB result = {};
