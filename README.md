@@ -53,7 +53,9 @@ You can view the `make.bat` or `make.sh`->`compile-and-lint.sh` as an example fo
 # Debian
 ```
 apt-get install libsdl2-dev
+apt-get install libsdl2-ttf-dev
 apt-get install libglm-dev
+apt-get install libglew-dev
 ```
 
 I manually built sdl2, sdl2-ttf, and glm as well.
