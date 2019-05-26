@@ -28,16 +28,6 @@ void VulkanGetSupportedQueueFamily(VulkanContext *vc,
     VkResult err;
     u32 queueCount = 0;
 
-    xcb_connection_t *xconn = xcb_connect(NULL, NULL);
-    xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(xconn)).data;
-    xcb_window_t xcb_window = xcb_generate_id(xconn);
-    xcb_create_window(xconn, XCB_COPY_FROM_PARENT, xcb_window, screen->root, 0, 0,
-            SCREEN_WIDTH, SCREEN_HEIGHT, 10, XCB_WINDOW_CLASS_INPUT_OUTPUT, screen->root_visual,
-            0, NULL);
-    xcb_map_window(xconn, xcb_window);
-    xcb_flush(xconn);
-
-
     // Create a WSI surface for the window
     PlatformSurfaceCreateInfo createInfo;
     createInfo.sType = PLATFORM_SURFACE_CREATE_INFO;
@@ -46,7 +36,20 @@ void VulkanGetSupportedQueueFamily(VulkanContext *vc,
 
     struct SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
+#ifdef WIN32
+    SDL_GetWindowWMInfo(*window, &info);
+#else
     SDL_GetWindowID(*window);
+
+    xcb_connection_t *xconn = xcb_connect(NULL, NULL);
+    xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(xconn)).data;
+    xcb_window_t xcb_window = xcb_generate_id(xconn);
+    xcb_create_window(xconn, XCB_COPY_FROM_PARENT, xcb_window, screen->root, 0, 0,
+            SCREEN_WIDTH, SCREEN_HEIGHT, 10, XCB_WINDOW_CLASS_INPUT_OUTPUT, screen->root_visual,
+            0, NULL);
+    xcb_map_window(xconn, xcb_window);
+    xcb_flush(xconn);
+#endif
 
     PLATFORM_ASSIGN_SURFACEINFO;
 
