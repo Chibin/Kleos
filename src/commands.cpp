@@ -136,6 +136,10 @@ void LoadScene(GameMetadata *gm, const char *fileName)
     }
 }
 
+#ifndef WIN32
+#define strtok_s(buffer, string, nextToken) (strtok_r(buffer, string, nextToken))
+#endif
+
 void ProcessCommand(GameMetadata *gm, Camera *camera)
 {
     if (gm->commandPromptCount == 0)

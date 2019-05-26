@@ -66,6 +66,7 @@ if (UNIX)
     target_link_libraries (main
         dl
         m
+        xcb
         )
 endif()
 

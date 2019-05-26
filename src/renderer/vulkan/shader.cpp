@@ -24,8 +24,13 @@ char *ReadSPV(const char *filename, size_t *psize)
     size_t retVal;
 
     FILE *fp = nullptr;
+#ifdef WIN32
     errno_t err = fopen_s(&fp, filename, "rb");
     if (err != 0)
+#else
+    fp = fopen(filename, "rb");
+    if (fp == nullptr)
+#endif
     {
         return nullptr;
     }

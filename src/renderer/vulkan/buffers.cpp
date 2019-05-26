@@ -215,7 +215,7 @@ void VulkanInitDepthBuffer(
         VulkanContext *vc,
         uint32 width,
         uint32 height,
-        Depth *depth,
+        VulkanDepth *depth,
         VkDevice *device,
         VkCommandBuffer *setupCmd,
         VkCommandPool *cmdPool)

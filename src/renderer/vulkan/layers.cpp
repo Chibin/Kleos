@@ -1,3 +1,5 @@
+#define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
+
 #pragma warning(push)
 #pragma warning(disable : 4100)
 VKAPI_ATTR VkBool32 VKAPI_CALL

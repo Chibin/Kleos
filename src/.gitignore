@@ -7,3 +7,5 @@ materials/
 dummy.vcx*
 update_and_render.dir/
 update_and_render.vcx*
+librender.so
+libupdate*

@@ -9,19 +9,26 @@
 #include <glm/gtc/type_ptr.hpp>
 #pragma warning(pop)
 
+#ifdef WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
 #define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #define PlatformSurfaceCreateInfo VkWin32SurfaceCreateInfoKHR
 #define PLATFORM_SURFACE_CREATE_INFO VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 #define PlatformCreateSurface vkCreateWin32SurfaceKHR
-#define DEMO_TEXTURE_COUNT 1
-#define VERTEX_BUFFER_BIND_ID 0
-
-#if WIN32
-#include "SDL_syswm.h"
+#include "vulkan/vulkan.h"
+#else
+#define VK_USE_PLATFORM_XLIB_KHR
+#define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_XCB_SURFACE_EXTENSION_NAME
+#define PlatformSurfaceCreateInfo VkXcbSurfaceCreateInfoKHR
+#define PLATFORM_SURFACE_CREATE_INFO VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+#define PlatformCreateSurface vkCreateXcbSurfaceKHR
+#include "xcb/xcb.h"
+#include "vulkan/vulkan.h"
+#include "vulkan/vulkan_xcb.h"
 #endif
 
-#include <vulkan/vulkan.h>
+#define DEMO_TEXTURE_COUNT 1
+#define VERTEX_BUFFER_BIND_ID 0
 
 typedef struct _SwapchainBuffers
 {
@@ -63,7 +70,7 @@ struct UniformObject
     VkDescriptorBufferInfo bufferInfo;
 };
 
-struct Depth
+struct VulkanDepth
 {
     VkFormat format;
     VkImage image;
@@ -166,7 +173,7 @@ struct VulkanContext
 
     UniformObject uniformData;
     UniformObject uniformDataFragment;
-    Depth depth;
+    VulkanDepth depth;
     TextureObject UITextures[DEMO_TEXTURE_COUNT];
 
     uint32_t swapchainImageCount;
