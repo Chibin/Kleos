@@ -17,7 +17,8 @@ inline void EmptyDebugPrint(const char * /*_unused*/, ...) // NOLINT
 {
 }
 
-#define ERROR_PRINT(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
+#define __ERROR_PRINT_INT(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
+#define ERROR_PRINT(...) __ERROR_PRINT_INT(__VA_ARGS__, "\n");
 
 #if WIN32
 #define PAUSE_HERE(fmt, ...)                                             \

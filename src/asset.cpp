@@ -120,7 +120,7 @@ void LoadFrameData(GameMetadata *gameMetadata, const char* file)
         {
             case NAME:
             {
-                char *name = "name:\r\n";
+                const char *name = "name:\r\n";
                 if (VerifyStringAndGotoNextLine(tmp, name) == false)
                 {
                     name = "name:\n";
@@ -147,7 +147,7 @@ void LoadFrameData(GameMetadata *gameMetadata, const char* file)
             }
             case ANIMATION_COUNT:
             {
-                char *animationCount = "animation count:\n";
+                const char *animationCount = "animation count:\n";
                 ASSERT(VerifyStringAndGotoNextLine(tmp, animationCount));
 
                 counter += strlen(animationCount);
@@ -169,7 +169,7 @@ void LoadFrameData(GameMetadata *gameMetadata, const char* file)
                 ASSERT(animationStateCount < fa->animationCount);
                 FrameCycle *fc = &fa->frameCycles[animationStateCount];
 
-                char *name = "frame name:\n";
+                const char *name = "frame name:\n";
                 ASSERT(VerifyStringAndGotoNextLine(tmp, name));
 
                 counter += strlen(name);
@@ -189,7 +189,7 @@ void LoadFrameData(GameMetadata *gameMetadata, const char* file)
             {
                 FrameCycle *fc = &fa->frameCycles[animationStateCount];
 
-                char *name = "frame count:\r\n";
+                const char *name = "frame count:\r\n";
                 if (VerifyStringAndGotoNextLine(tmp, name) == false)
                 {
                     name = "frame count:\n";
