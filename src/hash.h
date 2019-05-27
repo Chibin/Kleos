@@ -3,6 +3,14 @@
 
 #define MAX_HASH_SIZE 10
 
+#define CREATE_STRUCT(T, TKey, TVal) \
+    struct T                         \
+{                                    \
+    TKey key;                        \
+    TVal val;                        \
+    T *next;                         \
+};
+
 #include "string.h"
 
 struct Hash
@@ -13,13 +21,9 @@ struct Hash
     struct GameMemory *gm;
 };
 
-struct HashU32U32
-{
-    u32 key;
-    u32 val;
-    HashU32U32 *next;
-};
+CREATE_STRUCT(HashU32U32, u32, u32);
 
+/* This is more specific so can't generalize it. */
 struct HashCharU32
 {
     char key[24];

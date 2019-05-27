@@ -26,11 +26,6 @@
 #include "math.cpp"
 #pragma warning(pop)
 
-#ifndef WIN32
-/* need to figure out where to put this or do something else */
-#define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
-#endif
-
 #include "game_memory.h"
 
 /* cheeky way to replace malloc call for STB */
@@ -110,6 +105,7 @@ static Animation2D *g_spriteAnimation = nullptr;
 static Animation2D *g_spriteAnimations = nullptr;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
+static memory_index g_entityID = 0;
 static NPC *g_enemyNPC = nullptr;
 
 #include "render_helper.cpp"
@@ -165,7 +161,6 @@ void LoadStuff(GameMetadata *gameMetadata)
 
             Rect *r =
                 CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
-            AssociateEntity(r, rectEntity, true);
             r->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface")->bitmapID;
             r->renderLayer = BACKGROUND;
             PushBack(&(g_rectManager->Traversable.rda), r);

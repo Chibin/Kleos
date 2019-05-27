@@ -1,4 +1,4 @@
-#define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
+#include "define.h"
 
 #pragma warning(push)
 #pragma warning(disable : 4100)

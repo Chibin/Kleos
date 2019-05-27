@@ -19,6 +19,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     f32 dt = gt->dt;
 
     Entity *e = GetEntity(gameMetadata->playerRect);
+    //HashGetValue
 
     //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
     //      rayDirection))

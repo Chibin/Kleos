@@ -1,3 +1,11 @@
+#ifndef __DEFINE_H__
+#define __DEFINE_H__
+
+#ifndef WIN32
+/* need to figure out where to put this or do something else */
+#define sprintf_s(buffer, buffer_size, stringbuffer, ...) (sprintf(buffer, stringbuffer, __VA_ARGS__))
+#endif
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
 #define COLOR_WHITE \
@@ -63,3 +71,5 @@
     {                           \
         0, 0, 0, T              \
     }
+
+#endif

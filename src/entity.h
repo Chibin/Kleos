@@ -32,7 +32,7 @@ struct FrameState
 /* TODO: how do we treat dynamically moving entities vs static ones? */
 struct Entity
 {
-    unsigned int id;
+    memory_index id;
 
     glm::vec3 position;
     glm::vec3 velocity;

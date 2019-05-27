@@ -17,17 +17,21 @@ inline void EmptyDebugPrint(const char * /*_unused*/, ...) // NOLINT
 {
 }
 
-#define __ERROR_PRINT_INT(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
-#define ERROR_PRINT(...) __ERROR_PRINT_INT(__VA_ARGS__, "\n");
-
 #if WIN32
 #define PAUSE_HERE(fmt, ...)                                             \
     printf(fmt, __VA_ARGS__);                                            \
     printf("Pausing all activity. Press enter in console to resume.\n"); \
     getchar();
+
+#define ERROR_PRINT(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
+
 #else
 #define PAUSE_HERE(fmt, ...)                                             \
     printf(fmt, ##__VA_ARGS__);                                          \
     printf("Pausing all activity. Press enter in console to resume.\n"); \
     getchar();
+
+#define __ERROR_PRINT_INT(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__);
+#define ERROR_PRINT(...) __ERROR_PRINT_INT(__VA_ARGS__, "\n");
+
 #endif

@@ -37,6 +37,7 @@ struct GameMetadata
     v2 screenResolution;
     b32 initFromGameUpdateAndRender;
     struct Rect *playerRect;
+    struct Entity *playerEntity;
 
     VulkanContext *vulkanContext;
 
