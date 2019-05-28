@@ -155,7 +155,7 @@ inline void UpdatePosition(Rect *r, v3 newPosition)
     v2 max = basePositionXY + center;
 #endif
 
-    //r->center = newPosition;
+    r->center = newPosition;
 
 #if 1
     /* This is for clockwise */

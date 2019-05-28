@@ -216,7 +216,6 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
         v3 newPosition = V3(movement->position);
 
-        CreateVertices(&particle->rect);
         particle->acc.y = gravity * 2;
         particle->vel.x = 0;
         UpdateParticlePosition(particle, dt);
