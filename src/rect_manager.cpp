@@ -6,7 +6,7 @@ void SetAABB(RectStorage *rs)
     for(memory_index i = 0; i < rs->rda.size; i++)
     {
         Rect *rect = rs->rda.rects[i];
-            v2 center = V2(rect->basePosition);
+            v2 center = V2(rect->center);
             v2 dim = v2{rect->width, rect->height};
             MinMax result = GetMinMax(center, dim);
 

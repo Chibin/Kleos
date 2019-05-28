@@ -314,9 +314,9 @@ void SetPlayer(GameMetadata *gm)
     gm->playerRect->bitmapID = gm->playerRect->bitmap->bitmapID;
 
     Movement *movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
-    movement->position.x = gm->playerRect->basePosition.x;
-    movement->position.y = gm->playerRect->basePosition.y;
-    movement->position.z = gm->playerRect->basePosition.z;
+    movement->position.x = gm->playerRect->center.x;
+    movement->position.y = gm->playerRect->center.y;
+    movement->position.z = gm->playerRect->center.z;
 
     HashAdd(gm->hashEntityRect, playerEntity, gm->playerRect);
     HashAdd(gm->hashEntityMovement, playerEntity, movement);
@@ -344,15 +344,15 @@ void SetParticle(GameMetadata *gm)
         ZeroSize(particle, sizeof(Particle));
         particle->TTL = particle->maxTTL = 60000;
 
-        v3 basePosition = { base, base, 0.5f };
+        v3 center = { base, base, 0.5f };
         base += 0.15f;
         v4 color = { 0.1f, 0.1f, 0.1f, 1 };
         particle->rect.color = color;
         particle->rect.bitmapID = 0;
         particle->rect.bitmap = bitmap;
         particle->rect.renderLayer = BEHIND_PLAYER;
-        particle->positionOffset = basePosition;
-        SetRectPoints(&particle->rect, basePosition, width, height);
+        particle->positionOffset = center;
+        SetRectPoints(&particle->rect, center, width, height);
     }
 
 }

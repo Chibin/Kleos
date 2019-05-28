@@ -223,8 +223,8 @@ void ProcessKeysHeldDownEditMode(GameMetadata *gm, const u8 *keystate)
         positionOffset += v3{moveBy, 0.0f, 0.0f};
     }
 
-    rect->basePosition += positionOffset;
-    UpdatePosition(rect, rect->basePosition);
+    rect->center += positionOffset;
+    UpdatePosition(rect, rect->center);
 }
 
 void ProcessInputToMovement(SDL_Keycode sym)

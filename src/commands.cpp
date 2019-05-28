@@ -94,7 +94,7 @@ void SaveScene(GameMetadata *gm, const char *fileName)
 
             /* TODO: Write points here */
             char pointBuf[256] = {};
-            bytesWritten = ToChar(pointBuf, sizeof(pointBuf), V2(rect->basePosition));
+            bytesWritten = ToChar(pointBuf, sizeof(pointBuf), V2(rect->center));
             WriteToFile(file, pointBuf);
             WriteToFile(file, ",\n");
 

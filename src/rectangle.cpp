@@ -2,19 +2,19 @@
 #define __RECTANGLE__
 #include "rectangle.h"
 
-inline void SetRectPoints(Rect *rect, v3 basePosition, f32 width, f32 height)
+inline void SetRectPoints(Rect *rect, v3 center, f32 width, f32 height)
 {
-    v2 center = {0.5f * width, 0.5f * height};
+    v2 centerXY = {0.5f * width, 0.5f * height};
 #if 0
-    v2 min = { basePosition.x, basePosition.y };
-    v2 max = { basePosition.x + width, basePosition.y + height };
+    v2 min = { center.x, center.y };
+    v2 max = { center.x + width, center.y + height };
 #else
-    v2 basePositionXY = { basePosition.x, basePosition.y };
-    v2 min = basePositionXY - center;
-    v2 max = basePositionXY + center;
+    v2 basePositionXY = { center.x, center.y };
+    v2 min = basePositionXY - centerXY;
+    v2 max = basePositionXY + centerXY;
 
 #endif
-    rect->basePosition = basePosition;
+    rect->center = center;
     rect->width = width;
     rect->height = height;
 
@@ -36,7 +36,7 @@ inline void SetRectPoints(Rect *rect, v3 basePosition, f32 width, f32 height)
     rect->max = max;
 }
 
-void SetRect(Rect *rect, v3 basePosition, v4 color,
+void SetRect(Rect *rect, v3 center, v4 color,
              real32 width, real32 height)
 {
     ZeroSize(rect, sizeof(Rect));
@@ -47,30 +47,30 @@ void SetRect(Rect *rect, v3 basePosition, v4 color,
     /* FIXME: This is starting the drawing from the origin, but not centered at
      * the origin
      */
-    SetRectPoints(rect, basePosition, width, height);
+    SetRectPoints(rect, center, width, height);
     CreateVertices(rect);
 }
 
-Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color,
+Rect *CreateRectangle(GameMemory *gm, v3 center, v4 color,
                       real32 width, real32 height)
 {
     Rect *tmp = nullptr;
     tmp = static_cast<Rect *>(AllocateMemory(gm, sizeof(Rect)));
-    SetRect(tmp, basePosition, color, width, height);
+    SetRect(tmp, center, color, width, height);
 
     return tmp;
 }
 
-Rect *CreateRectangle(GameMemory *gm, v3 basePosition, v4 color, v2 rectDim)
+Rect *CreateRectangle(GameMemory *gm, v3 center, v4 color, v2 rectDim)
 {
-    return CreateRectangle(gm, basePosition, color, rectDim.x, rectDim.y);
+    return CreateRectangle(gm, center, color, rectDim.x, rectDim.y);
 }
 
-Rect *CreateRectangle(GameMemory *gm, glm::vec3 basePosition, v4 color, v2 rectDim)
+Rect *CreateRectangle(GameMemory *gm, glm::vec3 center, v4 color, v2 rectDim)
 {
     return CreateRectangle(
             gm,
-            v3{basePosition.x, basePosition.y, basePosition.z},
+            v3{center.x, center.y, center.z},
             color,
             rectDim.x,
             rectDim.y);
@@ -185,7 +185,7 @@ inline void UpdatePosition(Rect *r, v3 newPosition)
     v2 max = basePositionXY + center;
 #endif
 
-    //r->basePosition = newPosition;
+    //r->center = newPosition;
 
 #if 1
     /* This is for clockwise */

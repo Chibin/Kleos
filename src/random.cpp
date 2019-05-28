@@ -61,7 +61,7 @@ AABB MinMaxToSquareAABB(MinMax *minMax)
 AABB RectToAABB(Rect *rect)
 {
     AABB result = {};
-    result.center = V2(rect->basePosition);
+    result.center = V2(rect->center);
     result.halfDim = v2{rect->width, rect->height} * 0.5f;
     return result;
 }
