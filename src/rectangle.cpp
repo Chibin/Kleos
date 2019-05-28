@@ -5,27 +5,38 @@
 inline void SetRectPoints(Rect *rect, v3 center, f32 width, f32 height)
 {
     v2 centerXY = {0.5f * width, 0.5f * height};
-#if 0
-    v2 min = { center.x, center.y };
-    v2 max = { center.x + width, center.y + height };
-#else
     v2 basePositionXY = { center.x, center.y };
     v2 min = basePositionXY - centerXY;
     v2 max = basePositionXY + centerXY;
 
-#endif
     rect->center = center;
     rect->width = width;
     rect->height = height;
 
 #if 1
     /* This is for clock wise */
-    rect->topRight = v3{ max.x, max.y, 0 };
-    rect->bottomRight = v3{ max.x, min.y, 0 };
-    rect->bottomLeft = v3{ min.x, min.y, 0 };
-    rect->topLeft = v3{ min.x, max.y, 0 };
+    rect->topRight.vPosition = v3{ max.x, max.y, 0 };
+    rect->bottomRight.vPosition = v3{ max.x, min.y, 0 };
+    rect->bottomLeft.vPosition = v3{ min.x, min.y, 0 };
+    rect->topLeft.vPosition = v3{ min.x, max.y, 0 };
+
+    rect->topRight.vColor = rect->color;
+    rect->bottomRight.vColor = rect->color;
+    rect->bottomLeft.vColor = rect->color;
+    rect->topLeft.vColor = rect->color;
+
+    v3 normal = { 0.0f, 0.0f, 0.0f };
+    rect->topRight.vNormal = normal;
+    rect->bottomRight.vNormal = normal;
+    rect->bottomLeft.vNormal = normal;
+    rect->topLeft.vNormal = normal;
+
+    rect->topRight.vUv = v2{ 1, 1 };
+    rect->bottomRight.vUv = v2{ 1, 0 };
+    rect->bottomLeft.vUv = v2{ 0, 0 };
+    rect->topLeft.vUv = v2{ 0, 1 };
 #else
-    /* This is for ccw */
+    /* This is for ccw order*/
     rect->bottomRight = v3{ max.x, max.y, 0 };
     rect->topRight = v3{ max.x, min.y, 0 };
     rect->topLeft = v3{ min.x, min.y, 0 };
@@ -48,7 +59,6 @@ void SetRect(Rect *rect, v3 center, v4 color,
      * the origin
      */
     SetRectPoints(rect, center, width, height);
-    CreateVertices(rect);
 }
 
 Rect *CreateRectangle(GameMemory *gm, v3 center, v4 color,
@@ -96,36 +106,6 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, v4 color, AABB *aabb)
 Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 {
     return CreateMinimalRectInfo(gm, COLOR_RED, min, max);
-}
-
-void CreateVertices(Rect *rect)
-{
-    v3 normal = { 0.0f, 0.0f, 0.0f };
-    /* texCoords + verticesCoords + color*/
-    Vertex *vTopRight = &(rect->vertices[0]);
-
-    vTopRight->vPosition = rect->topRight;
-    vTopRight->vColor = rect->color;
-    vTopRight->vNormal = normal;
-    vTopRight->vUv = v2{ 1, 1 };
-
-    Vertex *vBottomRight = &(rect->vertices[1]);
-    vBottomRight->vPosition = rect->bottomRight;
-    vBottomRight->vColor = rect->color;
-    vBottomRight->vNormal = normal;
-    vBottomRight->vUv = v2{ 1, 0 };
-
-    Vertex *vBottomLeft = &(rect->vertices[2]);
-    vBottomLeft->vPosition = rect->bottomLeft;
-    vBottomLeft->vColor = rect->color;
-    vBottomLeft->vNormal = normal;
-    vBottomLeft->vUv = v2{ 0, 0 };
-
-    Vertex *topLeft = &(rect->vertices[3]);
-    topLeft->vPosition = rect->topLeft;
-    topLeft->vColor = rect->color;
-    topLeft->vNormal = normal;
-    topLeft->vUv = v2{ 0, 1 };
 }
 
 inline Entity *GetEntity(Rect *rect)
