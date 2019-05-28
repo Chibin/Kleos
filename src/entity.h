@@ -51,8 +51,6 @@ struct Entity
      */
     bool isTraversable;
     bool isPlayer;
-    /* not sure if we'll use this */
-    void (*draw)();
 };
 
 inline void EntityMoveAttack(Entity *entity)
