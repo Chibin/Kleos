@@ -169,13 +169,15 @@ void ProcessMouseInput(const SDL_Event &event, Camera *camera)
     }
 }
 
-void ProcessKeysHeldDown(Entity *entity, const u8 *keystate)
+void ProcessKeysHeldDown(Hash *hash, Entity *entity, const u8 *keystate)
 {
+    Movement *movement = HashGetValue(HashEntityMovement, hash, entity);
+
     if (((keystate[SDL_SCANCODE_UP] != 0u) ||
          (keystate[SDL_SCANCODE_SPACE] != 0u)) &&
         g_canJump)
     {
-        EntityMoveUp(entity);
+        MoveUp(movement);
         g_canJump = false;
     }
     if ((keystate[SDL_SCANCODE_S] != 0u) && g_canAttack)
@@ -186,15 +188,15 @@ void ProcessKeysHeldDown(Entity *entity, const u8 *keystate)
 
     if (keystate[SDL_SCANCODE_DOWN] != 0u)
     {
-        EntityMoveDown(entity);
+        MoveDown(movement);
     }
     if (keystate[SDL_SCANCODE_LEFT] != 0u)
     {
-        EntityMoveLeft(entity);
+        MoveLeft(movement);
     }
     if (keystate[SDL_SCANCODE_RIGHT] != 0u)
     {
-        EntityMoveRight(entity);
+        MoveRight(movement);
     }
 }
 

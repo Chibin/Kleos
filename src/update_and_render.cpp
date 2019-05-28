@@ -70,6 +70,7 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "sort.cpp"
 #include "string.h"
 
+#include "movement.cpp"
 #include "hashtable.cpp"
 #include "hash.h"
 

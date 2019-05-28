@@ -3,19 +3,7 @@
 
 #define DEBUG_NPC 0
 
-enum MovementType
-{
-    X_MOVEMENT,
-    Y_MOVEMENT,
-    XY_MOVEMENT
-};
-
-enum MovementPattern
-{
-    WAYPOINT,
-    UNI_DIRECTIONAL,
-    BI_DIRECTIONAL,
-};
+#include "movement.h"
 
 struct NPC
 {

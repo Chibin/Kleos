@@ -172,6 +172,9 @@ b32 KeyCompare(const char *a, const char *b)
         HASH_ADD(T, hash, k, value);                                                              \
     }
 
+#define CREATE_HASH_GET_VALUE_FUCTION_PROTOTYPE( T, keyType, valueType)                           \
+    valueType T##GetValue(Hash *hash, keyType k);
+
 #define CREATE_HASH_GET_VALUE_FUCTION(T, keyType, valueType)                                      \
     valueType T##GetValue(Hash *hash, keyType k)                                                  \
     {                                                                                             \

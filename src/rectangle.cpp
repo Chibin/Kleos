@@ -102,9 +102,6 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable)
 {
     rect->entity = entity;
-    rect->entity->movement.position.x = rect->basePosition.x;
-    rect->entity->movement.position.y = rect->basePosition.y;
-    rect->entity->movement.position.z = rect->basePosition.z;
     rect->entity->isTraversable = isTraversable;
     rect->entity->width = rect->width;
     rect->entity->height = rect->height;

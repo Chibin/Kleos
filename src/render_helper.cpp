@@ -13,6 +13,7 @@ void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
     if (gameMetadata->isEditMode == false)
     {
         ProcessKeysHeldDown(
+                gameMetadata->hashEntityMovement,
                 gameMetadata->playerEntity,
                 keystate);
     }
@@ -102,9 +103,12 @@ void SetHash(GameMetadata *gm)
     HASH_CREATE(HashBitmapBitmap, &gm->reservedMemory, hashBitmap, MAX_HASH);
     HASH_CREATE(HashBitmapVkDescriptorSet, &gm->reservedMemory, hashBMPDescSet, MAX_HASH);
     HASH_CREATE(HashEntityRect, &gm->reservedMemory, hashEntityRect, MAX_HASH);
+    HASH_CREATE(HashEntityMovement, &gm->reservedMemory, hashEntityMovement, MAX_HASH);
+
     gm->hashBitmapVkDescriptorSet = hashBMPDescSet;
     gm->hashBitmap = hashBitmap;
     gm->hashEntityRect = hashEntityRect;
+    gm->hashEntityMovement = hashEntityMovement;
 }
 
 void SetWhiteBitmap(GameMetadata *gm)
@@ -296,15 +300,6 @@ void SetVulkanDescriptorSet(VulkanContext *vc, GameMetadata *gameMetadata, Bitma
 void SetPlayer(GameMetadata *gm)
 {
     GameMemory *reservedMemory = &gm->reservedMemory;
-    Entity newPlayer = {};
-    newPlayer.movement.position = glm::vec3(0, 0, 0);
-    newPlayer.isPlayer = true;
-
-    u32 index = Append(reservedMemory, g_entityManager, &newPlayer);
-
-    /* NOTE: we don't need to free the player since we created it in the
-     * stack
-     */
     v3 pos = { 0, 0, 0.01f };
     Entity *playerEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
     playerEntity->id = g_entityID++;
@@ -312,15 +307,19 @@ void SetPlayer(GameMetadata *gm)
 
     gm->playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
     AssociateEntity(gm->playerRect, playerEntity, false);
-    g_rectManager->player = gm->playerRect;
     gm->playerRect->type = REGULAR;
     gm->playerRect->renderLayer = PLAYER;
     gm->playerRect->frameDirection = LEFT;
     gm->playerRect->bitmap = FindBitmap(&gm->bitmapSentinelNode, "arche");
     gm->playerRect->bitmapID = gm->playerRect->bitmap->bitmapID;
 
+    Movement *movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
+    movement->position.x = gm->playerRect->basePosition.x;
+    movement->position.y = gm->playerRect->basePosition.y;
+    movement->position.z = gm->playerRect->basePosition.z;
+
     HashAdd(gm->hashEntityRect, playerEntity, gm->playerRect);
-    //HashAdd(gm->hashEntityMovement, playerEntity, playerMovement);
+    HashAdd(gm->hashEntityMovement, playerEntity, movement);
 }
 
 void SetParticle(GameMetadata *gm)

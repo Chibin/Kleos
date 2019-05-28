@@ -72,7 +72,7 @@ Entity *AddNewEntity(GameMemory *gm, EntityManager *em, v3 position = v3{ 0, 0, 
     Entity *entity = &(em->entities[em->size]);
 
     entity->id = em->size;
-    entity->movement.position = glm::vec3(position.x, position.y, position.z);
+    //entity->movement.position = glm::vec3(position.x, position.y, position.z);
 
     em->size++;
     return entity;
