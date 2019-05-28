@@ -98,16 +98,6 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
     return CreateMinimalRectInfo(gm, COLOR_RED, min, max);
 }
 
-
-void AssociateEntity(Rect *rect, Entity *entity, bool isTraversable)
-{
-    rect->entity = entity;
-    rect->entity->isTraversable = isTraversable;
-    rect->entity->width = rect->width;
-    rect->entity->height = rect->height;
-    rect->entity->data = rect->vertices;
-}
-
 void CreateVertices(Rect *rect)
 {
     v3 normal = { 0.0f, 0.0f, 0.0f };

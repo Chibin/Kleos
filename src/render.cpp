@@ -24,7 +24,8 @@ void DrawScene(
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebug);
 
-    PushRenderGroupRectInfo(perFrameRenderGroup, gameMetadata->playerRect);
+    PushRenderGroupRectInfo(perFrameRenderGroup,
+            HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, gameMetadata->playerEntity));
     Rect *minimalRect = CreateMinimalRectInfo(perFrameMemory, g_enemyNPC);
     UpdateNPCAnimation(g_enemyNPC, minimalRect);
     PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect);

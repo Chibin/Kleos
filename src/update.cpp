@@ -20,11 +20,12 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     Entity *e = gameMetadata->playerEntity;
     Movement *movement = HashGetValue(HashEntityMovement, gameMetadata->hashEntityMovement, e);
+    Rect *rectFromEntity = HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, e);
 
     //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
     //      rayDirection))
-    v2 center = 0.5f * v2{gameMetadata->playerRect->width, gameMetadata->playerRect->height};
-    Rect nextUpdate = *gameMetadata->playerRect;
+    v2 center = 0.5f * v2{rectFromEntity->width, rectFromEntity->height};
+    Rect nextUpdate = *rectFromEntity;
     nextUpdate.min = V2(movement->position) + V2(movement->velocity) * dt + 0.5f * V2(movement->acceleration) * dt * dt - center;
     nextUpdate.max = V2(movement->position) + V2(movement->velocity) * dt + 0.5f * V2(movement->acceleration) * dt * dt + center;
 
@@ -91,7 +92,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* how to differentiate between x and y axis? */
-            movement->position.y = rect->max.y + gameMetadata->playerRect->height * 0.5f;
+            movement->position.y = rect->max.y + rectFromEntity->height * 0.5f;
             movement->velocity.y = 0;
             movement->acceleration.y = gravity;
         }
@@ -125,7 +126,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
             e->frameState.transform = glm::mat4(-2.0f);
             e->frameState.transform[3][3] = 1.0f;
 
-            if (gameMetadata->playerRect->frameDirection == RIGHT)
+            if (rectFromEntity->frameDirection == RIGHT)
             {
                 e->frameState.transform[0][0] = abs(e->frameState.transform[0][0]);
                 e->frameState.transform[1][1] = abs(e->frameState.transform[1][1]);
@@ -145,7 +146,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         if (UpdateFrameState(&e->frameState, gt->deltaTime))
         {
             /* TODO: The position that's passed needs to be the center of the
-             * entity. Otherwise, it's hard to make the frame distance
+             * movement. Otherwise, it's hard to make the frame distance
              * symetrical when swapping between both directions
              */
             AddDebugRect(gameMetadata, &e->frameState, V3(movement->position), COLOR_RED_TRANSPARENT);
@@ -185,29 +186,25 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         //UpdateEntityFrameDirection();
         if (movement->velocity.x > 0)
         {
-            gameMetadata->playerRect->frameDirection = RIGHT;
-            gameMetadata->playerRect->entity->frameState.transform[0][0] =
-                 abs(gameMetadata->playerRect->entity->frameState.transform[0][0]);
-            gameMetadata->playerRect->entity->frameState.transform[1][1] =
-                 abs(gameMetadata->playerRect->entity->frameState.transform[1][1]);
+            rectFromEntity->frameDirection = RIGHT;
+            e->frameState.transform[0][0] = abs(e->frameState.transform[0][0]);
+            e->frameState.transform[1][1] = abs(e->frameState.transform[1][1]);
         }
         else if (movement->velocity.x < 0)
         {
-            gameMetadata->playerRect->frameDirection = LEFT;
-            gameMetadata->playerRect->entity->frameState.transform[0][0] =
-                -1 * abs(gameMetadata->playerRect->entity->frameState.transform[0][0]);
-            gameMetadata->playerRect->entity->frameState.transform[1][1] =
-                -1 * abs(gameMetadata->playerRect->entity->frameState.transform[1][1]);
+            rectFromEntity->frameDirection = LEFT;
+            e->frameState.transform[0][0] = -1 * abs(e->frameState.transform[0][0]);
+            e->frameState.transform[1][1] = -1 * abs(e->frameState.transform[1][1]);
         }
         /* else don't update */
 
         /* follow the character around */
         CameraUpdateTarget(g_camera, movement->position);
-        UpdatePosition(gameMetadata->playerRect, V3(movement->position));
+        UpdatePosition(rectFromEntity, V3(movement->position));
 
         UpdateCurrentFrame(g_spriteAnimation, 17.6f);
-        UpdateUV(gameMetadata->playerRect, *g_spriteAnimation->currentFrame);
-        UpdateFrameDirection(g_spriteAnimation, gameMetadata->playerRect->frameDirection);
+        UpdateUV(rectFromEntity, *g_spriteAnimation->currentFrame);
+        UpdateFrameDirection(g_spriteAnimation, rectFromEntity->frameDirection);
     }
 
     /* Apply "friction" */
@@ -223,7 +220,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         particle->acc.y = gravity * 2;
         particle->vel.x = 0;
         UpdateParticlePosition(particle, dt);
-        if (particle->positionOffset.y <= gameMetadata->playerRect->min.y)
+        if (particle->positionOffset.y <= rectFromEntity->min.y)
         {
             particle->positionOffset.y = newPosition.y;
             particle->acc.y = 0;

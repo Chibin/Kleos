@@ -305,20 +305,19 @@ void SetPlayer(GameMetadata *gm)
     playerEntity->id = g_entityID++;
     gm->playerEntity = playerEntity;
 
-    gm->playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
-    AssociateEntity(gm->playerRect, playerEntity, false);
-    gm->playerRect->type = REGULAR;
-    gm->playerRect->renderLayer = PLAYER;
-    gm->playerRect->frameDirection = LEFT;
-    gm->playerRect->bitmap = FindBitmap(&gm->bitmapSentinelNode, "arche");
-    gm->playerRect->bitmapID = gm->playerRect->bitmap->bitmapID;
+    Rect *playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);
+    playerRect->type = REGULAR;
+    playerRect->renderLayer = PLAYER;
+    playerRect->frameDirection = LEFT;
+    playerRect->bitmap = FindBitmap(&gm->bitmapSentinelNode, "arche");
+    playerRect->bitmapID = playerRect->bitmap->bitmapID;
 
     Movement *movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
-    movement->position.x = gm->playerRect->center.x;
-    movement->position.y = gm->playerRect->center.y;
-    movement->position.z = gm->playerRect->center.z;
+    movement->position.x = playerRect->center.x;
+    movement->position.y = playerRect->center.y;
+    movement->position.z = playerRect->center.z;
 
-    HashAdd(gm->hashEntityRect, playerEntity, gm->playerRect);
+    HashAdd(gm->hashEntityRect, playerEntity, playerRect);
     HashAdd(gm->hashEntityMovement, playerEntity, movement);
 }
 
