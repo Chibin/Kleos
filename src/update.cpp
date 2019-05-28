@@ -18,18 +18,18 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     f32 dt = gt->dt;
 
-    Entity *e = GetEntity(gameMetadata->playerRect);
+    Entity *e = gameMetadata->playerEntity;
     //HashGetValue
 
     //      if (IntersectionAABB(rect, v2{e->position.x, e->position.y},
     //      rayDirection))
     v2 center = 0.5f * v2{gameMetadata->playerRect->width, gameMetadata->playerRect->height};
     Rect nextUpdate = *gameMetadata->playerRect;
-    nextUpdate.min = V2(e->position) + V2(e->velocity) * dt + 0.5f * V2(e->acceleration) * dt * dt - center;
-    nextUpdate.max = V2(e->position) + V2(e->velocity) * dt + 0.5f * V2(e->acceleration) * dt * dt + center;
+    nextUpdate.min = V2(e->movement.position) + V2(e->movement.velocity) * dt + 0.5f * V2(e->movement.acceleration) * dt * dt - center;
+    nextUpdate.max = V2(e->movement.position) + V2(e->movement.velocity) * dt + 0.5f * V2(e->movement.acceleration) * dt * dt + center;
 
     /* XXX: If we're on the ground we should always reset the accelration to the force of gravity. */
-    e->acceleration.y += gravity;
+    e->movement.acceleration.y += gravity;
 
     MinMax temp = GetMinMax(&nextUpdate);
     AABB range = MinMaxToSquareAABB(&temp);
@@ -91,17 +91,17 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* how to differentiate between x and y axis? */
-            e->position.y = rect->max.y + gameMetadata->playerRect->height * 0.5f;
-            e->velocity.y = 0;
-            e->acceleration.y = gravity;
+            e->movement.position.y = rect->max.y + gameMetadata->playerRect->height * 0.5f;
+            e->movement.velocity.y = 0;
+            e->movement.acceleration.y = gravity;
         }
     }
 
     /* TODO: There is a bug here. We're not properly updating the position
      * based on the collisions
      */
-    e->position += e->velocity * dt + 0.5f * e->acceleration * dt * dt;
-    e->velocity.y += e->acceleration.y *dt;
+    e->movement.position += e->movement.velocity * dt + 0.5f * e->movement.acceleration * dt * dt;
+    e->movement.velocity.y += e->movement.acceleration.y *dt;
 
     UpdatePositionBasedOnCollission(gameMetadata->sm, g_enemyNPC, gravity, dt);
 
@@ -148,7 +148,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
              * entity. Otherwise, it's hard to make the frame distance
              * symetrical when swapping between both directions
              */
-            AddDebugRect(gameMetadata, &e->frameState, V3(e->position), COLOR_RED_TRANSPARENT);
+            AddDebugRect(gameMetadata, &e->frameState, V3(e->movement.position), COLOR_RED_TRANSPARENT);
         }
         else
         {
@@ -183,7 +183,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
          * when necessary
          */
         //UpdateEntityFrameDirection();
-        if (e->velocity.x > 0)
+        if (e->movement.velocity.x > 0)
         {
             gameMetadata->playerRect->frameDirection = RIGHT;
             gameMetadata->playerRect->entity->frameState.transform[0][0] =
@@ -191,7 +191,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
             gameMetadata->playerRect->entity->frameState.transform[1][1] =
                  abs(gameMetadata->playerRect->entity->frameState.transform[1][1]);
         }
-        else if (e->velocity.x < 0)
+        else if (e->movement.velocity.x < 0)
         {
             gameMetadata->playerRect->frameDirection = LEFT;
             gameMetadata->playerRect->entity->frameState.transform[0][0] =
@@ -202,8 +202,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         /* else don't update */
 
         /* follow the character around */
-        CameraUpdateTarget(g_camera, e->position);
-        UpdatePosition(gameMetadata->playerRect, v3{ e->position.x, e->position.y, e->position.z });
+        CameraUpdateTarget(g_camera, e->movement.position);
+        UpdatePosition(gameMetadata->playerRect, V3(e->movement.position));
 
         UpdateCurrentFrame(g_spriteAnimation, 17.6f);
         UpdateUV(g_rectManager->player, *g_spriteAnimation->currentFrame);
@@ -211,15 +211,13 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     }
 
     /* Apply "friction" */
-    e->velocity.x = 0;
+    e->movement.velocity.x = 0;
 
     for (memory_index i = 0; i < gameMetadata->particleSystem.particleCount; i++)
     {
         Particle *particle = &gameMetadata->particleSystem.particles[i]; // NOLINT
 
-        v3 newPosition = v3{ e->position.x,
-                             e->position.y,
-                             e->position.z};
+        v3 newPosition = V3(e->movement.position);
 
         CreateVertices(&particle->rect);
         particle->acc.y = gravity * 2;

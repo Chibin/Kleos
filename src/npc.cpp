@@ -3,12 +3,6 @@
 
 #define DEBUG_NPC 0
 
-struct Movement {
-    glm::vec3 position;
-    glm::vec3 velocity;
-    glm::vec3 acceleration;
-};
-
 enum MovementType
 {
     X_MOVEMENT,

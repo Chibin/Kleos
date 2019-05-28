@@ -29,6 +29,8 @@ struct GameMetadata
 
     Hash *hashBitmapVkDescriptorSet;
     Hash *hashBitmap;
+    Hash *hashEntityRect;
+    Hash *hashEntityMovement;
 
     FrameAnimation frameAnimationSentinelNode;
 
@@ -39,7 +41,7 @@ struct GameMetadata
     struct Rect *playerRect;
     struct Entity *playerEntity;
 
-    VulkanContext *vulkanContext;
+    struct VulkanContext *vulkanContext;
 
     struct RectDynamicArray *rdaDebug;
     struct RectDynamicArray *rdaDebugUI;

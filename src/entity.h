@@ -5,6 +5,12 @@
 #include "opengl.h"
 #include <glm/glm.hpp>
 
+struct Movement {
+    glm::vec3 position;
+    glm::vec3 velocity;
+    glm::vec3 acceleration;
+};
+
 struct stats
 {
     int movementSpeed;
@@ -34,13 +40,10 @@ struct Entity
 {
     memory_index id;
 
-    glm::vec3 position;
-    glm::vec3 velocity;
-    glm::vec3 acceleration;
+    Movement movement;
     f32 width;
     f32 height;
 
-    int type;
     f32 minX;
     f32 maxX;
     Vertex *data;
@@ -62,23 +65,23 @@ struct Entity
 inline void EntityMoveUp(Entity *entity)
 {
     /* TODO: Replace this later with speed (time based)*/
-    entity->acceleration = glm::vec3(0, 9.81, 0);
-    entity->velocity = glm::vec3(0, 15, 0);
+    entity->movement.acceleration = glm::vec3(0, 9.81, 0);
+    entity->movement.velocity = glm::vec3(0, 15, 0);
 }
 
 inline void EntityMoveDown(Entity *entity)
 {
-    entity->velocity += glm::vec3(0, -0.01, 0);
+    entity->movement.velocity += glm::vec3(0, -0.01, 0);
 }
 
 inline void EntityMoveLeft(Entity *entity)
 {
-    entity->velocity.x += -5.0f;
+    entity->movement.velocity.x += -5.0f;
 }
 
 inline void EntityMoveRight(Entity *entity)
 {
-    entity->velocity.x += 5.0f;
+    entity->movement.velocity.x += 5.0f;
 }
 
 inline void EntityMoveAttack(Entity *entity)

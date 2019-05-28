@@ -16,4 +16,5 @@
 CREATE_STRUCT(HashBitmapVkDescriptorSet, Bitmap *, VkDescriptorSet *);
 CREATE_STRUCT(HashBitmapBitmap, Bitmap *, Bitmap *);
 CREATE_STRUCT(HashEntityRect, Entity *, Rect *);
+CREATE_STRUCT(HashEntityMovement, Entity *, Movement *);
 #endif

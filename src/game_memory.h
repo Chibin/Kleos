@@ -59,6 +59,13 @@ inline void *AllocateMemory(GameMemory *gm, memory_index size)
     return newAllocBase;
 }
 
+inline void *AllocateMemory0(GameMemory *gm, memory_index size)
+{
+    u8 *newAllocBase = (u8 *)AllocateMemory(gm, size);
+    memset(newAllocBase, 0, size);
+    return newAllocBase;
+}
+
 inline void *ReallocMemory(GameMemory *gm, void *ptr, memory_index oldSize, memory_index size)
 {
     u8 *newMemory = (u8 *)AllocateMemory(gm, size);

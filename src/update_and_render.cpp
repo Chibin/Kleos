@@ -95,7 +95,6 @@ inline void LoadAssets(GameMetadata *gameMetadata);
 Camera *g_camera = nullptr;
 glm::mat4 *g_projection = nullptr;
 EntityManager *g_entityManager = nullptr;
-Entity *g_player = nullptr;
 RectManager *g_rectManager = nullptr;
 EntityDynamicArray *g_eda = nullptr;
 v3 g_mousePoint;
@@ -151,14 +150,6 @@ void LoadStuff(GameMetadata *gameMetadata)
         for (int y = 0; y < 100; y++)
         {
             v3 startingPosition = { -1 + (real32)i, 1 * (real32)y, 0 };
-            /* TODO: extract out creating new entity from the manager */
-            Entity *rectEntity =
-                AddNewEntity(reservedMemory, g_entityManager, startingPosition);
-            ASSERT(rectEntity != nullptr);
-            rectEntity->isTraversable = true;
-            rectEntity->isPlayer = false;
-            rectEntity->type = REGULAR;
-
             Rect *r =
                 CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
             r->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface")->bitmapID;
