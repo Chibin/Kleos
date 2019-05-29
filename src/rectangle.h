@@ -100,7 +100,7 @@ struct Rect
     v2 min;
     v2 max;
 
-    Animation2D *sprites;
+    Animation2D *spriteAnimation;
     Direction frameDirection;
 
     bool isTextureUpsideDown;

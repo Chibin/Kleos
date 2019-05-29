@@ -136,7 +136,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
         if (e->frameState.timePassedCurrentFrame == 0)
         {
-            g_spriteAnimation =
+            rectFromEntity->spriteAnimation =
                 GetSpriteAnimationInfo(
                         GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
                         "ATTACK");
@@ -157,9 +157,9 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         }
     }
 
-    if (g_spriteAnimation->currentFrameIndex == 0 && e->willAttack == false)
+    if (rectFromEntity->spriteAnimation->currentFrameIndex == 0 && e->willAttack == false)
     {
-        g_spriteAnimation =
+        rectFromEntity->spriteAnimation =
             GetSpriteAnimationInfo(
                     GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "arche.png"),
                     "IDLE");
@@ -202,9 +202,9 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         CameraUpdateTarget(g_camera, movement->position);
         UpdatePosition(rectFromEntity, V3(movement->position));
 
-        UpdateCurrentFrame(g_spriteAnimation, 17.6f);
-        UpdateUV(rectFromEntity, *g_spriteAnimation->currentFrame);
-        UpdateFrameDirection(g_spriteAnimation, rectFromEntity->frameDirection);
+        UpdateCurrentFrame(rectFromEntity->spriteAnimation, 17.6f);
+        UpdateUV(rectFromEntity, *rectFromEntity->spriteAnimation->currentFrame);
+        UpdateFrameDirection(rectFromEntity->spriteAnimation, rectFromEntity->frameDirection);
     }
 
     /* Apply "friction" */
