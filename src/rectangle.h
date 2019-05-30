@@ -78,18 +78,8 @@ struct Rect
 {
     Entity *entity;
 
-    union {
-        struct
-        {
-            Vertex topRight;
-            Vertex bottomRight;
-            Vertex bottomLeft;
-            Vertex topLeft;
-        };
-        Vertex vertices[4];
-    };
-
     v4 color;
+    v2 UV[4];
 
     real32 width, height;
 

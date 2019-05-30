@@ -373,25 +373,25 @@ void SetUVForCharacter(Rect *rect, s32 character)
     Bitmap *bitmap = rect->bitmap;
     ASSERT(bitmap != nullptr);
 
-    Vertex *vTopRight = &(rect->vertices[0]);
-    Vertex *vBottomRight = &(rect->vertices[1]);
-    Vertex *vBottomLeft = &(rect->vertices[2]);
-    Vertex *topLeft = &(rect->vertices[3]);
+    v2 *vTopRight = &(rect->UV[0]);
+    v2 *vBottomRight = &(rect->UV[1]);
+    v2 *vBottomLeft = &(rect->UV[2]);
+    v2 *topLeft = &(rect->UV[3]);
 
     FontBitmapInfo fontInfo = GetFontPixelInfo(character);
     v2 start = fontInfo.pixelStart;
     v2 end = fontInfo.pixelEnd;
 
-    vTopRight->vUv = PixelToUV(
+    *vTopRight = PixelToUV(
             end,
             bitmap->width, bitmap->height);
-    vBottomRight->vUv = PixelToUV(
+    *vBottomRight = PixelToUV(
             v2{end.x, 0},
             bitmap->width, bitmap->height);
-    vBottomLeft->vUv = PixelToUV(
+    *vBottomLeft = PixelToUV(
             v2{start.x, 0},
             bitmap->width, bitmap->height);
-    topLeft->vUv = PixelToUV(
+    *topLeft = PixelToUV(
             start,
             bitmap->width, bitmap->height);
 }

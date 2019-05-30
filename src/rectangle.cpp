@@ -15,26 +15,6 @@ inline void SetRectPoints(Rect *rect, v3 center, f32 width, f32 height)
 
 #if 1
     /* This is for clock wise */
-    rect->topRight.vPosition = v3{ max.x, max.y, 0 };
-    rect->bottomRight.vPosition = v3{ max.x, min.y, 0 };
-    rect->bottomLeft.vPosition = v3{ min.x, min.y, 0 };
-    rect->topLeft.vPosition = v3{ min.x, max.y, 0 };
-
-    rect->topRight.vColor = rect->color;
-    rect->bottomRight.vColor = rect->color;
-    rect->bottomLeft.vColor = rect->color;
-    rect->topLeft.vColor = rect->color;
-
-    v3 normal = { 0.0f, 0.0f, 0.0f };
-    rect->topRight.vNormal = normal;
-    rect->bottomRight.vNormal = normal;
-    rect->bottomLeft.vNormal = normal;
-    rect->topLeft.vNormal = normal;
-
-    rect->topRight.vUv = v2{ 1, 1 };
-    rect->bottomRight.vUv = v2{ 1, 0 };
-    rect->bottomLeft.vUv = v2{ 0, 0 };
-    rect->topLeft.vUv = v2{ 0, 1 };
 #else
     /* This is for ccw order*/
     rect->bottomRight = v3{ max.x, max.y, 0 };
@@ -42,6 +22,10 @@ inline void SetRectPoints(Rect *rect, v3 center, f32 width, f32 height)
     rect->topLeft = v3{ min.x, min.y, 0 };
     rect->bottomLeft = v3{ min.x, max.y, 0 };
 #endif
+    rect->UV[0] = v2{ 1, 1 };
+    rect->UV[1] = v2{ 1, 0 };
+    rect->UV[2] = v2{ 0, 0 };
+    rect->UV[3] = v2{ 0, 1 };
 
     rect->min = min;
     rect->max = max;
@@ -113,6 +97,53 @@ inline Entity *GetEntity(Rect *rect)
     return rect->entity;
 }
 
+inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
+{
+    const u8 numOfPoints = ARRAY_SIZE(g_rectIndices);
+    union {
+        struct
+        {
+            Vertex topRight;
+            Vertex bottomRight;
+            Vertex bottomLeft;
+            Vertex topLeft;
+        };
+        Vertex vertices[4];
+    };
+
+    topRight.vPosition    = v3{ rect->max.x, rect->max.y, 0 };
+    bottomRight.vPosition = v3{ rect->max.x, rect->min.y, 0 };
+    bottomLeft.vPosition  = v3{ rect->min.x, rect->min.y, 0 };
+    topLeft.vPosition     = v3{ rect->min.x, rect->max.y, 0 };
+
+    topRight.vColor       = rect->color;
+    bottomRight.vColor    = rect->color;
+    bottomLeft.vColor     = rect->color;
+    topLeft.vColor        = rect->color;
+
+    v3 normal             = v3{ 0.0f, 0.0f, 0.0f };
+    topRight.vNormal      = normal;
+    bottomRight.vNormal   = normal;
+    bottomLeft.vNormal    = normal;
+    topLeft.vNormal       = normal;
+
+    topRight.vUv          = rect->UV[0];
+    bottomRight.vUv       = rect->UV[1];
+    bottomLeft.vUv        = rect->UV[2];
+    topLeft.vUv           = rect->UV[3];
+
+#if 1
+
+    for (memory_index i = 0; i < numOfPoints; i++)
+    {
+        memory_index index = g_rectIndices[i]; // NOLINT
+
+        ASSERT(index < sizeof(vertices));
+        *(vertexPointer + i) = vertices[index]; // NOLINT
+    }
+#endif
+}
+
 void PushRectVertex(GameMemory *gm, Rect *rect)
 {
     /* We need 6 points because we need to create 2 triangles */
@@ -121,6 +152,9 @@ void PushRectVertex(GameMemory *gm, Rect *rect)
 
     auto *vertexPointer = (Vertex *)(gm->base + gm->used);
 
+#if 1
+    CreateVertices(rect, vertexPointer);
+#else
     for (memory_index i = 0; i < numOfPoints; i++)
     {
         memory_index index = g_rectIndices[i]; // NOLINT
@@ -128,6 +162,7 @@ void PushRectVertex(GameMemory *gm, Rect *rect)
         ASSERT(index < sizeof(rect->vertices));
         *(vertexPointer + i) = rect->vertices[index]; // NOLINT
     }
+#endif
 
     gm->used += sizeof(Vertex) * numOfPoints;
 }
@@ -157,35 +192,16 @@ inline void UpdatePosition(Rect *r, v3 newPosition)
 
     r->center = newPosition;
 
-#if 1
-    /* This is for clockwise */
-    v3 topRight = v3{ max.x, max.y, 0 };
-    v3 bottomRight = v3{ max.x, min.y, 0 };
-    v3 bottomLeft = v3{ min.x, min.y, 0 };
-    v3 topLeft = v3{ min.x, max.y, 0 };
-#else
-    /* This is for counter clockwise */
-    v3 bottomRight = v3{ max.x, max.y, 0 };
-    v3 topRight = v3{ max.x, min.y, 0 };
-    v3 topLeft = v3{ min.x, min.y, 0 };
-    v3 bottomLeft = v3{ min.x, max.y, 0 };
-#endif
-
-    r->vertices[0].vPosition = topRight;
-    r->vertices[1].vPosition = bottomRight;
-    r->vertices[2].vPosition = bottomLeft;
-    r->vertices[3].vPosition = topLeft;
-
     r->min = min;
     r->max = max;
 }
 
 inline void UpdateUV(Rect *r, RectUVCoords uv)
 {
-    r->vertices[0].vUv = uv.UV[0];
-    r->vertices[1].vUv = uv.UV[1];
-    r->vertices[2].vUv = uv.UV[2];
-    r->vertices[3].vUv = uv.UV[3];
+    r->UV[0] = uv.UV[0];
+    r->UV[1] = uv.UV[1];
+    r->UV[2] = uv.UV[2];
+    r->UV[3] = uv.UV[3];
 }
 
 inline void UpdateColors(Rect *r, v4 color)
@@ -196,10 +212,7 @@ inline void UpdateColors(Rect *r, v4 color)
         r->vertices[i].vColor = color;
     }
 #else
-    for (auto &vertex : r->vertices)
-    {
-        vertex.vColor = color;
-    }
+    r->color = color;
 #endif
 }
 
