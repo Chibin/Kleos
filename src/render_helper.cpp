@@ -1,60 +1,3 @@
-void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
-{
-    SDL_Event event;
-
-    /* NOTE: Looks very player centric right now, not sure if we need to make it
-     * better later on.
-     * Use keystate to get the feel for the fastest response time.
-     * Keyrepeat is doesn't feel smooth enough for us to use it as a way to
-     * move. The amount of keyboard repeat depends on the setting the user has
-     * on their computer, so not reliable.
-     */
-    const u8 *keystate = SDL_GetKeyboardState(nullptr);
-    if (gameMetadata->isEditMode == false)
-    {
-        ProcessKeysHeldDown(
-                gameMetadata->hashEntityMovement,
-                gameMetadata->playerEntity,
-                keystate);
-    }
-    else if(gameMetadata->isEditMode && gameMetadata->selectedRect != nullptr)
-    {
-        ProcessKeysHeldDownEditMode(gameMetadata, keystate);
-    }
-
-    while (SDL_PollEvent(&event) != 0)
-    {
-        switch (event.type)
-        {
-        case SDL_QUIT:
-            *continueRunning = false;
-            break;
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-            ProcessMouseEditMode(gameMetadata, g_camera, g_projection, event);
-        case SDL_MOUSEWHEEL:
-            ProcessMouseInput(event, g_camera);
-            break;
-        case SDL_MOUSEMOTION:
-            g_mousePoint = ProcessMouseMotion(event.motion);
-            UpdateMouseDrag(gameMetadata, g_camera, g_projection, event);
-            break;
-        case SDL_KEYDOWN:
-            ProcessInputDown(
-                    event.key.keysym.sym,
-                    gameMetadata,
-                    g_camera,
-                    continueRunning);
-            break;
-        case SDL_KEYUP:
-            ProcessInputUp(event.key.keysym.sym);
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 void SetFont(GameMetadata *gm)
 {
     TTF_Font *font = OpenFont();
@@ -385,9 +328,87 @@ void DoVukanUpdateToNextFrame(VulkanContext *vc)
     }
 }
 
-void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory)
+void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
 {
-    gameMetadata->perFrameRenderGroup = CreateRenderGroup(perFrameMemory, 6 /*numOfPointsPerRect*/, 20001 /*maxEntityCount*/);
+    SDL_Event event;
+
+    /* NOTE: Looks very player centric right now, not sure if we need to make it
+     * better later on.
+     * Use keystate to get the feel for the fastest response time.
+     * Keyrepeat is doesn't feel smooth enough for us to use it as a way to
+     * move. The amount of keyboard repeat depends on the setting the user has
+     * on their computer, so not reliable.
+     */
+    const u8 *keystate = SDL_GetKeyboardState(nullptr);
+    if (gameMetadata->isEditMode == false)
+    {
+        ProcessKeysHeldDown(
+                gameMetadata->hashEntityMovement,
+                gameMetadata->playerEntity,
+                keystate);
+    }
+    else if(gameMetadata->isEditMode && gameMetadata->selectedRect != nullptr)
+    {
+        ProcessKeysHeldDownEditMode(gameMetadata, keystate);
+    }
+
+    while (SDL_PollEvent(&event) != 0)
+    {
+        switch (event.type)
+        {
+        case SDL_QUIT:
+            *continueRunning = false;
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+            ProcessMouseEditMode(gameMetadata, g_camera, g_projection, event);
+        case SDL_MOUSEWHEEL:
+            ProcessMouseInput(event, g_camera);
+            break;
+        case SDL_MOUSEMOTION:
+            g_mousePoint = ProcessMouseMotion(event.motion);
+            UpdateMouseDrag(gameMetadata, g_camera, g_projection, event);
+            break;
+        case SDL_KEYDOWN:
+            ProcessInputDown(
+                    event.key.keysym.sym,
+                    gameMetadata,
+                    g_camera,
+                    continueRunning);
+            break;
+        case SDL_KEYUP:
+            ProcessInputUp(event.key.keysym.sym);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Camera *camera, glm::mat4 *projection)
+{
+
+    /* bottom left (0,0 starts at the top left) */
+    v2 screenCoordinatesMin = v2{0, SCREEN_HEIGHT};
+    /* top right */
+    v2 screenCoordinatesMax = v2{SCREEN_WIDTH, 0};
+    glm::vec3 worldPosMin = GetWorldPointFromMouse(
+            camera,
+            projection,
+            screenCoordinatesMin,
+            gameMetadata->screenResolution,
+            gameMetadata->infinitePlaneNormal);
+    glm::vec3 worldPosMax = GetWorldPointFromMouse(
+            camera,
+            projection,
+            screenCoordinatesMax,
+            gameMetadata->screenResolution,
+            gameMetadata->infinitePlaneNormal);
+    MinMax minMax = {V2(worldPosMin), V2(worldPosMax)};
+
+    const u32 numOfPointsPerRect = 6;
+    const u16 maxEntityCount = 20001;
+    gameMetadata->perFrameRenderGroup = CreateRenderGroup(perFrameMemory, numOfPointsPerRect, maxEntityCount, minMax);
     gameMetadata->hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     gameMetadata->hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
@@ -396,6 +417,7 @@ void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory)
     SetAABB(&g_rectManager->NonTraversable);
     CreateScenePartition(gameMetadata->sm, &g_rectManager->NonTraversable);
 }
+
 void LoadStuff(GameMetadata *gameMetadata)
 {
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
@@ -654,6 +676,8 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
     SetParticle(gameMetadata);
 
     LoadStuff(gameMetadata);
+
+    gameMetadata->infinitePlaneNormal = glm::vec3(0, 0, 1);
 
     gameMetadata->initFromGameUpdateAndRender = true;
     END_DEBUG_TIMING();

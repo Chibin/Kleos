@@ -129,7 +129,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     HandleInput(gameMetadata, &continueRunning);
 
-    SetPerFrameData(gameMetadata, perFrameMemory);
+    SetPerFrameData(gameMetadata, perFrameMemory, g_camera, g_projection);
 
     Update(gameMetadata);
     Render(gameMetadata, vc);

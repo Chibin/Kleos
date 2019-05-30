@@ -2,6 +2,7 @@
 #define __RENDER_GROUP__
 
 #include "rectangle.h"
+#include "collision.h"
 
 struct RenderGroup
 {
@@ -11,6 +12,8 @@ struct RenderGroup
     memory_index rectCount;
 
     memory_index rectEntityCount;
+
+    MinMax minMax;
 };
 
 inline void ClearUsedVertexRenderGroup(RenderGroup *rg)
@@ -37,14 +40,20 @@ inline void PushRenderGroupRectVertex(RenderGroup *rg, Rect *rect)
     rg->rectCount++;
 }
 
-inline void PushRenderGroupRectInfo(RenderGroup *rg, Rect *rect)
+inline void PushRenderGroupRectInfo(RenderGroup *rg, Rect *rect, b32 skipFilter)
 {
+    MinMax rectMinMax = {rect->min, rect->max};
+    if (TestAABBAABB(&rg->minMax, &rectMinMax) == false && skipFilter == false)
+    {
+        return;
+    }
+
     PushRectInfo(&rg->rectMemory, rect);
     rg->rectEntityCount++;
 }
 
-
-inline RenderGroup *CreateRenderGroup(GameMemory *perFrameMemory, u32 numOfPointsPerRect, u16 maxEntityCount)
+inline RenderGroup *CreateRenderGroup(
+        GameMemory *perFrameMemory, u32 numOfPointsPerRect, u16 maxEntityCount, MinMax minMax)
 {
     RenderGroup *result = (RenderGroup *)AllocateMemory(perFrameMemory, sizeof(RenderGroup));
     memset(result, 0, sizeof(RenderGroup));
@@ -55,6 +64,8 @@ inline RenderGroup *CreateRenderGroup(GameMemory *perFrameMemory, u32 numOfPoint
     u32 rectMemoryBlockSize = sizeof(Rect) * maxEntityCount;
     result->rectMemory.base = (u8 *)AllocateMemory(perFrameMemory, rectMemoryBlockSize);
     result->rectMemory.maxSize = rectMemoryBlockSize;
+
+    result->minMax = minMax;
 
     return result;
 }

@@ -71,6 +71,7 @@ struct GameMetadata
 
     b32 willSelectObject;
     Rect *selectedRect;
+    glm::vec3 infinitePlaneNormal;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

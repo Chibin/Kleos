@@ -25,6 +25,7 @@ inline void UpdateParticlePosition(Particle *p, f32 dt)
 
 inline void UpdateAndGenerateParticleRectInfo(RenderGroup *renderGroup, ParticleSystem *ps, s32 ttl)
 {
+    const b32 skipFilter = false;
     for (memory_index i = 0; i < ps->particleCount; i++)
     {
         Particle *particle = &ps->particles[i]; // NOLINT
@@ -42,7 +43,7 @@ inline void UpdateAndGenerateParticleRectInfo(RenderGroup *renderGroup, Particle
                 particle->rect.color.b,
                 alpha});
 
-        PushRenderGroupRectInfo(renderGroup, &particle->rect);
+        PushRenderGroupRectInfo(renderGroup, &particle->rect, skipFilter);
     }
 }
 #endif

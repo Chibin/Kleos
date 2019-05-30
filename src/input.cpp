@@ -149,6 +149,7 @@ void ProcessMouseButtonPressed(u8 button)
 
 v3 GetScreenCoordinateFromMouse(const SDL_MouseMotionEvent &mme)
 {
+    //printf("X: %d, Y: %d\n", mme.x, mme.y);
     return v3{(f32)mme.x, (f32)mme.y, 0};
 }
 

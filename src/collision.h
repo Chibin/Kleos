@@ -19,5 +19,6 @@ struct MinMax
 };
 
 MinMax GetMinMax(v2 center, v2 dim);
+b32 TestAABBAABB(MinMax *a, MinMax *b);
 
 #endif

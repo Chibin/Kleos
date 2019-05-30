@@ -11,24 +11,25 @@ void DrawScene(
         RectDynamicArray *hitBoxes,
         RectDynamicArray *hurtBoxes)
 {
+    const b32 skipFilter = false;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
     ASSERT(g_rectManager->Traversable.rda.size > 0);
 
     RectDynamicArray *newWorldObjects = CreateRDAForNewWorldObjects(gameMetadata);
 
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda);
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda);
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, newWorldObjects);
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hitBoxes);
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes);
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebug);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, newWorldObjects, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hitBoxes, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebug, skipFilter);
 
     PushRenderGroupRectInfo(perFrameRenderGroup,
-            HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, gameMetadata->playerEntity));
+            HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, gameMetadata->playerEntity), skipFilter);
     Rect *minimalRect = CreateMinimalRectInfo(perFrameMemory, g_enemyNPC);
     UpdateNPCAnimation(g_enemyNPC, minimalRect);
-    PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect);
+    PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect, skipFilter);
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 
@@ -57,6 +58,7 @@ void DrawScene(
 
 void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
 {
+    const b32 skipFilter = true;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
     f32 screenHeight = gameMetadata->screenResolution.v[1];
 
@@ -69,7 +71,7 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
         CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.5f), 2, rectHeight);
     bottomUIBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
     bottomUIBar->bitmap = &gameMetadata->whiteBitmap;
-    PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar);
+    PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar, skipFilter);
 
     padding = 0.02f;
     startingPosition = v3{ -1 + padding, -1 + rectHeight * 0.5f, 0 };
@@ -86,7 +88,7 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
             CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 2, rectHeight);
         commandPromptBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
         commandPromptBar->bitmap = &gameMetadata->whiteBitmap;
-        PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar);
+        PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar, skipFilter);
 
         startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
         PushStringRectToRenderGroup(
@@ -107,6 +109,7 @@ void DrawUI(
         const f64 &MCPF)
 {
 
+    const b32 skipFilter = true;
     char buffer[256];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
@@ -153,7 +156,11 @@ void DrawUI(
             stringBitmap.data);
 #endif
 
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, gameMetadata->rdaDebugUI);
+    PushRectDynamicArrayToRenderGroupRectInfo(
+            gameMetadata,
+            perFrameRenderGroup,
+            gameMetadata->rdaDebugUI,
+            skipFilter);
 
     DrawRenderGroup(
             gameMetadata,

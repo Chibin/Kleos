@@ -239,14 +239,14 @@ glm::vec3 GetWorldPointFromMouse(
 }
 
 void PushRectDynamicArrayToRenderGroupRectInfo(
-        GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup, RectDynamicArray *rda)
+        GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup, RectDynamicArray *rda, b32 byPassFilter)
 {
     for (memory_index i = 0; i < rda->size; i++)
     {
         Rect *rect = rda->rects[i];
         rect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, rect->bitmapID);
         ASSERT(rect->bitmap);
-        PushRenderGroupRectInfo(perFrameRenderGroup, rect);
+        PushRenderGroupRectInfo(perFrameRenderGroup, rect, byPassFilter);
     }
 }
 
@@ -398,6 +398,7 @@ void SetUVForCharacter(Rect *rect, s32 character)
 
 void PushStringRectToRenderGroup(RenderGroup *perFrameRenderGroup, GameMetadata *gameMetadata, GameMemory *gameMemory, v3 startingPosition, f32 scale, const char *string)
 {
+    const b32 skipFilter = true;
     v3 position = startingPosition;
     f32 screenWidth = gameMetadata->screenResolution.v[0];
     f32 screenHeight = gameMetadata->screenResolution.v[1];
@@ -452,6 +453,6 @@ void PushStringRectToRenderGroup(RenderGroup *perFrameRenderGroup, GameMetadata 
         position.x += (xWidth + extraPixelPadding) / screenWidth * scale;
 
         SetUVForCharacter(editModeRect, character);
-        PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect);
+        PushRenderGroupRectInfo(perFrameRenderGroup, editModeRect, skipFilter);
     }
 }
