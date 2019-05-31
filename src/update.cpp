@@ -45,7 +45,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     AABB uiTest = {};
     glm::vec3 rayWorld =
-        UnProject(g_camera, g_projection, V2(g_mousePoint), gameMetadata->screenResolution);
+        UnProject(gameMetadata->camera, gameMetadata->projection, V2(g_mousePoint), gameMetadata->screenResolution);
 
     f32 dimRange = 0.1f;
     uiTest.halfDim = v2{dimRange, dimRange * (gameMetadata->screenResolution.x / gameMetadata->screenResolution.y)};
@@ -57,8 +57,8 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     glm::vec3 worldPos =
         GetWorldPointFromMouse(
-                g_camera,
-                g_projection,
+                gameMetadata->camera,
+                gameMetadata->projection,
                 V2(g_mousePoint),
                 gameMetadata->screenResolution,
                 infinitePlaneNormal);
@@ -77,7 +77,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
 
         glm::vec3 rayDirection = glm::vec3(1 / rayWorld.x, 1 / rayWorld.y, 0);
-        if (IntersectionAABB(rect, V2(g_camera->pos), rayDirection))
+        if (IntersectionAABB(rect, V2(gameMetadata->camera->pos), rayDirection))
         {
             AddDebugRect(gameMetadata, rect, COLOR_BLACK_TRANSPARENT);
         }
@@ -199,7 +199,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         /* else don't update */
 
         /* follow the character around */
-        CameraUpdateTarget(g_camera, movement->position);
+        CameraUpdateTarget(gameMetadata->camera, movement->position);
         UpdatePosition(rectFromEntity, V3(movement->position));
 
         UpdateCurrentFrame(rectFromEntity->spriteAnimation, 17.6f);

@@ -72,6 +72,9 @@ struct GameMetadata
     b32 willSelectObject;
     Rect *selectedRect;
     glm::vec3 infinitePlaneNormal;
+
+    struct Camera *camera;
+    glm::mat4 *projection;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

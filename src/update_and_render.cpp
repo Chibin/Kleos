@@ -93,8 +93,6 @@ void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 
 /* TODO: We'll need to get rid of these global variables later on */
-Camera *g_camera = nullptr;
-glm::mat4 *g_projection = nullptr;
 EntityManager *g_entityManager = nullptr;
 RectManager *g_rectManager = nullptr;
 EntityDynamicArray *g_eda = nullptr;
@@ -129,7 +127,7 @@ extern "C" UPDATEANDRENDER(UpdateAndRender)
 
     HandleInput(gameMetadata, &continueRunning);
 
-    SetPerFrameData(gameMetadata, perFrameMemory, g_camera, g_projection);
+    SetPerFrameData(gameMetadata, perFrameMemory, gameMetadata->camera, gameMetadata->projection);
 
     Update(gameMetadata);
     Render(gameMetadata, vc);

@@ -13,7 +13,7 @@ void SetCamera(GameMetadata *gm)
         v3 cameraTarget = { 0, 0, 0 };
         // Head is up (set to 0,1,0 to look upside-down)
         v3 cameraUp = { 0, 1, 0 };
-        g_camera = CreateCamera(&gm->reservedMemory, cameraPos, cameraTarget, cameraUp);
+        gm->camera = CreateCamera(&gm->reservedMemory, cameraPos, cameraTarget, cameraUp);
 }
 
 void SetGameTimeStep(GameMetadata *gm)
@@ -27,8 +27,8 @@ void SetPerspectiveProjection(GameMetadata *gm)
 {
     f32 screenWidth = gm->screenResolution.v[0];
     f32 screenHeight = gm->screenResolution.v[1];
-    g_projection = (glm::mat4 *)AllocateMemory(&gm->reservedMemory, (sizeof(glm::mat4)));
-    *g_projection =
+    gm->projection = (glm::mat4 *)AllocateMemory(&gm->reservedMemory, (sizeof(glm::mat4)));
+    *gm->projection =
         //glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f);
         //glm::infinitePerspective(45.0f, screenWidth / screenHeight, 1.0f);
         glm::mat4(PerspectiveProjectionMatrix(Radians(45.0f), screenWidth / screenHeight, 0.1f, 1000.0f));
@@ -361,19 +361,19 @@ void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
             break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-            ProcessMouseEditMode(gameMetadata, g_camera, g_projection, event);
+            ProcessMouseEditMode(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
         case SDL_MOUSEWHEEL:
-            ProcessMouseInput(event, g_camera);
+            ProcessMouseInput(event, gameMetadata->camera);
             break;
         case SDL_MOUSEMOTION:
             g_mousePoint = ProcessMouseMotion(event.motion);
-            UpdateMouseDrag(gameMetadata, g_camera, g_projection, event);
+            UpdateMouseDrag(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
             break;
         case SDL_KEYDOWN:
             ProcessInputDown(
                     event.key.keysym.sym,
                     gameMetadata,
-                    g_camera,
+                    gameMetadata->camera,
                     continueRunning);
             break;
         case SDL_KEYUP:
@@ -623,9 +623,7 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
     ASSERT(!g_reservedMemory);
     ASSERT(!g_rectManager);
     ASSERT(!*gameTimestep);
-    ASSERT(!g_camera);
     ASSERT(!g_eda);
-    ASSERT(!g_projection);
     ASSERT(!g_entityManager);
 
     g_reservedMemory = reservedMemory;

@@ -190,8 +190,8 @@ void Render(GameMetadata *gameMetadata, VulkanContext *vc)
         perFrameRenderGroup,
         vc,
         &g_vkBuffers,
-        g_camera,
-        g_projection,
+        gameMetadata->camera,
+        gameMetadata->projection,
         hitBoxes,
         hurtBoxes);
 
