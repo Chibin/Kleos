@@ -13,7 +13,6 @@ struct Animation2D
     f32 frameTTL;
     RectUVCoords *currentFrame;
     memory_index currentFrameIndex;
-    Direction direction;
 };
 
 #endif

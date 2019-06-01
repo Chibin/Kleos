@@ -186,7 +186,6 @@ void UpdatePlayer(
 
     UpdateCurrentFrame(rectFromEntity->spriteAnimation, 17.6f);
     UpdateUV(rectFromEntity, *rectFromEntity->spriteAnimation->currentFrame);
-    UpdateFrameDirection(rectFromEntity->spriteAnimation, rectFromEntity->frameDirection);
 
     for (memory_index i = 0; i < gameMetadata->particleSystem.particleCount; i++)
     {

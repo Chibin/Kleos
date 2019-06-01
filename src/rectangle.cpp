@@ -126,6 +126,18 @@ inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
     bottomRight.vUv       = rect->UV[1];
     bottomLeft.vUv        = rect->UV[2];
     topLeft.vUv           = rect->UV[3];
+    if(rect->frameDirection == RIGHT)
+    {
+        v2 first          = rect->UV[0];
+        v2 second         = rect->UV[1];
+        v2 third          = rect->UV[2];
+        v2 fourth         = rect->UV[3];
+
+        topRight.vUv      = v2{ fourth.x, fourth.y };
+        bottomRight.vUv   = v2{ third.x, third.y };
+        bottomLeft.vUv    = v2{ second.x, second.y };
+        topLeft.vUv       = v2{ first.x, first.y };
+    }
 
 #if 1
 
@@ -243,17 +255,6 @@ inline v2 PixelToUV(v2 pixel, u32 width, u32 height)
 inline v2 PixelToUV(v2i pixel, u32 width, u32 height)
 {
     return v2{ (float)pixel.x / (float)width, (float)pixel.y / (float)height };
-}
-
-inline void UpdateFrameDirection(Animation2D *a, Direction d)
-{
-    if (a->direction == d)
-    {
-        return;
-    }
-
-    FlipYAxisOnAllFrames(a);
-    a->direction = d;
 }
 
 inline void UpdateCurrentFrame(Animation2D *a, f32 timeElapsed)

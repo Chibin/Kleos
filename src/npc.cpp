@@ -29,6 +29,7 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, NPC *npc)
 
     r->bitmap = npc->bitmap;
     r->renderLayer = npc->renderLayer;
+    r->frameDirection = npc->direction;
     return r;
 };
 
@@ -57,7 +58,6 @@ void UpdateNPCAnimation(NPC *npc, Rect *r)
 {
     UpdateCurrentFrame(npc->spriteAnimation, 17.6f);
     UpdateUV(r, *npc->spriteAnimation->currentFrame);
-    UpdateFrameDirection(npc->spriteAnimation, npc->direction);
 }
 
 void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, f32 gravity, f32 dt)

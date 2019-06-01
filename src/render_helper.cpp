@@ -452,7 +452,6 @@ void LoadStuff(GameMetadata *gameMetadata)
                     GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom"),
                     "IDLE")
         );
-    g_enemyNPC->spriteAnimation->direction = LEFT;
     g_enemyNPC->direction = LEFT;
     g_enemyNPC->renderLayer = BEHIND_PLAYER;
     g_enemyNPC->movementType = X_MOVEMENT;
@@ -519,7 +518,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         }
 
         Animation2D *spriteAnim = fa->frameCycles[animCount].animationInfo;
-        spriteAnim->direction = LEFT;
         u32 totalFrames = fa->frameCycles[animCount].frameCount;
         spriteAnim->totalFrames = totalFrames;
         spriteAnim->frameCoords =
@@ -566,7 +564,6 @@ inline void LoadAssets(GameMetadata *gameMetadata)
         }
 
         Animation2D *spriteAnim = fa->frameCycles[animCount].animationInfo;
-        spriteAnim->direction = LEFT;
         u32 totalFrames = fa->frameCycles[animCount].frameCount;
         spriteAnim->totalFrames = totalFrames;
         spriteAnim->frameCoords =
