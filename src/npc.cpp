@@ -3,25 +3,7 @@
 
 #define DEBUG_NPC 0
 
-#include "movement.h"
-
-struct NPC
-{
-    /* movement -/+ dim == min / max */
-    Movement *movement;
-    Bitmap *bitmap;
-    v2 dim;
-
-    Animation2D *spriteAnimation;
-    FrameState frameState;
-
-    RenderLayer renderLayer;
-
-    MovementType movementType;
-    MovementPattern movementPattern;
-
-    Direction direction;
-};
+#include "npc.h"
 
 Rect *CreateMinimalRectInfo(GameMemory *gm, NPC *npc)
 {
@@ -58,57 +40,6 @@ void UpdateNPCAnimation(NPC *npc, Rect *r)
 {
     UpdateCurrentFrame(npc->spriteAnimation, 17.6f);
     UpdateUV(r, *npc->spriteAnimation->currentFrame);
-}
-
-void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, f32 gravity, f32 dt)
-{
-
-    v2 center = {0.5f * npc->dim.width, 0.5f * npc->dim.height};
-    /* We only need the min and max from the rect to test for AABB, so we can be a bit reckless here. */
-    Rect nextUpdate = {};
-    nextUpdate.min =
-        V2(npc->movement->position) + V2(npc->movement->velocity) * dt + 0.5f * V2(npc->movement->acceleration) * dt * dt - center;
-    nextUpdate.max =
-        V2(npc->movement->position) + V2(npc->movement->velocity) * dt + 0.5f * V2(npc->movement->acceleration) * dt * dt + center;
-
-    npc->movement->acceleration.y += gravity;
-    MinMax temp = GetMinMax(&nextUpdate);
-    AABB range = MinMaxToSquareAABB(&temp);
-    f32 arbitraryPadding = 5.0f;
-    range.halfDim = range.halfDim + arbitraryPadding;
-    Rect **arr = GetRectsWithInRange(sm, &range);
-
-#if DEBUG_NPC
-    AddDebugRect(sm->gameMetadata, &range, COLOR_GREEN);
-#endif
-
-    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
-    {
-        Rect *rect = arr[i];
-
-#if DEBUG_NPC
-        AddDebugRect(sm->gameMetadata, rect, COLOR_YELLOW);
-#endif
-
-        if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
-        {
-            /* XXX: This is the part where we should figure out the direction of the collision */
-            npc->movement->position.y = rect->max.y + npc->dim.height * 0.5f;
-            npc->movement->velocity.y = 0;
-            npc->movement->acceleration.y = gravity;
-
-            break;
-        }
-    };
-
-    /* TODO: There is a bug here. We're not properly updating the position
-     * based on the collisions
-     */
-    npc->movement->position += npc->movement->velocity * dt + 0.5f * npc->movement->acceleration * dt * dt;
-    npc->movement->velocity.y += npc->movement->acceleration.y *dt;
-
-    /* Apply "friction" */
-    npc->movement->velocity.x = 0;
 }
 
 void NPCMoveRight(NPC *npc)

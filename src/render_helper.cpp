@@ -47,11 +47,13 @@ void SetHash(GameMetadata *gm)
     HASH_CREATE(HashBitmapVkDescriptorSet, &gm->reservedMemory, hashBMPDescSet, MAX_HASH);
     HASH_CREATE(HashEntityRect, &gm->reservedMemory, hashEntityRect, MAX_HASH);
     HASH_CREATE(HashEntityMovement, &gm->reservedMemory, hashEntityMovement, MAX_HASH);
+    HASH_CREATE(HashEntityNPC, &gm->reservedMemory, hashEntityNPC, MAX_HASH);
 
     gm->hashBitmapVkDescriptorSet = hashBMPDescSet;
     gm->hashBitmap = hashBitmap;
     gm->hashEntityRect = hashEntityRect;
     gm->hashEntityMovement = hashEntityMovement;
+    gm->hashEntityNPC = hashEntityNPC;
 }
 
 void SetWhiteBitmap(GameMetadata *gm)
@@ -461,6 +463,7 @@ void LoadStuff(GameMetadata *gameMetadata)
     Entity *enemyEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
     enemyEntity->id = g_entityID++;
     HashAdd(gameMetadata->hashEntityMovement, enemyEntity, g_enemyNPC->movement);
+    HashAdd(gameMetadata->hashEntityNPC, enemyEntity, g_enemyNPC);
 }
 
 inline void LoadAssets(GameMetadata *gameMetadata)

@@ -41,22 +41,6 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
     /* This points towards us */
     glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
 
-    glm::vec3 worldPos =
-        GetWorldPointFromMouse(
-                gameMetadata->camera,
-                gameMetadata->projection,
-                V2(g_mousePoint),
-                gameMetadata->screenResolution,
-                infinitePlaneNormal);
-
-    uiTest.halfDim = v2{dimRange, dimRange};
-    uiTest.center = v2{worldPos.x, worldPos.y};
-#if 0
-    printf("coords: X %f, Y %f\n", uiTest.center.x, uiTest.center.y);
-#endif
-
-    AddDebugRect(gameMetadata, &uiTest, COLOR_BLUE_TRANSPARENT);
-
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
         Rect *rect = arr[i];
@@ -89,8 +73,6 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
      */
     movement->position += movement->velocity * dt + 0.5f * movement->acceleration * dt * dt;
     movement->velocity.y += movement->acceleration.y *dt;
-
-    UpdatePositionBasedOnCollission(gameMetadata->sm, g_enemyNPC, gravity, dt);
 }
 
 void UpdateAttack(
@@ -121,7 +103,6 @@ void UpdateAttack(
             e->frameState.transform[0][0] = abs(e->frameState.transform[0][0]);
             e->frameState.transform[1][1] = abs(e->frameState.transform[1][1]);
         }
-
     }
 
     if (e->frameState.timePassedCurrentFrame == 0)
@@ -230,16 +211,26 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     f32 dt = gt->dt;
 
-    FOR_EACH_HASH_KEY_VAL_BEGIN(HashEntityRect, hashKeyVal, gameMetadata->hashEntityRect)
+    FOR_EACH_HASH_KEY_VAL_BEGIN(HashEntityMovement, hashKeyVal, gameMetadata->hashEntityMovement)
     {
         Entity *e = hashKeyVal->key;
-        Rect *rectFromEntity = hashKeyVal->val;
-        Movement *movement = HashGetValue(HashEntityMovement, gameMetadata->hashEntityMovement, e);
+        Movement *movement = hashKeyVal->val;
+        Rect *rectFromEntity = HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, e);
 
-        UpdateMovement(gameMetadata, movement, rectFromEntity->dim, dt);
+        if (rectFromEntity != NULL)
+        {
+            UpdateMovement(gameMetadata, movement, rectFromEntity->dim, dt);
+        }
+        else
+        {
+
+            NPC *npcFromEntity = HashGetValue(HashEntityNPC, gameMetadata->hashEntityNPC, e);
+            ASSERT(npcFromEntity != NULL);
+            UpdateMovement(gameMetadata, movement, npcFromEntity->dim, dt);
+        }
 
         /* TODO: can't let the player spam attack while we're still in an attack animation */
-        if (e->willAttack)
+        if (e->willAttack && rectFromEntity != NULL)
         {
             UpdateAttack(gameMetadata, gt, e, movement, rectFromEntity);
         }

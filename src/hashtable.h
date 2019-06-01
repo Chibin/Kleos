@@ -4,6 +4,7 @@
 #include "hash.h"
 #include "entity.h"
 #include "rectangle.h"
+#include "npc.h"
 #include "bitmap.h"
 #include "movement.h"
 #include "renderer/vulkan/vulkan.h"
@@ -18,6 +19,7 @@ CREATE_STRUCT(HashBitmapVkDescriptorSet, Bitmap *, VkDescriptorSet *);
 CREATE_STRUCT(HashBitmapBitmap, Bitmap *, Bitmap *);
 CREATE_STRUCT(HashEntityRect, Entity *, Rect *);
 CREATE_STRUCT(HashEntityMovement, Entity *, Movement *);
+CREATE_STRUCT(HashEntityNPC, Entity *, NPC *);
 
 CREATE_HASH_GET_VALUE_FUCTION_PROTOTYPE(HashEntityMovement, Entity *, Movement *);
 #endif
