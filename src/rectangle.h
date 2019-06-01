@@ -76,12 +76,10 @@ struct MinimalRectInfo
 
 struct Rect
 {
-    Entity *entity;
-
     v4 color;
     v2 UV[4];
 
-    real32 width, height;
+    v2 dim;
 
     memory_index bitmapID;
     Bitmap *bitmap;

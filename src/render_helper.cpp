@@ -457,6 +457,11 @@ void LoadStuff(GameMetadata *gameMetadata)
     g_enemyNPC->renderLayer = BEHIND_PLAYER;
     g_enemyNPC->movementType = X_MOVEMENT;
     g_enemyNPC->movementPattern = UNI_DIRECTIONAL;
+    g_enemyNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
+
+    Entity *enemyEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
+    enemyEntity->id = g_entityID++;
+    HashAdd(gameMetadata->hashEntityMovement, enemyEntity, g_enemyNPC->movement);
 }
 
 inline void LoadAssets(GameMetadata *gameMetadata)

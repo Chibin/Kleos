@@ -68,7 +68,7 @@ void SaveScene(GameMetadata *gm, const char *fileName)
             WriteToFile(file, widthTag);
 
             char dimBuffer[256] = {};
-            s32 bytesWritten = ToChar(dimBuffer, sizeof(dimBuffer), rect->width);
+            s32 bytesWritten = ToChar(dimBuffer, sizeof(dimBuffer), rect->dim.x);
             dimBuffer[bytesWritten] = '\n';
             WriteToFile(file, dimBuffer);
 
@@ -76,7 +76,7 @@ void SaveScene(GameMetadata *gm, const char *fileName)
             WriteToFile(file, heightTag);
 
             memset(dimBuffer, 0, sizeof(dimBuffer));
-            bytesWritten = ToChar(dimBuffer, sizeof(dimBuffer), rect->height);
+            bytesWritten = ToChar(dimBuffer, sizeof(dimBuffer), rect->dim.y);
             dimBuffer[bytesWritten] = '\n';
             WriteToFile(file, dimBuffer);
 

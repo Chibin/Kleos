@@ -8,7 +8,7 @@
 struct NPC
 {
     /* movement -/+ dim == min / max */
-    Movement movement;
+    Movement *movement;
     Bitmap *bitmap;
     v2 dim;
 
@@ -25,7 +25,7 @@ struct NPC
 
 Rect *CreateMinimalRectInfo(GameMemory *gm, NPC *npc)
 {
-    Rect *r =  CreateRectangle(gm, npc->movement.position, COLOR_WHITE, npc->dim);
+    Rect *r =  CreateRectangle(gm, npc->movement->position, COLOR_WHITE, npc->dim);
 
     r->bitmap = npc->bitmap;
     r->renderLayer = npc->renderLayer;
@@ -67,11 +67,11 @@ void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, f32 gravity, f3
     /* We only need the min and max from the rect to test for AABB, so we can be a bit reckless here. */
     Rect nextUpdate = {};
     nextUpdate.min =
-        V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt - center;
+        V2(npc->movement->position) + V2(npc->movement->velocity) * dt + 0.5f * V2(npc->movement->acceleration) * dt * dt - center;
     nextUpdate.max =
-        V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
+        V2(npc->movement->position) + V2(npc->movement->velocity) * dt + 0.5f * V2(npc->movement->acceleration) * dt * dt + center;
 
-    npc->movement.acceleration.y += gravity;
+    npc->movement->acceleration.y += gravity;
     MinMax temp = GetMinMax(&nextUpdate);
     AABB range = MinMaxToSquareAABB(&temp);
     f32 arbitraryPadding = 5.0f;
@@ -93,9 +93,9 @@ void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, f32 gravity, f3
         if (rect->type == COLLISION && TestAABBAABB(rect, &nextUpdate))
         {
             /* XXX: This is the part where we should figure out the direction of the collision */
-            npc->movement.position.y = rect->max.y + npc->dim.height * 0.5f;
-            npc->movement.velocity.y = 0;
-            npc->movement.acceleration.y = gravity;
+            npc->movement->position.y = rect->max.y + npc->dim.height * 0.5f;
+            npc->movement->velocity.y = 0;
+            npc->movement->acceleration.y = gravity;
 
             break;
         }
@@ -104,23 +104,23 @@ void UpdatePositionBasedOnCollission(SceneManager *sm, NPC *npc, f32 gravity, f3
     /* TODO: There is a bug here. We're not properly updating the position
      * based on the collisions
      */
-    npc->movement.position += npc->movement.velocity * dt + 0.5f * npc->movement.acceleration * dt * dt;
-    npc->movement.velocity.y += npc->movement.acceleration.y *dt;
+    npc->movement->position += npc->movement->velocity * dt + 0.5f * npc->movement->acceleration * dt * dt;
+    npc->movement->velocity.y += npc->movement->acceleration.y *dt;
 
     /* Apply "friction" */
-    npc->movement.velocity.x = 0;
+    npc->movement->velocity.x = 0;
 }
 
 void NPCMoveRight(NPC *npc)
 {
     npc->direction = RIGHT;
-    npc->movement.velocity.x += 1.0f;
+    npc->movement->velocity.x += 1.0f;
 }
 
 void NPCMoveLeft(NPC *npc)
 {
     npc->direction = LEFT;
-    npc->movement.velocity.x -= 1.0f;
+    npc->movement->velocity.x -= 1.0f;
 }
 
 b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, f32 dt)
@@ -130,9 +130,9 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, f32 dt)
     Rect nextUpdate = {};
 
     nextUpdate.min =
-        V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt - center;
+        V2(npc->movement->position) + V2(npc->movement->velocity) * dt + 0.5f * V2(npc->movement->acceleration) * dt * dt - center;
     nextUpdate.max =
-        V2(npc->movement.position) + V2(npc->movement.velocity) * dt + 0.5f * V2(npc->movement.acceleration) * dt * dt + center;
+        V2(npc->movement->position) + V2(npc->movement->velocity) * dt + 0.5f * V2(npc->movement->acceleration) * dt * dt + center;
 
     MinMax temp = GetMinMax(&nextUpdate);
     AABB range = MinMaxToSquareAABB(&temp);

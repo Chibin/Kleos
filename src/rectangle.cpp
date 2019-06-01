@@ -10,8 +10,8 @@ inline void SetRectPoints(Rect *rect, v3 center, f32 width, f32 height)
     v2 max = basePositionXY + centerXY;
 
     rect->center = center;
-    rect->width = width;
-    rect->height = height;
+    rect->dim.x = width;
+    rect->dim.y = height;
 
 #if 1
     /* This is for clock wise */
@@ -90,11 +90,6 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, v4 color, AABB *aabb)
 Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 {
     return CreateMinimalRectInfo(gm, COLOR_RED, min, max);
-}
-
-inline Entity *GetEntity(Rect *rect)
-{
-    return rect->entity;
 }
 
 inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
@@ -179,7 +174,7 @@ void PushRectInfo(GameMemory *gm, Rect *rect)
 
 inline void UpdatePosition(Rect *r, v3 newPosition)
 {
-    v2 center = 0.5f * v2{r->width, r->height};
+    v2 center = 0.5f * r->dim;
 
 #if 0
     v2 min = { newPosition.x, newPosition.y };

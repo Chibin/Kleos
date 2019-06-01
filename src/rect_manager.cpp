@@ -7,7 +7,7 @@ void SetAABB(RectStorage *rs)
     {
         Rect *rect = rs->rda.rects[i];
             v2 center = V2(rect->center);
-            v2 dim = v2{rect->width, rect->height};
+            v2 dim = rect->dim;
             MinMax result = GetMinMax(center, dim);
 
             aabbMinMax.min.x = aabbMinMax.min.x > result.min.x ? result.min.x : aabbMinMax.min.x;

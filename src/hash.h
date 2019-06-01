@@ -140,31 +140,24 @@ b32 KeyCompare(const char *a, const char *b)
         }                                                                                          \
     }
 
-#define HASH_GET_VALUE(T, hash, k, result)                                                         \
+#define HASH_GET_VALUE(T, hash, k, result, found)                                                  \
+    memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                              \
+    T *tmp = &((T *)hash->list)[index];                                                            \
+                                                                                                   \
+    if(hash->isEmptyList[index] == false)                                                          \
     {                                                                                              \
-        memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                          \
-        T *tmp = &((T *)hash->list)[index];                                                        \
-                                                                                                   \
-        b32 found = false;                                                                         \
-        if(hash->isEmptyList[index] == false)                                                      \
+        do                                                                                         \
         {                                                                                          \
-            do                                                                                     \
+            if (KeyCompare(tmp->key, k))                                                           \
             {                                                                                      \
-                if (KeyCompare(tmp->key, k))                                                       \
-                {                                                                                  \
-                    result = tmp->val;                                                             \
-                    found = true;                                                                  \
-                    break;                                                                         \
-                }                                                                                  \
-                                                                                                   \
+                result = tmp->val;                                                                 \
+                found = true;                                                                      \
+                break;                                                                             \
             }                                                                                      \
-            while((tmp = tmp->next) != 0);                                                         \
+                                                                                                   \
         }                                                                                          \
-        if(!found)                                                                                 \
-        {                                                                                          \
-            printf("not found\n");                                                                 \
-        }                                                                                          \
-    }
+        while((tmp = tmp->next) != 0);                                                             \
+    }                                                                                              \
 
 #define CREATE_HASH_ADD_FUNCTION(T, keyType, valueType)                                            \
     void HashAdd(Hash *hash, keyType k, valueType value)                                           \
@@ -179,7 +172,12 @@ b32 KeyCompare(const char *a, const char *b)
     valueType T##GetValue(Hash *hash, keyType k)                                                   \
     {                                                                                              \
         valueType result = {};                                                                     \
-        HASH_GET_VALUE(T, hash, k, result);                                                        \
+        b32 found = false;                                                                         \
+        HASH_GET_VALUE(T, hash, k, result, found);                                                 \
+        if(!found)                                                                                 \
+        {                                                                                          \
+            return NULL;                                                                           \
+        }                                                                                          \
         return result;                                                                             \
     }                                                                                              \
 
