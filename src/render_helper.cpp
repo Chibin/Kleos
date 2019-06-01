@@ -246,6 +246,7 @@ void SetPlayer(GameMetadata *gm)
     v3 pos = { 0, 0, 0.01f };
     Entity *playerEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
     playerEntity->id = g_entityID++;
+    playerEntity->isPlayer = true;
     gm->playerEntity = playerEntity;
 
     Rect *playerRect = CreateRectangle(reservedMemory, pos, COLOR_WHITE, 2, 1);

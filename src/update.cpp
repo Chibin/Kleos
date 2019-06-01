@@ -1,7 +1,7 @@
 #ifndef __UPDATE__
 #define __UPDATE__
 
-void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup, bool isPlayer = false)
+void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArray *hitBoxes, RectDynamicArray *hurtBoxes, RenderGroup *perFrameRenderGroup)
 {
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
@@ -184,7 +184,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
             }
         }
 
-        if (isPlayer)
+        if (e->isPlayer)
         {
             /* TODO: bound checking for the camera such that we only move the camera
              * when necessary
@@ -318,7 +318,7 @@ void Update(GameMetadata *gameMetadata)
     UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
 
     /* Update entities */
-    UpdateEntities(gameMetadata, gameTimestep, gameMetadata->hitBoxes, gameMetadata->hurtBoxes, gameMetadata->perFrameRenderGroup, true);
+    UpdateEntities(gameMetadata, gameTimestep, gameMetadata->hitBoxes, gameMetadata->hurtBoxes, gameMetadata->perFrameRenderGroup);
 }
 
 #endif
