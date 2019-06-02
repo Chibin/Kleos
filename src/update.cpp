@@ -27,7 +27,10 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
 #endif
     range.halfDim = range.halfDim + arbitraryPadding;
     Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+
+#if 0
     AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
+#endif
 
     AABB uiTest = {};
     glm::vec3 rayWorld =
@@ -44,7 +47,9 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
     {
         Rect *rect = arr[i];
+#if 0
         AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
+#endif
 
         glm::vec3 rayDirection = glm::vec3(1 / rayWorld.x, 1 / rayWorld.y, 0);
         if (IntersectionAABB(rect, V2(gameMetadata->camera->pos), rayDirection))
@@ -311,7 +316,9 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
             Rect *rect = arr[i];
             if (ContainsPoint(rect, range.center))
             {
+#if 0
                 AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
+#endif
                 gameMetadata->selectedRect = rect;
                 break;
             }
@@ -330,7 +337,11 @@ void Update(GameMetadata *gameMetadata)
     UpdateBasedOnEditModeChanges(gameMetadata);
 
     const GLfloat gravity = -9.81f;
-    UpdateNPCMovement(g_enemyNPC, gameMetadata, gameTimestep->dt);
+    FOR_EACH_HASH_KEY_VAL_BEGIN(HashEntityNPC, hashKeyVal, gameMetadata->hashEntityNPC)
+    {
+        UpdateNPCMovement(hashKeyVal->val, gameMetadata, gameTimestep->dt);
+    }
+    FOR_EACH_HASH_KEY_VAL_END();
 
     /* Update entities */
     UpdateEntities(gameMetadata, gameTimestep, gameMetadata->hitBoxes, gameMetadata->hurtBoxes, gameMetadata->perFrameRenderGroup);

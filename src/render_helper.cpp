@@ -441,29 +441,55 @@ void LoadStuff(GameMetadata *gameMetadata)
     }
 
     /* Spawn new enemty */
-    g_enemyNPC = (NPC *)AllocateMemory(reservedMemory, sizeof(NPC));
-    memset(g_enemyNPC, 0, sizeof(NPC));
+    NPC *enemyNPC = (NPC *)AllocateMemory(reservedMemory, sizeof(NPC));
+    memset(enemyNPC, 0, sizeof(NPC));
 
-    g_enemyNPC->dim.height = 1.0f;
-    g_enemyNPC->dim.width = 1.5f;
-    g_enemyNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
-    g_enemyNPC->spriteAnimation =
+    enemyNPC->dim.height = 1.0f;
+    enemyNPC->dim.width = 1.5f;
+    enemyNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
+    enemyNPC->spriteAnimation =
         CreateCopyOfSpriteAnimationInfo(
                 reservedMemory,
                 GetSpriteAnimationInfo(
                     GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom"),
                     "IDLE")
         );
-    g_enemyNPC->direction = LEFT;
-    g_enemyNPC->renderLayer = BEHIND_PLAYER;
-    g_enemyNPC->movementType = X_MOVEMENT;
-    g_enemyNPC->movementPattern = UNI_DIRECTIONAL;
-    g_enemyNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
+    enemyNPC->direction = LEFT;
+    enemyNPC->renderLayer = BEHIND_PLAYER;
+    enemyNPC->movementType = X_MOVEMENT;
+    enemyNPC->movementPattern = UNI_DIRECTIONAL;
+    enemyNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
 
     Entity *enemyEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
     enemyEntity->id = g_entityID++;
-    HashAdd(gameMetadata->hashEntityMovement, enemyEntity, g_enemyNPC->movement);
-    HashAdd(gameMetadata->hashEntityNPC, enemyEntity, g_enemyNPC);
+    HashAdd(gameMetadata->hashEntityMovement, enemyEntity, enemyNPC->movement);
+    HashAdd(gameMetadata->hashEntityNPC, enemyEntity, enemyNPC);
+
+    /* Spawn another enemty */
+    NPC *secondNPC = (NPC *)AllocateMemory(reservedMemory, sizeof(NPC));
+    memset(secondNPC, 0, sizeof(NPC));
+
+    secondNPC->dim.height = 1.0f;
+    secondNPC->dim.width = 1.5f;
+    secondNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
+    secondNPC->spriteAnimation =
+        CreateCopyOfSpriteAnimationInfo(
+                reservedMemory,
+                GetSpriteAnimationInfo(
+                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom"),
+                    "IDLE")
+        );
+    secondNPC->direction = LEFT;
+    secondNPC->renderLayer = BEHIND_PLAYER;
+    secondNPC->movementType = X_MOVEMENT;
+    secondNPC->movementPattern = UNI_DIRECTIONAL;
+    secondNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
+    secondNPC->movement->position = glm::vec3(1,1,0);
+
+    Entity *secondNPCEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
+    secondNPCEntity->id = g_entityID++;
+    HashAdd(gameMetadata->hashEntityMovement, secondNPCEntity, secondNPC->movement);
+    HashAdd(gameMetadata->hashEntityNPC, secondNPCEntity, secondNPC);
 }
 
 inline void LoadAssets(GameMetadata *gameMetadata)

@@ -27,9 +27,15 @@ void DrawScene(
 
     PushRenderGroupRectInfo(perFrameRenderGroup,
             HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, gameMetadata->playerEntity), skipFilter);
-    Rect *minimalRect = CreateMinimalRectInfo(perFrameMemory, g_enemyNPC);
-    UpdateNPCAnimation(g_enemyNPC, minimalRect);
-    PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect, skipFilter);
+
+    FOR_EACH_HASH_KEY_VAL_BEGIN(HashEntityNPC, hashKeyVal, gameMetadata->hashEntityNPC)
+    {
+        NPC *npc = hashKeyVal->val;
+        Rect *minimalRect = CreateMinimalRectInfo(perFrameMemory, npc);
+        UpdateNPCAnimation(npc, minimalRect);
+        PushRenderGroupRectInfo(perFrameRenderGroup, minimalRect, skipFilter);
+    }
+    FOR_EACH_HASH_KEY_VAL_END();
 
     ClearUsedVertexRenderGroup(perFrameRenderGroup);
 

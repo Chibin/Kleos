@@ -101,7 +101,6 @@ static bool g_debugMode = false;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 static memory_index g_entityID = 0;
-static NPC *g_enemyNPC = nullptr;
 
 #include "render_helper.cpp"
 #include "update.cpp"
