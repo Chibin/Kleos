@@ -54,7 +54,6 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "camera.cpp"
 #include "entity.cpp"
 #include "frame.cpp"
-#include "entity_manager.cpp"
 #include "font.cpp"
 #include "game_time.cpp"
 #include "shaders.cpp"
@@ -93,11 +92,7 @@ void LoadStuff(GameMetadata *gameMetadata);
 inline void LoadAssets(GameMetadata *gameMetadata);
 
 /* TODO: We'll need to get rid of these global variables later on */
-EntityManager *g_entityManager = nullptr;
-RectManager *g_rectManager = nullptr;
-EntityDynamicArray *g_eda = nullptr;
 v3 g_mousePoint;
-static bool g_debugMode = false;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 static memory_index g_entityID = 0;

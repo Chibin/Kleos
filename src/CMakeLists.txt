@@ -13,7 +13,6 @@ list (APPEND justtobuild
     camera.cpp
     collision.cpp
     entity.cpp
-    entity_manager.cpp
     font.cpp
     game_time.cpp
     input.cpp

@@ -417,8 +417,8 @@ void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Cam
     gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);
     gameMetadata->rdaDebugUI = CreateRectDynamicArray(perFrameMemory);
     gameMetadata->sm = CreateSceneManager(gameMetadata, perFrameMemory);
-    SetAABB(&g_rectManager->NonTraversable);
-    CreateScenePartition(gameMetadata->sm, &g_rectManager->NonTraversable);
+    SetAABB(&gameMetadata->rectManager->NonTraversable);
+    CreateScenePartition(gameMetadata->sm, &gameMetadata->rectManager->NonTraversable);
 }
 
 void LoadStuff(GameMetadata *gameMetadata)
@@ -436,7 +436,7 @@ void LoadStuff(GameMetadata *gameMetadata)
                 CreateRectangle(reservedMemory, startingPosition, color, 1, 1);
             r->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "awesomeface")->bitmapID;
             r->renderLayer = BACKGROUND;
-            PushBack(&(g_rectManager->Traversable.rda), r);
+            PushBack(&(gameMetadata->rectManager->Traversable.rda), r);
         }
     }
 
@@ -639,7 +639,7 @@ inline void LoadAssets(GameMetadata *gameMetadata)
 
             Bitmap *findBoxBitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
             collissionRect->bitmapID = findBoxBitmap->bitmapID;
-            PushBack(&(g_rectManager->NonTraversable.rda), collissionRect);
+            PushBack(&(gameMetadata->rectManager->NonTraversable.rda), collissionRect);
         }
     }
 }
@@ -653,20 +653,14 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
     GameTimestep **gameTimestep = &gameMetadata->gameTimestep;
 
     ASSERT(!g_reservedMemory);
-    ASSERT(!g_rectManager);
     ASSERT(!*gameTimestep);
-    ASSERT(!g_eda);
-    ASSERT(!g_entityManager);
 
     g_reservedMemory = reservedMemory;
 
     /* TODO: May be the entity manager should be the only one creating the
      * entities?
      */
-    g_entityManager = CreateEntityManger(reservedMemory);
-    g_eda = CreateEntityDynamicArray(reservedMemory);
-    g_rectManager = CreateRectManager(reservedMemory);
-    gameMetadata->rectManager = g_rectManager;
+    gameMetadata->rectManager = CreateRectManager(reservedMemory);
 
     LoadAssets(gameMetadata);
 

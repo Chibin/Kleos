@@ -290,9 +290,9 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
         permanentRect->type = COLLISION;
         permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
         permanentRect->renderLayer = FRONT_STATIC;
-        PushBack(&g_rectManager->NonTraversable.rda, permanentRect);
+        PushBack(&gameMetadata->rectManager->NonTraversable.rda, permanentRect);
 
-        SetAABB(&g_rectManager->NonTraversable);
+        SetAABB(&gameMetadata->rectManager->NonTraversable);
     }
 
     if (gameMetadata->isLeftButtonReleased == false)

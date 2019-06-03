@@ -14,12 +14,12 @@ void DrawScene(
     const b32 skipFilter = false;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
 
-    ASSERT(g_rectManager->Traversable.rda.size > 0);
+    ASSERT(gameMetadata->rectManager->Traversable.rda.size > 0);
 
     RectDynamicArray *newWorldObjects = CreateRDAForNewWorldObjects(gameMetadata);
 
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->Traversable.rda, skipFilter);
-    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &g_rectManager->NonTraversable.rda, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &gameMetadata->rectManager->Traversable.rda, skipFilter);
+    PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, &gameMetadata->rectManager->NonTraversable.rda, skipFilter);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, newWorldObjects, skipFilter);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hitBoxes, skipFilter);
     PushRectDynamicArrayToRenderGroupRectInfo(gameMetadata, perFrameRenderGroup, hurtBoxes, skipFilter);
