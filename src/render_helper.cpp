@@ -48,12 +48,14 @@ void SetHash(GameMetadata *gm)
     HASH_CREATE(HashEntityRect, &gm->reservedMemory, hashEntityRect, MAX_HASH);
     HASH_CREATE(HashEntityMovement, &gm->reservedMemory, hashEntityMovement, MAX_HASH);
     HASH_CREATE(HashEntityNPC, &gm->reservedMemory, hashEntityNPC, MAX_HASH);
+    HASH_CREATE(HashSetEntity, &gm->reservedMemory, hashSetEntity, MAX_HASH);
 
     gm->hashBitmapVkDescriptorSet = hashBMPDescSet;
     gm->hashBitmap = hashBitmap;
     gm->hashEntityRect = hashEntityRect;
     gm->hashEntityMovement = hashEntityMovement;
     gm->hashEntityNPC = hashEntityNPC;
+    gm->hashSetEntity = hashSetEntity;
 }
 
 void SetWhiteBitmap(GameMetadata *gm)
@@ -246,8 +248,7 @@ void SetPlayer(GameMetadata *gm)
 {
     GameMemory *reservedMemory = &gm->reservedMemory;
     v3 pos = { 0, 0, 0.01f };
-    Entity *playerEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
-    playerEntity->id = g_entityID++;
+    Entity *playerEntity = CreateNewEntity(gm, reservedMemory);
     playerEntity->isPlayer = true;
     gm->playerEntity = playerEntity;
 
@@ -460,8 +461,7 @@ void LoadStuff(GameMetadata *gameMetadata)
     enemyNPC->movementPattern = UNI_DIRECTIONAL;
     enemyNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
 
-    Entity *enemyEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
-    enemyEntity->id = g_entityID++;
+    Entity *enemyEntity = CreateNewEntity(gameMetadata, reservedMemory);
     HashAdd(gameMetadata->hashEntityMovement, enemyEntity, enemyNPC->movement);
     HashAdd(gameMetadata->hashEntityNPC, enemyEntity, enemyNPC);
 
@@ -484,10 +484,9 @@ void LoadStuff(GameMetadata *gameMetadata)
     secondNPC->movementType = X_MOVEMENT;
     secondNPC->movementPattern = UNI_DIRECTIONAL;
     secondNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
-    secondNPC->movement->position = glm::vec3(1,1,0);
+    secondNPC->movement->position = glm::vec3(1,2,0);
 
-    Entity *secondNPCEntity = (Entity *)AllocateMemory0(reservedMemory, sizeof(Entity));
-    secondNPCEntity->id = g_entityID++;
+    Entity *secondNPCEntity = CreateNewEntity(gameMetadata, reservedMemory);
     HashAdd(gameMetadata->hashEntityMovement, secondNPCEntity, secondNPC->movement);
     HashAdd(gameMetadata->hashEntityNPC, secondNPCEntity, secondNPC);
 }

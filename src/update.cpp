@@ -216,10 +216,10 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
     f32 dt = gt->dt;
 
-    FOR_EACH_HASH_KEY_VAL_BEGIN(HashEntityMovement, hashKeyVal, gameMetadata->hashEntityMovement)
+    FOR_EACH_HASH_KEY_VAL_BEGIN(HashSetEntity, hashKeyVal, gameMetadata->hashSetEntity)
     {
         Entity *e = hashKeyVal->key;
-        Movement *movement = hashKeyVal->val;
+        Movement *movement = HashGetValue(HashEntityMovement, gameMetadata->hashEntityMovement, e);
         Rect *rectFromEntity = HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, e);
 
         if (rectFromEntity != NULL)

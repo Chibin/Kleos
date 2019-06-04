@@ -32,6 +32,8 @@ struct GameMetadata
     Hash *hashEntityRect;
     Hash *hashEntityMovement;
     Hash *hashEntityNPC;
+    Hash *hashSetEntity;
+    memory_index entityID;
 
     FrameAnimation frameAnimationSentinelNode;
 

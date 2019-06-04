@@ -95,7 +95,6 @@ inline void LoadAssets(GameMetadata *gameMetadata);
 v3 g_mousePoint;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
-static memory_index g_entityID = 0;
 
 #include "render_helper.cpp"
 #include "update.cpp"

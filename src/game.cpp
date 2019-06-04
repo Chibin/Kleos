@@ -51,6 +51,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.willSelectObject = false;
     gameMetadata.selectedRect = nullptr;
 
+    gameMetadata.entityID = 0;
+
     FindFile(GetProgramPath(), "render*dll");
 
     /* We still want to initialize vulkan. This is so that we have the
