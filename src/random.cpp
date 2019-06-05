@@ -259,7 +259,7 @@ b32 IsWithinThreshold(v2 a, v2 b, f32 thresholdValueInScreenCoordinates)
 
 void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SDL_Event &event)
 {
-    if (!gm->isEditMode)
+    if (!gm->editMode.isActive)
     {
         return;
     }
@@ -281,33 +281,33 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                         screenCoordinates,
                         gm->screenResolution,
                         infinitePlaneNormal);
-            if (mbe.state == SDL_PRESSED && gm->isLeftButtonReleased)
+            if (mbe.state == SDL_PRESSED && gm->editMode.isLeftButtonReleased)
             {
-                gm->screenCoordinates[0] = screenCoordinates;
-                gm->leftMouseDrag[0] = worldPos;
+                gm->editMode.screenCoordinates[0] = screenCoordinates;
+                gm->editMode.leftMouseDrag[0] = worldPos;
 
-                gm->isLeftButtonReleased = false;
+                gm->editMode.isLeftButtonReleased = false;
             }
             else if (mbe.state == SDL_RELEASED)
             {
-                gm->isLeftButtonReleased = true;
+                gm->editMode.isLeftButtonReleased = true;
 
-                gm->leftMouseDrag[1] = worldPos;
-                gm->screenCoordinates[1] = screenCoordinates;
+                gm->editMode.leftMouseDrag[1] = worldPos;
+                gm->editMode.screenCoordinates[1] = screenCoordinates;
 
                 f32 screenCoordinatesThresholdValue = 17.0f;
-                if (IsWithinThreshold(gm->screenCoordinates[0], gm->screenCoordinates[1], screenCoordinatesThresholdValue))
+                if (IsWithinThreshold(gm->editMode.screenCoordinates[0], gm->editMode.screenCoordinates[1], screenCoordinatesThresholdValue))
                 {
-                    ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->objectsToBeAddedTotheWorld, worldPos);
+                    ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->editMode.objectsToBeAddedTotheWorld, worldPos);
                 }
 
-                gm->createNewRect = true;
+                gm->editMode.createNewRect = true;
             }
             break;
         case SDL_BUTTON_RIGHT:
-            if (mbe.state == SDL_PRESSED && gm->isLeftButtonReleased)
+            if (mbe.state == SDL_PRESSED && gm->editMode.isLeftButtonReleased)
             {
-                gm->isRightButtonReleased = false;
+                gm->editMode.isRightButtonReleased = false;
             }
             else if (mbe.state == SDL_RELEASED)
             {
@@ -318,10 +318,10 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                             screenCoordinates,
                             gm->screenResolution,
                             infinitePlaneNormal);
-                gm->rightMouseButton = worldPos;
-                gm->isRightButtonReleased = true;
+                gm->editMode.rightMouseButton = worldPos;
+                gm->editMode.isRightButtonReleased = true;
 
-                gm->willSelectObject = true;
+                gm->editMode.willSelectObject = true;
             }
             break;
         default:
@@ -333,7 +333,7 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
 
 void UpdateMouseDrag(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SDL_Event &event)
 {
-    if (!gm->isLeftButtonReleased)
+    if (!gm->editMode.isLeftButtonReleased)
     {
         SDL_MouseButtonEvent mbe = event.button;
         v2 screenCoordinates = V2(GetScreenCoordinateFromMouse(event.motion));
@@ -348,7 +348,7 @@ void UpdateMouseDrag(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SD
                     gm->screenResolution,
                     infinitePlaneNormal);
 
-        gm->leftMouseDrag[1] = worldPos;
+        gm->editMode.leftMouseDrag[1] = worldPos;
     }
 }
 
@@ -357,9 +357,9 @@ RectDynamicArray *CreateRDAForNewWorldObjects(GameMetadata *gm)
     GameMemory *perFrameMemory = &gm->temporaryMemory;
     RectDynamicArray *result = CreateRectDynamicArray(perFrameMemory);
 
-    for (memory_index i = 0; i < ARRAY_LIST_SIZE(gm->objectsToBeAddedTotheWorld); i++)
+    for (memory_index i = 0; i < ARRAY_LIST_SIZE(gm->editMode.objectsToBeAddedTotheWorld); i++)
     {
-        glm::vec3 pos = gm->objectsToBeAddedTotheWorld[i];
+        glm::vec3 pos = gm->editMode.objectsToBeAddedTotheWorld[i];
         Rect *rect = CreateRectangle(perFrameMemory, V3(pos), COLOR_BLUE_TRANSPARENT, 1, 1);
         rect->bitmapID = 0;
         PushBack(result, rect);

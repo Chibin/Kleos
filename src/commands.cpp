@@ -5,12 +5,12 @@
 
 void ResetCommandPrompt(GameMetadata *gm)
 {
-    for(memory_index i = 0; i < ARRAY_SIZE(gm->commandPrompt); i++)
+    for(memory_index i = 0; i < ARRAY_SIZE(gm->editMode.commandPrompt); i++)
     {
-        gm->commandPrompt[i] = '\0';
+        gm->editMode.commandPrompt[i] = '\0';
 
     }
-    gm->commandPromptCount = 0;
+    gm->editMode.commandPromptCount = 0;
 }
 
 void WriteToFile(SDL_RWops *file, const char *str)
@@ -142,7 +142,7 @@ void LoadScene(GameMetadata *gm, const char *fileName)
 
 void ProcessCommand(GameMetadata *gm, Camera *camera)
 {
-    if (gm->commandPromptCount == 0)
+    if (gm->editMode.commandPromptCount == 0)
     {
         return;
     }
@@ -150,11 +150,11 @@ void ProcessCommand(GameMetadata *gm, Camera *camera)
     char *command = nullptr;
     char *option = nullptr;
 
-    memset(gm->backupCommandPrompt, 0, sizeof(gm->backupCommandPrompt));
-    StringCopy(gm->commandPrompt, gm->backupCommandPrompt, StringLen(gm->commandPrompt));
+    memset(gm->editMode.backupCommandPrompt, 0, sizeof(gm->editMode.backupCommandPrompt));
+    StringCopy(gm->editMode.commandPrompt, gm->editMode.backupCommandPrompt, StringLen(gm->editMode.commandPrompt));
 
     char *nextToken = nullptr;
-    char *token = strtok_s(gm->commandPrompt, " ", &nextToken);
+    char *token = strtok_s(gm->editMode.commandPrompt, " ", &nextToken);
     ASSERT(token != nullptr);
 
     if (strcmp(token, "SAVE") == 0 && strcmp(nextToken, "") == 0)

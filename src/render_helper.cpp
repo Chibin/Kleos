@@ -344,14 +344,14 @@ void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
      * on their computer, so not reliable.
      */
     const u8 *keystate = SDL_GetKeyboardState(nullptr);
-    if (gameMetadata->isEditMode == false)
+    if (gameMetadata->editMode.isActive == false)
     {
         ProcessKeysHeldDown(
                 gameMetadata->hashEntityMovement,
                 gameMetadata->playerEntity,
                 keystate);
     }
-    else if(gameMetadata->isEditMode && gameMetadata->selectedRect != nullptr)
+    else if(gameMetadata->editMode.isActive && gameMetadata->editMode.selectedRect != nullptr)
     {
         ProcessKeysHeldDownEditMode(gameMetadata, keystate);
     }
@@ -664,7 +664,7 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
     LoadAssets(gameMetadata);
 
     ARRAY_CREATE(glm::vec3, &gameMetadata->reservedMemory, worldArr);
-    gameMetadata->objectsToBeAddedTotheWorld = worldArr;
+    gameMetadata->editMode.objectsToBeAddedTotheWorld = worldArr;
 
     SetFont(gameMetadata);
     SetHash(gameMetadata);

@@ -267,24 +267,24 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
 void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 {
-    if (gameMetadata->isEditMode == false)
+    if (gameMetadata->editMode.isActive == false)
     {
         return;
     }
 
     AABB range = {};
-    range.halfDim = V2(gameMetadata->leftMouseDrag[0] - gameMetadata->leftMouseDrag[1]) * 0.5f;
-    range.center = V2(gameMetadata->leftMouseDrag[0]) - range.halfDim;
+    range.halfDim = V2(gameMetadata->editMode.leftMouseDrag[0] - gameMetadata->editMode.leftMouseDrag[1]) * 0.5f;
+    range.center = V2(gameMetadata->editMode.leftMouseDrag[0]) - range.halfDim;
     /* sometimes we're going to the negative value when calculating the
      * dimension. This needs to be positive in order to work.
      * We also need to use the negative dimension to calculate two out of the four quadrants.
      */
     range.halfDim = abs(range.halfDim);
 
-    if (gameMetadata->createNewRect)
+    if (gameMetadata->editMode.createNewRect)
     {
 
-        gameMetadata->createNewRect = false;
+        gameMetadata->editMode.createNewRect = false;
 
         Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
         permanentRect->type = COLLISION;
@@ -295,22 +295,22 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
         SetAABB(&gameMetadata->rectManager->NonTraversable);
     }
 
-    if (gameMetadata->isLeftButtonReleased == false)
+    if (gameMetadata->editMode.isLeftButtonReleased == false)
     {
         AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
     }
 
-    if (gameMetadata->willSelectObject)
+    if (gameMetadata->editMode.willSelectObject)
     {
-        gameMetadata->willSelectObject = false;
-        range.center = V2(gameMetadata->rightMouseButton);
+        gameMetadata->editMode.willSelectObject = false;
+        range.center = V2(gameMetadata->editMode.rightMouseButton);
         f32 arbitraryPadding = 15.0f;
         range.halfDim = range.halfDim + arbitraryPadding;
         Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
 #if 0
         AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
 #endif
-        gameMetadata->selectedRect = nullptr;
+        gameMetadata->editMode.selectedRect = nullptr;
         for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
         {
             Rect *rect = arr[i];
@@ -319,7 +319,7 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 #if 0
                 AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
 #endif
-                gameMetadata->selectedRect = rect;
+                gameMetadata->editMode.selectedRect = rect;
                 break;
             }
         }

@@ -11,6 +11,29 @@
 #include "rect_manager.h"
 #include "hash.h"
 
+struct EditMode
+{
+    b32 isActive;
+    b32 isCommandPrompt;
+
+    char commandPrompt[256];
+    char backupCommandPrompt[256];
+    memory_index commandPromptCount;
+
+    b32 willSelectObject;
+    Rect *selectedRect;
+
+    glm::vec3 *objectsToBeAddedTotheWorld;
+    glm::vec3 leftMouseDrag[2];
+    v2 screenCoordinates[2];
+    b32 isLeftButtonReleased;
+    b32 createNewRect;
+
+    b32 isRightButtonReleased;
+    glm::vec3 rightMouseButton;
+
+};
+
 struct GameMetadata
 {
     u32 totalMemoryBlockSize;
@@ -54,26 +77,10 @@ struct GameMetadata
 
     struct SceneManager *sm;
 
-    glm::vec3 *objectsToBeAddedTotheWorld;
-    glm::vec3 leftMouseDrag[2];
-    v2 screenCoordinates[2];
-    b32 isLeftButtonReleased;
-    b32 createNewRect;
-
-    b32 isEditMode;
-    b32 isCommandPrompt;
-
-    char commandPrompt[256];
-    char backupCommandPrompt[256];
-    memory_index commandPromptCount;
+    EditMode editMode;
 
     struct RectManager *rectManager;
 
-    b32 isRightButtonReleased;
-    glm::vec3 rightMouseButton;
-
-    b32 willSelectObject;
-    Rect *selectedRect;
     glm::vec3 infinitePlaneNormal;
 
     struct Camera *camera;

@@ -16,40 +16,40 @@ void ProcessInputDown(
         Camera *camera,
         b32 *continueRunning)
 {
-    if (gm->isCommandPrompt && gm->isEditMode)
+    if (gm->editMode.isCommandPrompt && gm->editMode.isActive)
     {
         switch (sym)
         {
             case SDLK_ESCAPE:
                 ResetCommandPrompt(gm);
-                gm->isCommandPrompt = false;
+                gm->editMode.isCommandPrompt = false;
                 break;
             case SDLK_RETURN:
-                if(gm->isEditMode)
+                if(gm->editMode.isActive)
                 {
                     ProcessCommand(gm, camera);
-                    Toggle(&gm->isCommandPrompt);
+                    Toggle(&gm->editMode.isCommandPrompt);
                 }
                 break;
             case SDLK_BACKSPACE:
-                if(gm->commandPromptCount > 0)
+                if(gm->editMode.commandPromptCount > 0)
                 {
-                    gm->commandPrompt[--gm->commandPromptCount] = '\0';
+                    gm->editMode.commandPrompt[--gm->editMode.commandPromptCount] = '\0';
                 }
                 break;
             case SDLK_UP:
-                StringCopy(gm->backupCommandPrompt, gm->commandPrompt, sizeof(gm->backupCommandPrompt));
-                gm->commandPromptCount = StringLen(gm->commandPrompt);
+                StringCopy(gm->editMode.backupCommandPrompt, gm->editMode.commandPrompt, sizeof(gm->editMode.backupCommandPrompt));
+                gm->editMode.commandPromptCount = StringLen(gm->editMode.commandPrompt);
                 break;
             default:
-                ASSERT(gm->commandPromptCount < sizeof(gm->commandPrompt));
+                ASSERT(gm->editMode.commandPromptCount < sizeof(gm->editMode.commandPrompt));
                 if (sym == SDLK_SPACE)
                 {
-                    gm->commandPrompt[gm->commandPromptCount++] = ' ';
+                    gm->editMode.commandPrompt[gm->editMode.commandPromptCount++] = ' ';
                 }
                 else
                 {
-                    gm->commandPrompt[gm->commandPromptCount++] = *SDL_GetKeyName(sym);
+                    gm->editMode.commandPrompt[gm->editMode.commandPromptCount++] = *SDL_GetKeyName(sym);
                 }
                 break;
         }
@@ -59,14 +59,14 @@ void ProcessInputDown(
         switch (sym)
         {
             case SDLK_ESCAPE:
-                if (gm->isEditMode)
+                if (gm->editMode.isActive)
                 {
-                    Toggle(&gm->isEditMode);
+                    Toggle(&gm->editMode.isActive);
                     ResetCommandPrompt(gm);
-                    gm->isCommandPrompt = false;
+                    gm->editMode.isCommandPrompt = false;
 
                     /* Only need to set this value when you're getting out of edit mode. */
-                    gm->selectedRect = nullptr;
+                    gm->editMode.selectedRect = nullptr;
                 }
                 else
                 {
@@ -79,15 +79,15 @@ void ProcessInputDown(
                 Toggle(&gm->gameTimestep->isPaused);
                 break;
             case SDLK_e:
-                Toggle(&gm->isEditMode);
+                Toggle(&gm->editMode.isActive);
                 /* Only need to set this value when you're getting out of edit mode. */
-                gm->selectedRect = nullptr;
+                gm->editMode.selectedRect = nullptr;
                 break;
             case SDLK_RETURN:
                 /* only activatecommand prompt when edit mode is active */
-                if (gm->isEditMode)
+                if (gm->editMode.isActive)
                 {
-                    Toggle(&gm->isCommandPrompt);
+                    Toggle(&gm->editMode.isCommandPrompt);
                 }
                 break;
             default:
@@ -208,7 +208,7 @@ void ProcessKeysHeldDown(Hash *hash, Entity *entity, const u8 *keystate)
 
 void ProcessKeysHeldDownEditMode(GameMetadata *gm, const u8 *keystate)
 {
-    Rect *rect = gm->selectedRect;
+    Rect *rect = gm->editMode.selectedRect;
     v3 positionOffset = {0,0,0};
     f32 moveBy = 0.05f;
 

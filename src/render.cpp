@@ -84,7 +84,7 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
     PushStringRectToRenderGroup(
             perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
 
-    if (gameMetadata->isCommandPrompt)
+    if (gameMetadata->editMode.isCommandPrompt)
     {
         f32 scale = 0.50f;
         f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
@@ -99,12 +99,12 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
         startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
         PushStringRectToRenderGroup(
                 perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor,
-                gameMetadata->commandPrompt);
+                gameMetadata->editMode.commandPrompt);
 
         /* TODO: Draw letters */
     }
 
-    if (gameMetadata->selectedRect != nullptr)
+    if (gameMetadata->editMode.selectedRect != nullptr)
     {
         f32 scale = 0.50f;
         startingPosition =
@@ -114,6 +114,12 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
         selectedUI->bitmapID = gameMetadata->whiteBitmap.bitmapID;
         selectedUI->bitmap = &gameMetadata->whiteBitmap;
         PushRenderGroupRectInfo(perFrameRenderGroup, selectedUI, skipFilter);
+
+        Rect *texture =
+            CreateRectangle(perFrameMemory, startingPosition, TRANSPARENCY(1.0f), 0.5f, 0.5f);
+        texture->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
+        texture->bitmapID = selectedUI->bitmapID;
+        PushRenderGroupRectInfo(perFrameRenderGroup, texture, skipFilter);
     }
 }
 
@@ -142,7 +148,7 @@ void DrawUI(
     PushStringRectToRenderGroup(
             perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, buffer);
 
-    if (gameMetadata->isEditMode)
+    if (gameMetadata->editMode.isActive)
     {
         DoEditModeUI(gameMetadata, perFrameRenderGroup);
     }
