@@ -103,6 +103,18 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
 
         /* TODO: Draw letters */
     }
+
+    if (gameMetadata->selectedRect != nullptr)
+    {
+        f32 scale = 0.50f;
+        startingPosition =
+            v3{ 0.75f, 0.0f,  0 };
+        Rect *selectedUI =
+            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 0.5f, 2.0f);
+        selectedUI->bitmapID = gameMetadata->whiteBitmap.bitmapID;
+        selectedUI->bitmap = &gameMetadata->whiteBitmap;
+        PushRenderGroupRectInfo(perFrameRenderGroup, selectedUI, skipFilter);
+    }
 }
 
 void DrawUI(

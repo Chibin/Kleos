@@ -64,6 +64,9 @@ void ProcessInputDown(
                     Toggle(&gm->isEditMode);
                     ResetCommandPrompt(gm);
                     gm->isCommandPrompt = false;
+
+                    /* Only need to set this value when you're getting out of edit mode. */
+                    gm->selectedRect = nullptr;
                 }
                 else
                 {
@@ -77,6 +80,8 @@ void ProcessInputDown(
                 break;
             case SDLK_e:
                 Toggle(&gm->isEditMode);
+                /* Only need to set this value when you're getting out of edit mode. */
+                gm->selectedRect = nullptr;
                 break;
             case SDLK_RETURN:
                 /* only activatecommand prompt when edit mode is active */
