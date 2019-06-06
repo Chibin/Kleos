@@ -42,12 +42,10 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.frameAnimationSentinelNode.next = &gameMetadata.frameAnimationSentinelNode;
     gameMetadata.frameAnimationSentinelNode.prev = &gameMetadata.frameAnimationSentinelNode;
 
+    gameMetadata.editMode = {};
     gameMetadata.editMode.isLeftButtonReleased = true;
-    gameMetadata.editMode.createNewRect = false;
     gameMetadata.editMode.isActive = true;
     gameMetadata.editMode.isRightButtonReleased = true;
-    gameMetadata.editMode.willSelectObject = false;
-    gameMetadata.editMode.selectedRect = nullptr;
 
     gameMetadata.entityID = 0;
 

@@ -267,7 +267,7 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
 void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 {
-    if (gameMetadata->editMode.isActive == false)
+    if (!gameMetadata->editMode.isActive)
     {
         return;
     }
@@ -281,12 +281,23 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
      */
     range.halfDim = abs(range.halfDim);
 
-    if (gameMetadata->editMode.createNewRect)
+    b32 createNewRect = false;
+    if (gameMetadata->editMode.isRequestTriggered)
     {
+        gameMetadata->editMode.isRequestTriggered = false;
+        createNewRect = true;
+    }
 
-        gameMetadata->editMode.createNewRect = false;
+    if (createNewRect)
+    {
+        /* most likely just a single click if x value is 0*/
+        if (range.halfDim.x == 0)
+        {
+            range.halfDim = v2{1.0f, 1.0f};
+        }
 
-        Rect *permanentRect = CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
+        Rect *permanentRect =
+            CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
         permanentRect->type = COLLISION;
         permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
         permanentRect->renderLayer = FRONT_STATIC;

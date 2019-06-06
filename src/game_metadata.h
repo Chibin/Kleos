@@ -29,6 +29,7 @@ struct EditMode
     b32 isLeftButtonReleased;
     b32 createNewRect;
 
+    b32 isRequestTriggered;
     b32 isRightButtonReleased;
     glm::vec3 rightMouseButton;
 

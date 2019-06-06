@@ -10,13 +10,12 @@ void Toggle(b32 *value)
     *value = !*value;
 }
 
-void ProcessInputDown(
+void ProcessInputDownEditMode(
         SDL_Keycode sym,
         GameMetadata *gm,
-        Camera *camera,
-        b32 *continueRunning)
+        Camera *camera)
 {
-    if (gm->editMode.isCommandPrompt && gm->editMode.isActive)
+    if (gm->editMode.isCommandPrompt)
     {
         switch (sym)
         {
@@ -38,7 +37,10 @@ void ProcessInputDown(
                 }
                 break;
             case SDLK_UP:
-                StringCopy(gm->editMode.backupCommandPrompt, gm->editMode.commandPrompt, sizeof(gm->editMode.backupCommandPrompt));
+                StringCopy(
+                        gm->editMode.backupCommandPrompt,
+                        gm->editMode.commandPrompt,
+                        sizeof(gm->editMode.backupCommandPrompt));
                 gm->editMode.commandPromptCount = StringLen(gm->editMode.commandPrompt);
                 break;
             default:
@@ -59,45 +61,59 @@ void ProcessInputDown(
         switch (sym)
         {
             case SDLK_ESCAPE:
-                if (gm->editMode.isActive)
-                {
-                    Toggle(&gm->editMode.isActive);
-                    ResetCommandPrompt(gm);
-                    gm->editMode.isCommandPrompt = false;
+                Toggle(&gm->editMode.isActive);
+                ResetCommandPrompt(gm);
+                gm->editMode.isCommandPrompt = false;
 
-                    /* Only need to set this value when you're getting out of edit mode. */
-                    gm->editMode.selectedRect = nullptr;
-                }
-                else
-                {
-                    *continueRunning = false;
-                }
-                break;
-            case SDLK_1:
+                /* Only need to set this value when you're getting out of edit mode. */
+                gm->editMode.selectedRect = nullptr;
                 break;
             case SDLK_p:
                 Toggle(&gm->gameTimestep->isPaused);
                 break;
             case SDLK_e:
                 Toggle(&gm->editMode.isActive);
-                /* Only need to set this value when you're getting out of edit mode. */
                 gm->editMode.selectedRect = nullptr;
                 break;
             case SDLK_RETURN:
-                /* only activatecommand prompt when edit mode is active */
-                if (gm->editMode.isActive)
-                {
-                    Toggle(&gm->editMode.isCommandPrompt);
-                }
+                Toggle(&gm->editMode.isCommandPrompt);
                 break;
             default:
-                /* TODO: differentiate different types of input
-                 * something like...  if (mode == movement)
-                 */
-                ProcessInputToMovement(sym);
-                /* TODO: ProcessInputToMenu() */
                 break;
         }
+    }
+}
+
+void ProcessInputDown(
+        SDL_Keycode sym,
+        GameMetadata *gm,
+        Camera *camera,
+        b32 *continueRunning)
+{
+    switch (sym)
+    {
+        case SDLK_ESCAPE:
+            *continueRunning = false;
+            break;
+        case SDLK_1:
+            break;
+        case SDLK_p:
+            Toggle(&gm->gameTimestep->isPaused);
+            break;
+        case SDLK_e:
+            Toggle(&gm->editMode.isActive);
+            /* Only need to set this value when you're getting out of edit mode. */
+            gm->editMode.selectedRect = nullptr;
+            break;
+        case SDLK_RETURN:
+            break;
+        default:
+            /* TODO: differentiate different types of input
+             * something like...  if (mode == movement)
+             */
+            ProcessInputToMovement(sym);
+            /* TODO: ProcessInputToMenu() */
+            break;
     }
 }
 

@@ -298,10 +298,10 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                 f32 screenCoordinatesThresholdValue = 17.0f;
                 if (IsWithinThreshold(gm->editMode.screenCoordinates[0], gm->editMode.screenCoordinates[1], screenCoordinatesThresholdValue))
                 {
-                    ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->editMode.objectsToBeAddedTotheWorld, worldPos);
+                    //ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->editMode.objectsToBeAddedTotheWorld, worldPos);
                 }
 
-                gm->editMode.createNewRect = true;
+                gm->editMode.isRequestTriggered = true;
             }
             break;
         case SDL_BUTTON_RIGHT:

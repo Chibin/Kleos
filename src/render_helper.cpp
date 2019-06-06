@@ -332,37 +332,20 @@ void DoVukanUpdateToNextFrame(VulkanContext *vc)
     }
 }
 
-void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
+void DoEditModeInput(GameMetadata *gameMetadata)
 {
-    SDL_Event event;
-
-    /* NOTE: Looks very player centric right now, not sure if we need to make it
-     * better later on.
-     * Use keystate to get the feel for the fastest response time.
-     * Keyrepeat is doesn't feel smooth enough for us to use it as a way to
-     * move. The amount of keyboard repeat depends on the setting the user has
-     * on their computer, so not reliable.
-     */
     const u8 *keystate = SDL_GetKeyboardState(nullptr);
-    if (gameMetadata->editMode.isActive == false)
-    {
-        ProcessKeysHeldDown(
-                gameMetadata->hashEntityMovement,
-                gameMetadata->playerEntity,
-                keystate);
-    }
-    else if(gameMetadata->editMode.isActive && gameMetadata->editMode.selectedRect != nullptr)
+
+    if(gameMetadata->editMode.selectedRect != nullptr)
     {
         ProcessKeysHeldDownEditMode(gameMetadata, keystate);
     }
 
-    while (SDL_PollEvent(&event) != 0)
+    SDL_Event event;
+    while (gameMetadata->editMode.isActive && SDL_PollEvent(&event) != 0)
     {
         switch (event.type)
         {
-        case SDL_QUIT:
-            *continueRunning = false;
-            break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
             ProcessMouseEditMode(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
@@ -374,17 +357,77 @@ void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
             UpdateMouseDrag(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
             break;
         case SDL_KEYDOWN:
-            ProcessInputDown(
+            ProcessInputDownEditMode(
                     event.key.keysym.sym,
                     gameMetadata,
-                    gameMetadata->camera,
-                    continueRunning);
+                    gameMetadata->camera);
             break;
         case SDL_KEYUP:
             ProcessInputUp(event.key.keysym.sym);
             break;
         default:
             break;
+        }
+    }
+
+}
+
+void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
+{
+    /* NOTE: Looks very player centric right now, not sure if we need to make it
+     * better later on.
+     * Use keystate to get the feel for the fastest response time.
+     * Keyrepeat is doesn't feel smooth enough for us to use it as a way to
+     * move. The amount of keyboard repeat depends on the setting the user has
+     * on their computer, so not reliable.
+     */
+    if (gameMetadata->editMode.isActive)
+    {
+        DoEditModeInput(gameMetadata);
+    }
+    else
+    {
+        const u8 *keystate = SDL_GetKeyboardState(nullptr);
+        ProcessKeysHeldDown(
+            gameMetadata->hashEntityMovement,
+            gameMetadata->playerEntity,
+            keystate);
+
+        SDL_Event event;
+
+        /* It's possible that we will switch from inactive to active edit mode
+         * from here, so we should stop going through the events once we hit
+         * that mark. */
+        while (!gameMetadata->editMode.isActive && SDL_PollEvent(&event) != 0)
+        {
+            switch (event.type)
+            {
+                case SDL_QUIT:
+                    *continueRunning = false;
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                case SDL_MOUSEBUTTONUP:
+                    ProcessMouseEditMode(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
+                case SDL_MOUSEWHEEL:
+                    ProcessMouseInput(event, gameMetadata->camera);
+                    break;
+                case SDL_MOUSEMOTION:
+                    g_mousePoint = ProcessMouseMotion(event.motion);
+                    UpdateMouseDrag(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
+                    break;
+                case SDL_KEYDOWN:
+                    ProcessInputDown(
+                            event.key.keysym.sym,
+                            gameMetadata,
+                            gameMetadata->camera,
+                            continueRunning);
+                    break;
+                case SDL_KEYUP:
+                    ProcessInputUp(event.key.keysym.sym);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
