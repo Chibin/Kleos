@@ -265,6 +265,31 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
     FOR_EACH_HASH_KEY_VAL_END();
 }
 
+b32 IsMouseInSelectedUIRegion(GameMetadata *gm)
+{
+    AABB range = {};
+    range.halfDim = v2{0.25, 1.0f};
+    range.center = v2{0.75f, 0.0f};
+
+    AddDebugRectUI(gm, &range, COLOR_RED_TRANSPARENT);
+
+    f32 screenCoordinatesThresholdValue = 17.0f;
+    if (IsWithinThreshold(gm->editMode.screenCoordinates[0],
+                gm->editMode.screenCoordinates[1],
+                screenCoordinatesThresholdValue))
+    {
+        v2 firstPoint = V2(ScreenSpaceToNormalizedDeviceSpace(
+                    gm->editMode.screenCoordinates[0],
+                    gm->screenResolution));
+        v2 secondPoint = V2(ScreenSpaceToNormalizedDeviceSpace(
+                    gm->editMode.screenCoordinates[1],
+                    gm->screenResolution));
+        return ContainsPoint(&range, firstPoint) || ContainsPoint(&range, secondPoint);
+    }
+
+    return false;
+}
+
 void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 {
     if (!gameMetadata->editMode.isActive)
@@ -285,7 +310,16 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     if (gameMetadata->editMode.isRequestTriggered)
     {
         gameMetadata->editMode.isRequestTriggered = false;
-        createNewRect = true;
+        if (gameMetadata->editMode.selectedRect && IsMouseInSelectedUIRegion(gameMetadata))
+        {
+
+            ASSERT(!"TRUE");
+
+        }
+        else
+        {
+            createNewRect = true;
+        }
     }
 
     if (createNewRect)
