@@ -296,7 +296,10 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                 gm->editMode.screenCoordinates[1] = screenCoordinates;
 
                 f32 screenCoordinatesThresholdValue = 17.0f;
-                if (IsWithinThreshold(gm->editMode.screenCoordinates[0], gm->editMode.screenCoordinates[1], screenCoordinatesThresholdValue))
+                if (IsWithinThreshold(
+                            gm->editMode.screenCoordinates[0],
+                            gm->editMode.screenCoordinates[1],
+                            screenCoordinatesThresholdValue))
                 {
                     //ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->editMode.objectsToBeAddedTotheWorld, worldPos);
                 }
@@ -318,10 +321,12 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                             screenCoordinates,
                             gm->screenResolution,
                             infinitePlaneNormal);
+                gm->editMode.rightMouseButtonScreenCoordiantes = screenCoordinates;
                 gm->editMode.rightMouseButton = worldPos;
                 gm->editMode.isRightButtonReleased = true;
 
                 gm->editMode.willSelectObject = true;
+                gm->editMode.isRequestTriggered = true;
             }
             break;
         default:

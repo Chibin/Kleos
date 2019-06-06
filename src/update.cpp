@@ -284,7 +284,12 @@ b32 IsMouseInSelectedUIRegion(GameMetadata *gm)
         v2 secondPoint = V2(ScreenSpaceToNormalizedDeviceSpace(
                     gm->editMode.screenCoordinates[1],
                     gm->screenResolution));
-        return ContainsPoint(&range, firstPoint) || ContainsPoint(&range, secondPoint);
+
+        v2 rightMouseButton = V2(ScreenSpaceToNormalizedDeviceSpace(
+                    gm->editMode.rightMouseButtonScreenCoordiantes,
+                    gm->screenResolution));
+        return ContainsPoint(&range, firstPoint) || ContainsPoint(&range, secondPoint) ||
+            ContainsPoint(&range, rightMouseButton);
     }
 
     return false;
@@ -307,14 +312,14 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     range.halfDim = abs(range.halfDim);
 
     b32 createNewRect = false;
+    b32 buttonUIFound = false;
     if (gameMetadata->editMode.isRequestTriggered)
     {
         gameMetadata->editMode.isRequestTriggered = false;
         if (gameMetadata->editMode.selectedRect && IsMouseInSelectedUIRegion(gameMetadata))
         {
-
-            ASSERT(!"TRUE");
-
+            buttonUIFound = true;
+            gameMetadata->editMode.willSelectObject = false;
         }
         else
         {
@@ -322,50 +327,53 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
         }
     }
 
-    if (createNewRect)
+    if (!buttonUIFound)
     {
-        /* most likely just a single click if x value is 0*/
-        if (range.halfDim.x == 0)
+        if (createNewRect)
         {
-            range.halfDim = v2{1.0f, 1.0f};
+            /* most likely just a single click if x value is 0*/
+            if (range.halfDim.x == 0)
+            {
+                range.halfDim = v2{1.0f, 1.0f};
+            }
+
+            Rect *permanentRect =
+                CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
+            permanentRect->type = COLLISION;
+            permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
+            permanentRect->renderLayer = FRONT_STATIC;
+            PushBack(&gameMetadata->rectManager->NonTraversable.rda, permanentRect);
+
+            SetAABB(&gameMetadata->rectManager->NonTraversable);
         }
 
-        Rect *permanentRect =
-            CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
-        permanentRect->type = COLLISION;
-        permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
-        permanentRect->renderLayer = FRONT_STATIC;
-        PushBack(&gameMetadata->rectManager->NonTraversable.rda, permanentRect);
-
-        SetAABB(&gameMetadata->rectManager->NonTraversable);
-    }
-
-    if (gameMetadata->editMode.isLeftButtonReleased == false)
-    {
-        AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
-    }
-
-    if (gameMetadata->editMode.willSelectObject)
-    {
-        gameMetadata->editMode.willSelectObject = false;
-        range.center = V2(gameMetadata->editMode.rightMouseButton);
-        f32 arbitraryPadding = 15.0f;
-        range.halfDim = range.halfDim + arbitraryPadding;
-        Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
-#if 0
-        AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
-#endif
-        gameMetadata->editMode.selectedRect = nullptr;
-        for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
+        if (gameMetadata->editMode.isLeftButtonReleased == false)
         {
-            Rect *rect = arr[i];
-            if (ContainsPoint(rect, range.center))
-            {
+            AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
+        }
+
+        if (gameMetadata->editMode.willSelectObject)
+        {
+            gameMetadata->editMode.willSelectObject = false;
+            range.center = V2(gameMetadata->editMode.rightMouseButton);
+            f32 arbitraryPadding = 15.0f;
+            range.halfDim = range.halfDim + arbitraryPadding;
+            Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
 #if 0
-                AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
+            AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
 #endif
-                gameMetadata->editMode.selectedRect = rect;
-                break;
+            gameMetadata->editMode.selectedRect = nullptr;
+            for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
+            {
+                Rect *rect = arr[i];
+                if (ContainsPoint(rect, range.center))
+                {
+#if 0
+                    AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
+#endif
+                    gameMetadata->editMode.selectedRect = rect;
+                    break;
+                }
             }
         }
     }

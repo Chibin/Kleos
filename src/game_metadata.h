@@ -26,6 +26,7 @@ struct EditMode
     glm::vec3 *objectsToBeAddedTotheWorld;
     glm::vec3 leftMouseDrag[2];
     v2 screenCoordinates[2];
+    v2 rightMouseButtonScreenCoordiantes;
     b32 isLeftButtonReleased;
     b32 createNewRect;
 
