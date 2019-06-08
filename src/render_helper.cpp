@@ -1,3 +1,4 @@
+#include "mouse.cpp"
 void SetFont(GameMetadata *gm)
 {
     TTF_Font *font = OpenFont();
@@ -407,13 +408,9 @@ void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:
-                    ProcessMouseEditMode(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
                 case SDL_MOUSEWHEEL:
-                    ProcessMouseInput(event, gameMetadata->camera);
-                    break;
                 case SDL_MOUSEMOTION:
-                    g_mousePoint = ProcessMouseMotion(event.motion);
-                    UpdateMouseDrag(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
+                    HandleMouseInput(event, gameMetadata);
                     break;
                 case SDL_KEYDOWN:
                     ProcessInputDown(
