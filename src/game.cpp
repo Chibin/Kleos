@@ -47,6 +47,8 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.editMode.isActive = true;
     gameMetadata.editMode.isRightButtonReleased = true;
 
+    gameMetadata.mouseInfo.mouseType = DO_NOT_USE_ANYMORE_MOUSE;
+
     gameMetadata.entityID = 0;
 
     FindFile(GetProgramPath(), "render*dll");

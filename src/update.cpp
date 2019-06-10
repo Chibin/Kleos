@@ -273,23 +273,21 @@ b32 IsMouseInSelectedUIRegion(GameMetadata *gm)
 
     AddDebugRectUI(gm, &range, COLOR_RED_TRANSPARENT);
 
-    f32 screenCoordinatesThresholdValue = 17.0f;
-    if (IsWithinThreshold(gm->editMode.screenCoordinates[0],
-                gm->editMode.screenCoordinates[1],
-                screenCoordinatesThresholdValue))
+    if (gm->mouseInfo.mouseType == LEFT_SINGLE_CLICK || gm->mouseInfo.mouseType == LEFT_DRAG_CLICK)
     {
-        v2 firstPoint = V2(ScreenSpaceToNormalizedDeviceSpace(
-                    gm->editMode.screenCoordinates[0],
-                    gm->screenResolution));
-        v2 secondPoint = V2(ScreenSpaceToNormalizedDeviceSpace(
-                    gm->editMode.screenCoordinates[1],
+        v2 leftMouseButton = V2(ScreenSpaceToNormalizedDeviceSpace(
+                    gm->mouseInfo.leftScreenCoordinates[0],
                     gm->screenResolution));
 
+        return ContainsPoint(&range, leftMouseButton);
+    }
+
+    if (gm->mouseInfo.mouseType == RIGHT_SINGLE_CLICK || gm->mouseInfo.mouseType == RIGHT_DRAG_CLICK)
+    {
         v2 rightMouseButton = V2(ScreenSpaceToNormalizedDeviceSpace(
-                    gm->editMode.rightMouseButtonScreenCoordiantes,
+                    gm->mouseInfo.rightScreenCoordinates[0],
                     gm->screenResolution));
-        return ContainsPoint(&range, firstPoint) || ContainsPoint(&range, secondPoint) ||
-            ContainsPoint(&range, rightMouseButton);
+        return ContainsPoint(&range, rightMouseButton);
     }
 
     return false;
@@ -303,60 +301,69 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     }
 
     AABB range = {};
-    range.halfDim = V2(gameMetadata->editMode.leftMouseDrag[0] - gameMetadata->editMode.leftMouseDrag[1]) * 0.5f;
-    range.center = V2(gameMetadata->editMode.leftMouseDrag[0]) - range.halfDim;
-    /* sometimes we're going to the negative value when calculating the
-     * dimension. This needs to be positive in order to work.
-     * We also need to use the negative dimension to calculate two out of the four quadrants.
-     */
-    range.halfDim = abs(range.halfDim);
-
-    b32 createNewRect = false;
     b32 buttonUIFound = false;
-    if (gameMetadata->editMode.isRequestTriggered)
+    if (gameMetadata->mouseInfo.isNew)
     {
-        gameMetadata->editMode.isRequestTriggered = false;
-        if (gameMetadata->editMode.selectedRect && IsMouseInSelectedUIRegion(gameMetadata))
-        {
-            buttonUIFound = true;
-            gameMetadata->editMode.willSelectObject = false;
-        }
-        else
-        {
-            createNewRect = true;
-        }
+        gameMetadata->mouseInfo.isNew = false;
+        buttonUIFound = gameMetadata->editMode.selectedRect && IsMouseInSelectedUIRegion(gameMetadata);
     }
 
     if (!buttonUIFound)
     {
-        if (createNewRect)
+        glm::vec3 mouse0 = {};
+        glm::vec3 mouse1 = {};
+        if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
+                gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK ||
+                gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
         {
-            /* most likely just a single click if x value is 0*/
-            if (range.halfDim.x == 0)
-            {
-                range.halfDim = v2{1.0f, 1.0f};
-            }
+            mouse0 =
+                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.leftScreenCoordinates[0]);
+            mouse1 =
+                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.leftScreenCoordinates[1]);
+        }
+        else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
+        {
+            mouse0 =
+                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.rightScreenCoordinates[0]);
+            mouse1 =
+                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.rightScreenCoordinates[1]);
+        }
 
+        range.halfDim = V2(mouse0 - mouse1) * 0.5f;
+        range.center = V2(mouse0) - range.halfDim;
+        /* sometimes we're going to the negative value when calculating the
+         * dimension. This needs to be positive in order to work.
+         * We also need to use the negative dimension to calculate two out of the four quadrants.
+         */
+        range.halfDim = abs(range.halfDim);
+
+        if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK)
+        {
+            range.halfDim = v2{1.0f, 1.0f};
+        }
+
+        if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
+                gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK)
+        {
             Rect *permanentRect =
                 CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
             permanentRect->type = COLLISION;
-            permanentRect->bitmapID = FindBitmap(&gameMetadata->bitmapSentinelNode, "box")->bitmapID;
+            permanentRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
+            permanentRect->bitmapID = permanentRect->bitmap->bitmapID;
             permanentRect->renderLayer = FRONT_STATIC;
             PushBack(&gameMetadata->rectManager->NonTraversable.rda, permanentRect);
 
             SetAABB(&gameMetadata->rectManager->NonTraversable);
         }
 
-        if (gameMetadata->editMode.isLeftButtonReleased == false)
+        if (gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
         {
             AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
         }
 
-        if (gameMetadata->editMode.willSelectObject)
+        if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
         {
-            gameMetadata->editMode.willSelectObject = false;
-            range.center = V2(gameMetadata->editMode.rightMouseButton);
-            f32 arbitraryPadding = 15.0f;
+            f32 arbitraryPadding = 50.0f;
             range.halfDim = range.halfDim + arbitraryPadding;
             Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
 #if 0
@@ -376,6 +383,15 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
                 }
             }
         }
+
+    }
+
+    if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
+            gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK ||
+            gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK ||
+            gameMetadata->mouseInfo.mouseType == RIGHT_DRAG_CLICK)
+    {
+        gameMetadata->mouseInfo.mouseType = DO_NOT_USE_ANYMORE_MOUSE;
     }
 }
 

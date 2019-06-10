@@ -10,6 +10,7 @@
 #include "asset.h"
 #include "rect_manager.h"
 #include "hash.h"
+#include "mouse.h"
 
 struct EditMode
 {
@@ -87,6 +88,8 @@ struct GameMetadata
 
     struct Camera *camera;
     glm::mat4 *projection;
+
+    MouseInfo mouseInfo;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

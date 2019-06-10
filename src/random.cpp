@@ -206,13 +206,12 @@ glm::vec3 UnProject(Camera *camera, glm::mat4 *projection, v2 screenCoords, v2 s
     return glm::normalize(rayZFar - rayZNear);
 }
 
-glm::vec3 GetWorldPointFromMouse(
-        Camera *camera,
-        glm::mat4 *projection,
-        v2 screenCoords,
-        v2 screenResolution,
-        glm::vec3 infinitePlaneNormal)
+glm::vec3 GetWorldPointFromMouse(GameMetadata *gm, v2 screenCoords)
 {
+    Camera *camera = gm->camera;
+    glm::mat4 *projection = gm->projection;
+    v2 screenResolution = gm->screenResolution;
+    glm::vec3 infinitePlaneNormal = gm->infinitePlaneNormal;
 
     /* XXX: arbitrary position since it's infinite anyways. */
     glm::vec3 infinitePlanePos = glm::vec3(0, 0, 0);
@@ -250,13 +249,6 @@ void PushRectDynamicArrayToRenderGroupRectInfo(
     }
 }
 
-b32 IsWithinThreshold(v2 a, v2 b, f32 thresholdValueInScreenCoordinates)
-{
-    v2 result = abs(a - b);
-
-    return result.x < thresholdValueInScreenCoordinates && result.y < thresholdValueInScreenCoordinates;
-}
-
 void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SDL_Event &event)
 {
     if (!gm->editMode.isActive)
@@ -274,13 +266,7 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
     {
         /* AddNewRectToWorld */
         case SDL_BUTTON_LEFT:
-            worldPos =
-                GetWorldPointFromMouse(
-                        camera,
-                        projection,
-                        screenCoordinates,
-                        gm->screenResolution,
-                        infinitePlaneNormal);
+            worldPos = GetWorldPointFromMouse(gm, screenCoordinates);
             if (mbe.state == SDL_PRESSED && gm->editMode.isLeftButtonReleased)
             {
                 gm->editMode.screenCoordinates[0] = screenCoordinates;
@@ -304,7 +290,7 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
                     //ARRAY_PUSH(glm::vec3, &gm->reservedMemory, gm->editMode.objectsToBeAddedTotheWorld, worldPos);
                 }
 
-                gm->editMode.isRequestTriggered = true;
+                gm->mouseInfo.isNew = true;
             }
             break;
         case SDL_BUTTON_RIGHT:
@@ -314,19 +300,13 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
             }
             else if (mbe.state == SDL_RELEASED)
             {
-                worldPos =
-                    GetWorldPointFromMouse(
-                            camera,
-                            projection,
-                            screenCoordinates,
-                            gm->screenResolution,
-                            infinitePlaneNormal);
+                worldPos = GetWorldPointFromMouse(gm, screenCoordinates);
                 gm->editMode.rightMouseButtonScreenCoordiantes = screenCoordinates;
                 gm->editMode.rightMouseButton = worldPos;
                 gm->editMode.isRightButtonReleased = true;
 
                 gm->editMode.willSelectObject = true;
-                gm->editMode.isRequestTriggered = true;
+                gm->mouseInfo.isNew = true;
             }
             break;
         default:
@@ -334,27 +314,6 @@ void ProcessMouseEditMode(GameMetadata *gm, Camera *camera, glm::mat4 *projectio
     }
 
 
-}
-
-void UpdateMouseDrag(GameMetadata *gm, Camera *camera, glm::mat4 *projection, SDL_Event &event)
-{
-    if (!gm->editMode.isLeftButtonReleased)
-    {
-        SDL_MouseButtonEvent mbe = event.button;
-        v2 screenCoordinates = V2(GetScreenCoordinateFromMouse(event.motion));
-
-        glm::vec3 infinitePlaneNormal = glm::vec3(0, 0, 1);
-
-        glm::vec3 worldPos =
-            GetWorldPointFromMouse(
-                    camera,
-                    projection,
-                    screenCoordinates,
-                    gm->screenResolution,
-                    infinitePlaneNormal);
-
-        gm->editMode.leftMouseDrag[1] = worldPos;
-    }
 }
 
 RectDynamicArray *CreateRDAForNewWorldObjects(GameMetadata *gm)

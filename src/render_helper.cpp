@@ -349,13 +349,9 @@ void DoEditModeInput(GameMetadata *gameMetadata)
         {
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-            ProcessMouseEditMode(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
         case SDL_MOUSEWHEEL:
-            ProcessMouseInput(event, gameMetadata->camera);
-            break;
         case SDL_MOUSEMOTION:
-            g_mousePoint = ProcessMouseMotion(event.motion);
-            UpdateMouseDrag(gameMetadata, gameMetadata->camera, gameMetadata->projection, event);
+            HandleMouseInput(event, gameMetadata);
             break;
         case SDL_KEYDOWN:
             ProcessInputDownEditMode(
@@ -436,18 +432,8 @@ void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Cam
     v2 screenCoordinatesMin = v2{0, SCREEN_HEIGHT};
     /* top right */
     v2 screenCoordinatesMax = v2{SCREEN_WIDTH, 0};
-    glm::vec3 worldPosMin = GetWorldPointFromMouse(
-            camera,
-            projection,
-            screenCoordinatesMin,
-            gameMetadata->screenResolution,
-            gameMetadata->infinitePlaneNormal);
-    glm::vec3 worldPosMax = GetWorldPointFromMouse(
-            camera,
-            projection,
-            screenCoordinatesMax,
-            gameMetadata->screenResolution,
-            gameMetadata->infinitePlaneNormal);
+    glm::vec3 worldPosMin = GetWorldPointFromMouse(gameMetadata, screenCoordinatesMin);
+    glm::vec3 worldPosMax = GetWorldPointFromMouse(gameMetadata, screenCoordinatesMax);
     MinMax minMax = {V2(worldPosMin), V2(worldPosMax)};
 
     const u32 numOfPointsPerRect = 6;

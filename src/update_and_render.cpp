@@ -78,6 +78,8 @@ inline void *RequestToReservedMemory(memory_index size)
 #include "renderer/vulkan/my_vulkan.cpp"
 #include "renderer/common.cpp"
 
+b32 IsWithinThreshold(v2 a, v2 b, f32 thresholdValueInScreenCoordinates);
+
 #include "debug_helper.cpp"
 #include "random.cpp"
 #include "scene_node.cpp"
@@ -96,6 +98,7 @@ v3 g_mousePoint;
 static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 
+#include "mouse.cpp"
 #include "render_helper.cpp"
 #include "update.cpp"
 #include "render.cpp"
