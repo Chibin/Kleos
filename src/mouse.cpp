@@ -85,7 +85,6 @@ void HandleMouseInput(SDL_Event &event, GameMetadata *gm)
                     }
                     break;
             }
-            ProcessMouseEditMode(gm, gm->camera, gm->projection, event);
             break;
         case SDL_MOUSEWHEEL:
             ProcessMouseInput(event, gm->camera);
