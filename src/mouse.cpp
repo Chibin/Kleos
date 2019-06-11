@@ -58,6 +58,8 @@ void HandleMouseInput(SDL_Event &event, GameMetadata *gm)
                         {
                             gm->mouseInfo.mouseType = LEFT_DRAG_CLICK;
                         }
+
+                        gm->mouseInfo.isNew = true;
                     }
                     break;
                 case SDL_BUTTON_RIGHT:
@@ -82,6 +84,8 @@ void HandleMouseInput(SDL_Event &event, GameMetadata *gm)
                         {
                             gm->mouseInfo.mouseType = RIGHT_DRAG_CLICK;
                         }
+
+                        gm->mouseInfo.isNew = true;
                     }
                     break;
             }
