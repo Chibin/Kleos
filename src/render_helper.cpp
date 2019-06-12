@@ -439,6 +439,7 @@ void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Cam
     const u32 numOfPointsPerRect = 6;
     const u16 maxEntityCount = 20001;
     gameMetadata->perFrameRenderGroup = CreateRenderGroup(perFrameMemory, numOfPointsPerRect, maxEntityCount, minMax);
+    gameMetadata->perFrameRenderGroupUI = CreateRenderGroup(perFrameMemory, numOfPointsPerRect, maxEntityCount, minMax);
     gameMetadata->hitBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     gameMetadata->hurtBoxes = CreateRectDynamicArray(perFrameMemory, 100);
     gameMetadata->rdaDebug = CreateRectDynamicArray(perFrameMemory, 10000);

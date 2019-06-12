@@ -77,6 +77,7 @@ struct GameMetadata
     struct RectDynamicArray *hitBoxes;
 
     RenderGroup *perFrameRenderGroup;
+    RenderGroup *perFrameRenderGroupUI;
 
     struct SceneManager *sm;
 

@@ -62,70 +62,9 @@ void DrawScene(
     ClearUsedRectInfoRenderGroup(perFrameRenderGroup);
 }
 
-void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
-{
-    const b32 skipFilter = true;
-    GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-    f32 screenHeight = gameMetadata->screenResolution.v[1];
-
-    f32 scaleFactor = 0.50f;
-    f32 padding = 0.0f;
-    f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scaleFactor;
-
-    v3 startingPosition = v3{ 0.0f, -1 + rectHeight * 0.5f, 0 };
-    Rect *bottomUIBar =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.5f), 2, rectHeight);
-    bottomUIBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-    bottomUIBar->bitmap = &gameMetadata->whiteBitmap;
-    PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar, skipFilter);
-
-    padding = 0.02f;
-    startingPosition = v3{ -1 + padding, -1 + rectHeight * 0.5f, 0 };
-    PushStringRectToRenderGroup(
-            perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
-
-    if (gameMetadata->editMode.isCommandPrompt)
-    {
-        f32 scale = 0.50f;
-        f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
-        startingPosition =
-            v3{ 0.0f, -0.35f + rectHeight * 0.5f, 0 };
-        Rect *commandPromptBar =
-            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 2, rectHeight);
-        commandPromptBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-        commandPromptBar->bitmap = &gameMetadata->whiteBitmap;
-        PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar, skipFilter);
-
-        startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
-        PushStringRectToRenderGroup(
-                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor,
-                gameMetadata->editMode.commandPrompt);
-
-        /* TODO: Draw letters */
-    }
-
-    if (gameMetadata->editMode.selectedRect != nullptr)
-    {
-        f32 scale = 0.50f;
-        startingPosition =
-            v3{ 0.75f, 0.0f,  0 };
-        Rect *selectedUI =
-            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 0.5f, 2.0f);
-        selectedUI->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-        selectedUI->bitmap = &gameMetadata->whiteBitmap;
-        PushRenderGroupRectInfo(perFrameRenderGroup, selectedUI, skipFilter);
-
-        Rect *texture =
-            CreateRectangle(perFrameMemory, startingPosition, TRANSPARENCY(1.0f), 0.5f, 0.5f);
-        texture->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
-        texture->bitmapID = selectedUI->bitmapID;
-        PushRenderGroupRectInfo(perFrameRenderGroup, texture, skipFilter);
-    }
-}
-
 void DrawUI(
         GameMetadata *gameMetadata,
-        RenderGroup *perFrameRenderGroup,
+        RenderGroup *perFrameRenderGroupUI,
         VulkanContext *vc,
         VulkanBuffers *vkBuffers,
         const f64 &MSPerFrame,
@@ -146,15 +85,7 @@ void DrawUI(
     v3 startingPosition = v3{ -1, 1 - gameMetadata->fontBitmap.height / screenHeight * scaleFactor * 0.5f, 0 };
 
     PushStringRectToRenderGroup(
-            perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, buffer);
-
-    if (gameMetadata->editMode.isActive)
-    {
-        DoEditModeUI(gameMetadata, perFrameRenderGroup);
-    }
-
-    perFrameRenderGroup->rectCount = 0;
-    ClearMemoryUsed(&perFrameRenderGroup->vertexMemory);
+            perFrameRenderGroupUI, gameMetadata, perFrameMemory, startingPosition, scaleFactor, buffer);
 
     /* TODO: Update UI texture */
     /* use texture of arrays or arrays of texture? */
@@ -182,13 +113,13 @@ void DrawUI(
 
     PushRectDynamicArrayToRenderGroupRectInfo(
             gameMetadata,
-            perFrameRenderGroup,
+            perFrameRenderGroupUI,
             gameMetadata->rdaDebugUI,
             skipFilter);
 
     DrawRenderGroup(
             gameMetadata,
-            perFrameRenderGroup,
+            perFrameRenderGroupUI,
             vc,
             vkBuffers);
 }
@@ -221,7 +152,7 @@ void Render(GameMetadata *gameMetadata, VulkanContext *vc)
 
     DrawUI(
         gameMetadata,
-        perFrameRenderGroup,
+        gameMetadata->perFrameRenderGroupUI,
         vc,
         &g_vkBuffers,
         MSPerFrame,
