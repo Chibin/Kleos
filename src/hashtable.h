@@ -7,6 +7,7 @@
 #include "npc.h"
 #include "bitmap.h"
 #include "movement.h"
+#include "ui.h"
 #include "renderer/vulkan/vulkan.h"
 
 #define MAX_HASH 17
@@ -21,6 +22,7 @@ CREATE_STRUCT(HashEntityRect, Entity *, Rect *);
 CREATE_STRUCT(HashEntityMovement, Entity *, Movement *);
 CREATE_STRUCT(HashEntityNPC, Entity *, NPC *);
 CREATE_STRUCT(HashSetEntity, Entity *, Entity *);
+CREATE_STRUCT(HashCharUIInfo, const char *, UIInfo *);
 
 CREATE_HASH_GET_VALUE_FUCTION_PROTOTYPE(HashEntityMovement, Entity *, Movement *);
 #endif

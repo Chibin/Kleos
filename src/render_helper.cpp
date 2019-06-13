@@ -50,6 +50,7 @@ void SetHash(GameMetadata *gm)
     HASH_CREATE(HashEntityMovement, &gm->reservedMemory, hashEntityMovement, MAX_HASH);
     HASH_CREATE(HashEntityNPC, &gm->reservedMemory, hashEntityNPC, MAX_HASH);
     HASH_CREATE(HashSetEntity, &gm->reservedMemory, hashSetEntity, MAX_HASH);
+    HASH_CREATE(HashCharUIInfo, &gm->reservedMemory, hashCharUIInfo, MAX_HASH);
 
     gm->hashBitmapVkDescriptorSet = hashBMPDescSet;
     gm->hashBitmap = hashBitmap;
@@ -57,6 +58,7 @@ void SetHash(GameMetadata *gm)
     gm->hashEntityMovement = hashEntityMovement;
     gm->hashEntityNPC = hashEntityNPC;
     gm->hashSetEntity = hashSetEntity;
+    gm->hashCharUIInfo = hashCharUIInfo;
 }
 
 void SetWhiteBitmap(GameMetadata *gm)
@@ -694,8 +696,6 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
     gameMetadata->editMode.objectsToBeAddedTotheWorld = worldArr;
 
     SetFont(gameMetadata);
-    SetHash(gameMetadata);
-
     g_vkBuffers.count = 0;
     g_vkBuffers.maxNum = 100;
 
@@ -709,6 +709,8 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
 
     Bitmap stringBitmap = {};
     SetBitmapToGPUForPipeline(vc, gameMetadata, &stringBitmap);
+
+    SetHash(gameMetadata);
 
     /* XXX: This is needed so that we can bind a descriptor set to a pipeline.
      * There might be a better way of doing this. This is just a hack.*/
@@ -724,6 +726,8 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
     SetPerspectiveProjection(gameMetadata);
     SetPlayer(gameMetadata);
     SetParticle(gameMetadata);
+
+    SetUI(gameMetadata);
 
     LoadStuff(gameMetadata);
 

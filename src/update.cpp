@@ -291,39 +291,15 @@ b32 IsMouseInSelectedUIRegion(GameMetadata *gm, AABB range)
 
 void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
 {
-    const b32 skipFilter = true;
     GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-    f32 screenHeight = gameMetadata->screenResolution.v[1];
 
-    f32 scaleFactor = 0.50f;
-    f32 padding = 0.05f;
-    f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scaleFactor;
-
-    UIInfo uiInfo = {};
-    uiInfo.range.center = v2{ 0.0f, -1 + rectHeight * 0.5f };
-    uiInfo.range.halfDim.x = 1;
-    uiInfo.range.halfDim.y = rectHeight * 0.5f;
-    uiInfo.color = COLOR_BLACK - TRANSPARENCY(0.5f);
-    uiInfo.bitmap = &gameMetadata->whiteBitmap;
-    uiInfo.skipFilter = true;
-    uiInfo.uiText.basePosition = v2{ -1 + padding, -1 + rectHeight * 0.5f };
-    uiInfo.uiText.scaleFactor = scaleFactor;
-    uiInfo.uiText.text = "Edit";
-
-    PushToRenderGroup(perFrameRenderGroup, gameMetadata, perFrameMemory, &uiInfo);
+    UIInfo *uiInfo = HashGetValue(HashCharUIInfo, gameMetadata->hashCharUIInfo, "edit_ui_bar");
+    PushToRenderGroup(perFrameRenderGroup, gameMetadata, perFrameMemory, uiInfo);
 
     if (gameMetadata->editMode.isCommandPrompt)
     {
-        f32 scale = 0.50f;
-        f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
-        uiInfo.range.halfDim.y = rectHeight * 0.5f;
-        uiInfo.range.center = v2{ 0.0f, -0.35f + rectHeight * 0.5f };
-        uiInfo.color = COLOR_BLACK - TRANSPARENCY(0.6f);
-        uiInfo.uiText.basePosition =v2{ -1 + padding, -0.35f + rectHeight * 0.5f };
-        uiInfo.uiText.scaleFactor = scaleFactor;
-        uiInfo.uiText.text = gameMetadata->editMode.commandPrompt;
-
-        PushToRenderGroup(perFrameRenderGroup, gameMetadata, perFrameMemory, &uiInfo);
+        UIInfo *uiInfo = HashGetValue(HashCharUIInfo, gameMetadata->hashCharUIInfo, "command_prompt_ui");
+        PushToRenderGroup(perFrameRenderGroup, gameMetadata, perFrameMemory, uiInfo);
     }
 }
 
@@ -390,7 +366,17 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     if (gameMetadata->mouseInfo.isNew)
     {
         gameMetadata->mouseInfo.isNew = false;
-        buttonUIFound = gameMetadata->editMode.selectedRect && IsMouseInSelectedUIRegion(gameMetadata, selectedUI);
+        FOR_EACH_HASH_KEY_VAL_BEGIN(HashCharUIInfo, hashKeyVal, gameMetadata->hashCharUIInfo)
+        {
+            UIInfo *uiInfo = hashKeyVal->val;
+            buttonUIFound = gameMetadata->editMode.selectedRect &&
+                IsMouseInSelectedUIRegion(gameMetadata, uiInfo->range);
+            if (buttonUIFound)
+            {
+                FOR_EACH_HASH_BREAK();
+            }
+        }
+        FOR_EACH_HASH_KEY_VAL_END();
     }
 
     DoEditModeUI(gameMetadata, gameMetadata->perFrameRenderGroupUI);
@@ -399,18 +385,13 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     {
         GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
         b32 skipFilter = true;
-
-        v3 startingPosition = V3(selectedUI.center, 0);
-        Rect *selectedUI =
-            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 0.5f, 2.0f);
-        selectedUI->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-        selectedUI->bitmap = &gameMetadata->whiteBitmap;
-        PushRenderGroupRectInfo(gameMetadata->perFrameRenderGroupUI, selectedUI, skipFilter);
+        UIInfo *uiInfo = HashGetValue(HashCharUIInfo, gameMetadata->hashCharUIInfo, "select_rect_ui");
+        PushToRenderGroup(gameMetadata->perFrameRenderGroupUI, gameMetadata, perFrameMemory, uiInfo);
 
         Rect *texture =
-            CreateRectangle(perFrameMemory, startingPosition, TRANSPARENCY(1.0f), 0.5f, 0.5f);
+            CreateRectangle(perFrameMemory, V3(uiInfo->range.center, 0), TRANSPARENCY(1.0f), 0.5f, 0.5f);
         texture->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
-        texture->bitmapID = selectedUI->bitmapID;
+        texture->bitmapID = texture->bitmapID;
         PushRenderGroupRectInfo(gameMetadata->perFrameRenderGroupUI, texture, skipFilter);
     }
 

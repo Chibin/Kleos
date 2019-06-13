@@ -42,6 +42,11 @@ void SetValue(NPC *value, NPC **o_value)
     *o_value = value;
 }
 
+void SetValue(UIInfo *value, UIInfo **o_value)
+{
+    *o_value = value;
+}
+
 b32 KeyCompare(Bitmap *a, Bitmap *b)
 {
     return a->bitmapID == b->bitmapID;
@@ -68,6 +73,7 @@ CREATE_SET_HASH_FUNCTION(HashBitmapBitmap, Bitmap *, Bitmap *);
 CREATE_SET_HASH_FUNCTION(HashEntityMovement, Entity *, Movement *);
 CREATE_SET_HASH_FUNCTION(HashEntityNPC, Entity *, NPC *);
 CREATE_SET_HASH_FUNCTION(HashSetEntity, Entity *, Entity *);
+CREATE_SET_HASH_FUNCTION(HashCharUIInfo, const char *, UIInfo *);
 
 memory_index KeyToHashIndex(Hash *hash, Bitmap *key)
 {
@@ -84,6 +90,7 @@ CREATE_HASH_FUNCTIONS(HashEntityRect, Entity *, Rect *);
 CREATE_HASH_FUNCTIONS(HashEntityMovement, Entity *, Movement *);
 CREATE_HASH_FUNCTIONS(HashEntityNPC, Entity *, NPC *);
 CREATE_HASH_FUNCTIONS(HashSetEntity, Entity *, Entity *);
+CREATE_HASH_FUNCTIONS(HashCharUIInfo, const char *, UIInfo *);
 
 CREATE_HASH_FUNCTIONS(HashBitmapBitmap, Bitmap *, Bitmap *);
 CREATE_HASH_GET_VALUE_FUCTION(HashBitmapBitmap, const char *, Bitmap *);
