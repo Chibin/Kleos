@@ -99,6 +99,7 @@ static VulkanBuffers g_vkBuffers;
 static memory_index g_bitmapID = 0;
 
 #include "mouse.cpp"
+#include "ui.cpp"
 #include "render_helper.cpp"
 #include "update.cpp"
 #include "render.cpp"

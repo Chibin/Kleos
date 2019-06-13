@@ -296,40 +296,82 @@ void DoEditModeUI(GameMetadata *gameMetadata, RenderGroup *perFrameRenderGroup)
     f32 screenHeight = gameMetadata->screenResolution.v[1];
 
     f32 scaleFactor = 0.50f;
-    f32 padding = 0.0f;
+    f32 padding = 0.05f;
     f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scaleFactor;
 
-    v3 startingPosition = v3{ 0.0f, -1 + rectHeight * 0.5f, 0 };
-    Rect *bottomUIBar =
-        CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.5f), 2, rectHeight);
-    bottomUIBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-    bottomUIBar->bitmap = &gameMetadata->whiteBitmap;
-    PushRenderGroupRectInfo(perFrameRenderGroup, bottomUIBar, skipFilter);
+    UIInfo uiInfo = {};
+    uiInfo.range.center = v2{ 0.0f, -1 + rectHeight * 0.5f };
+    uiInfo.range.halfDim.x = 1;
+    uiInfo.range.halfDim.y = rectHeight * 0.5f;
+    uiInfo.color = COLOR_BLACK - TRANSPARENCY(0.5f);
+    uiInfo.bitmap = &gameMetadata->whiteBitmap;
+    uiInfo.skipFilter = true;
+    uiInfo.uiText.basePosition = v2{ -1 + padding, -1 + rectHeight * 0.5f };
+    uiInfo.uiText.scaleFactor = scaleFactor;
+    uiInfo.uiText.text = "Edit";
 
-    padding = 0.02f;
-    startingPosition = v3{ -1 + padding, -1 + rectHeight * 0.5f, 0 };
-    PushStringRectToRenderGroup(
-            perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor, "Edit");
+    PushToRenderGroup(perFrameRenderGroup, gameMetadata, perFrameMemory, &uiInfo);
 
     if (gameMetadata->editMode.isCommandPrompt)
     {
         f32 scale = 0.50f;
         f32 rectHeight = gameMetadata->fontBitmap.height / screenHeight * scale;
-        startingPosition =
-            v3{ 0.0f, -0.35f + rectHeight * 0.5f, 0 };
-        Rect *commandPromptBar =
-            CreateRectangle(perFrameMemory, startingPosition, COLOR_BLACK - TRANSPARENCY(0.6f), 2, rectHeight);
-        commandPromptBar->bitmapID = gameMetadata->whiteBitmap.bitmapID;
-        commandPromptBar->bitmap = &gameMetadata->whiteBitmap;
-        PushRenderGroupRectInfo(perFrameRenderGroup, commandPromptBar, skipFilter);
+        uiInfo.range.halfDim.y = rectHeight * 0.5f;
+        uiInfo.range.center = v2{ 0.0f, -0.35f + rectHeight * 0.5f };
+        uiInfo.color = COLOR_BLACK - TRANSPARENCY(0.6f);
+        uiInfo.uiText.basePosition =v2{ -1 + padding, -0.35f + rectHeight * 0.5f };
+        uiInfo.uiText.scaleFactor = scaleFactor;
+        uiInfo.uiText.text = gameMetadata->editMode.commandPrompt;
 
-        startingPosition = v3{ -1 + padding, -0.35f + rectHeight * 0.5f, 0 };
-        PushStringRectToRenderGroup(
-                perFrameRenderGroup, gameMetadata, perFrameMemory, startingPosition, scaleFactor,
-                gameMetadata->editMode.commandPrompt);
-
-        /* TODO: Draw letters */
+        PushToRenderGroup(perFrameRenderGroup, gameMetadata, perFrameMemory, &uiInfo);
     }
+}
+
+AABB DetermineAABBRangeBasedOnMouse(GameMetadata *gameMetadata)
+{
+    AABB result = {};
+    glm::vec3 mouse0 = {};
+    glm::vec3 mouse1 = {};
+    if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
+            gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK ||
+            gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
+    {
+        mouse0 =
+            GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.leftScreenCoordinates[0]);
+        mouse1 =
+            GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.leftScreenCoordinates[1]);
+    }
+    else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
+    {
+        mouse0 =
+            GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.rightScreenCoordinates[0]);
+        mouse1 =
+            GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.rightScreenCoordinates[1]);
+    }
+
+    if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK)
+    {
+        result.halfDim = v2{1.0f, 1.0f};
+        result.center = V2(mouse0);
+    }
+    else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
+    {
+        f32 arbitraryPadding = 50.0f;
+        result.halfDim = v2{arbitraryPadding, arbitraryPadding};
+        result.center = V2(mouse0);
+    }
+    else
+    {
+        result.halfDim = V2(mouse0 - mouse1) * 0.5f;
+        result.center = V2(mouse0) - result.halfDim;
+        /* sometimes we're going to the negative value when calculating the
+         * dimension. This needs to be positive in order to work.
+         * We also need to use the negative dimension to calculate two out of the four quadrants.
+         */
+        result.halfDim = abs(result.halfDim);
+    }
+
+    return result;
 }
 
 void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
@@ -339,7 +381,6 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
         return;
     }
 
-    AABB range = {};
     b32 buttonUIFound = false;
 
     AABB selectedUI = {};
@@ -375,37 +416,7 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 
     if (!buttonUIFound)
     {
-        glm::vec3 mouse0 = {};
-        glm::vec3 mouse1 = {};
-        if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
-                gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK ||
-                gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
-        {
-            mouse0 =
-                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.leftScreenCoordinates[0]);
-            mouse1 =
-                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.leftScreenCoordinates[1]);
-        }
-        else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
-        {
-            mouse0 =
-                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.rightScreenCoordinates[0]);
-            mouse1 =
-                GetWorldPointFromMouse(gameMetadata, gameMetadata->mouseInfo.rightScreenCoordinates[1]);
-        }
-
-        range.halfDim = V2(mouse0 - mouse1) * 0.5f;
-        range.center = V2(mouse0) - range.halfDim;
-        /* sometimes we're going to the negative value when calculating the
-         * dimension. This needs to be positive in order to work.
-         * We also need to use the negative dimension to calculate two out of the four quadrants.
-         */
-        range.halfDim = abs(range.halfDim);
-
-        if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK)
-        {
-            range.halfDim = v2{1.0f, 1.0f};
-        }
+        AABB range = DetermineAABBRangeBasedOnMouse(gameMetadata);
 
         if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
                 gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK)
@@ -420,35 +431,25 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 
             SetAABB(&gameMetadata->rectManager->NonTraversable);
         }
-
-        if (gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
+        else if (gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
         {
             AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
         }
-
-        if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
+        /* Find new selected rect to modify */
+        else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
         {
-            f32 arbitraryPadding = 50.0f;
-            range.halfDim = range.halfDim + arbitraryPadding;
             Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
-#if 0
-            AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
-#endif
             gameMetadata->editMode.selectedRect = nullptr;
             for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
             {
                 Rect *rect = arr[i];
                 if (ContainsPoint(rect, range.center))
                 {
-#if 0
-                    AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
-#endif
                     gameMetadata->editMode.selectedRect = rect;
                     break;
                 }
             }
         }
-
     }
 
     if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
