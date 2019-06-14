@@ -203,8 +203,8 @@ b32 KeyCompare(const char *a, const char *b)
 }
 
 /* This is needed as we're doing a for loop within a while loop. If we just do
- * a normal break, then  it will just end the for loop but will still go
- * through the other buckets of the hack */
+ * a normal break, then it will just end the for loop but will still go
+ * through the other buckets of the hash */
 #define FOR_EACH_HASH_BREAK()                                                                      \
     i = hashBucketCount + 1;                                                                       \
     break;

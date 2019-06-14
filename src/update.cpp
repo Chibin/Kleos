@@ -384,14 +384,14 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     if (gameMetadata->editMode.selectedRect != nullptr)
     {
         GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
-        b32 skipFilter = true;
         UIInfo *uiInfo = HashGetValue(HashCharUIInfo, gameMetadata->hashCharUIInfo, "select_rect_ui");
         PushToRenderGroup(gameMetadata->perFrameRenderGroupUI, gameMetadata, perFrameMemory, uiInfo);
 
+        b32 skipFilter = true;
         Rect *texture =
             CreateRectangle(perFrameMemory, V3(uiInfo->range.center, 0), TRANSPARENCY(1.0f), 0.5f, 0.5f);
         texture->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
-        texture->bitmapID = texture->bitmapID;
+        texture->bitmapID = texture->bitmap->bitmapID;
         PushRenderGroupRectInfo(gameMetadata->perFrameRenderGroupUI, texture, skipFilter);
     }
 
