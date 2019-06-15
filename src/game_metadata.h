@@ -92,6 +92,8 @@ struct GameMetadata
     glm::mat4 *projection;
 
     MouseInfo mouseInfo;
+
+    v3 selectUITextureOffset;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

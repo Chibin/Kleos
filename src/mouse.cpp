@@ -91,7 +91,22 @@ void HandleMouseInput(SDL_Event &event, GameMetadata *gm)
             }
             break;
         case SDL_MOUSEWHEEL:
-            ProcessMouseInput(event, gm->camera);
+            /* event.motion doesn't work when the mouse wheel type is
+             * happening. I'm not 100% sure why, but getmousestate at
+             * least guarantees the mouse position for the focused window */
+            s32 x, y;
+            SDL_GetMouseState(&x, &y);
+            gm->mouseInfo.middleScreenCoordinate = v2{(f32)x, (f32)y};
+
+            if (event.wheel.y == 1)
+            {
+                gm->mouseInfo.mouseType = MOUSE_WHEEL_UP;
+            }
+            else if (event.wheel.y == -1)
+            {
+                gm->mouseInfo.mouseType = MOUSE_WHEEL_DOWN;
+            }
+            gm->mouseInfo.isNew = true;
             break;
         case SDL_MOUSEMOTION:
             g_mousePoint = ProcessMouseMotion(event.motion);

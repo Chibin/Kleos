@@ -179,13 +179,13 @@ v3 ProcessMouseMotion(const SDL_MouseMotionEvent &mme)
     return GetScreenCoordinateFromMouse(mme);
 }
 
-void ProcessMouseInput(const SDL_Event &event, Camera *camera)
+void DoCameraUpdate(MouseType mouseType, Camera *camera)
 {
-    if (event.wheel.y == 1) /* scroll up */
+    if (mouseType == MOUSE_WHEEL_UP) /* scroll up */
     {
         CameraZoom(camera, -1.0f);
     }
-    else if (event.wheel.y == -1) /* scroll down */
+    else if (mouseType == MOUSE_WHEEL_DOWN) /* scroll down */
     {
         CameraZoom(camera, 1.0f);
     }

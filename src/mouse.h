@@ -13,6 +13,8 @@ enum MouseType
     RIGHT_DOUBLE_CLICK,
     RIGHT_DRAG_CLICK,
     RIGHT_MOUSE_DRAG,
+    MOUSE_WHEEL_UP,
+    MOUSE_WHEEL_DOWN,
     DO_NOT_USE_ANYMORE_MOUSE,
 };
 
@@ -22,6 +24,7 @@ struct MouseInfo
     /* we need 2 v2 for drag information */
     v2 leftScreenCoordinates[2];
     v2 rightScreenCoordinates[2];
+    v2 middleScreenCoordinate;
     b32 isNew;
 };
 

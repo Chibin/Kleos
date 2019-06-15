@@ -277,13 +277,19 @@ b32 IsMouseInSelectedUIRegion(GameMetadata *gm, AABB range)
 
         return ContainsPoint(&range, leftMouseButton);
     }
-
-    if (gm->mouseInfo.mouseType == RIGHT_SINGLE_CLICK || gm->mouseInfo.mouseType == RIGHT_DRAG_CLICK)
+    else if (gm->mouseInfo.mouseType == RIGHT_SINGLE_CLICK || gm->mouseInfo.mouseType == RIGHT_DRAG_CLICK)
     {
         v2 rightMouseButton = V2(ScreenSpaceToNormalizedDeviceSpace(
                     gm->mouseInfo.rightScreenCoordinates[0],
                     gm->screenResolution));
         return ContainsPoint(&range, rightMouseButton);
+    }
+    else if (gm->mouseInfo.mouseType == MOUSE_WHEEL_UP || gm->mouseInfo.mouseType == MOUSE_WHEEL_DOWN)
+    {
+        v2 middleMouseButton = V2(ScreenSpaceToNormalizedDeviceSpace(
+                    gm->mouseInfo.middleScreenCoordinate,
+                    gm->screenResolution));
+        return ContainsPoint(&range, middleMouseButton);
     }
 
     return false;
@@ -358,10 +364,7 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
     }
 
     b32 buttonUIFound = false;
-
-    AABB selectedUI = {};
-    selectedUI.halfDim = v2{0.25, 1.0f};
-    selectedUI.center = v2{0.75f, 0.0f};
+    b32 selectRectUI = false;
 
     if (gameMetadata->mouseInfo.isNew)
     {
@@ -373,6 +376,7 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
                 IsMouseInSelectedUIRegion(gameMetadata, uiInfo->range);
             if (buttonUIFound)
             {
+                selectRectUI = strcmp(hashKeyVal->key, "select_rect_ui")  == 0;
                 FOR_EACH_HASH_BREAK();
             }
         }
@@ -383,62 +387,116 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
 
     if (gameMetadata->editMode.selectedRect != nullptr)
     {
+        if (buttonUIFound && selectRectUI)
+        {
+            if (gameMetadata->mouseInfo.mouseType == MOUSE_WHEEL_UP)
+            {
+                gameMetadata->selectUITextureOffset.y -= 0.1f;
+
+            }
+            else if (gameMetadata->mouseInfo.mouseType == MOUSE_WHEEL_DOWN)
+            {
+                gameMetadata->selectUITextureOffset.y += 0.1f;
+            }
+        }
+
         GameMemory *perFrameMemory = &gameMetadata->temporaryMemory;
         UIInfo *uiInfo = HashGetValue(HashCharUIInfo, gameMetadata->hashCharUIInfo, "select_rect_ui");
         PushToRenderGroup(gameMetadata->perFrameRenderGroupUI, gameMetadata, perFrameMemory, uiInfo);
 
         b32 skipFilter = true;
-        Rect *texture =
-            CreateRectangle(perFrameMemory, V3(uiInfo->range.center, 0), TRANSPARENCY(1.0f), 0.5f, 0.5f);
-        texture->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
-        texture->bitmapID = texture->bitmap->bitmapID;
-        PushRenderGroupRectInfo(gameMetadata->perFrameRenderGroupUI, texture, skipFilter);
+
+        Bitmap *sentinelNode = &gameMetadata->bitmapSentinelNode;
+        v3 position = V3(uiInfo->range.center, 0);
+        /* This will make the first texture at the very top of the screen. */
+        position.y = 0.75f;
+        position += gameMetadata->selectUITextureOffset;
+
+        for(Bitmap *node = sentinelNode->next; node != sentinelNode; node = node->next)
+        {
+            if (strcmp(node->name, "font") == 0 || strcmp(node->name, "arche") == 0 ||
+                    strcmp(node->name, "pshroom") == 0 || strcmp(node->name, "white") == 0)
+            {
+                continue;
+            }
+            Rect *texture =
+                CreateRectangle(perFrameMemory, position, TRANSPARENCY(1.0f), 0.5f, 0.5f);
+            texture->bitmap = node;
+            texture->bitmapID = node->bitmapID;
+            PushRenderGroupRectInfo(gameMetadata->perFrameRenderGroupUI, texture, skipFilter);
+
+            if (selectRectUI && gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK)
+            {
+                if (ContainsPoint(texture,
+                            V2(ScreenSpaceToNormalizedDeviceSpace(
+                                    gameMetadata->mouseInfo.leftScreenCoordinates[0],
+                                    gameMetadata->screenResolution))))
+                {
+                    gameMetadata->editMode.selectedRect->bitmap = texture->bitmap;
+                    gameMetadata->editMode.selectedRect->bitmapID = texture->bitmapID;
+                }
+            }
+
+            position.y -= 0.5f;
+        }
     }
 
-    if (!buttonUIFound)
+    if (!buttonUIFound || !selectRectUI)
     {
         AABB range = DetermineAABBRangeBasedOnMouse(gameMetadata);
 
-        if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
-                gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK)
+        switch(gameMetadata->mouseInfo.mouseType)
         {
-            Rect *permanentRect =
-                CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
-            permanentRect->type = COLLISION;
-            permanentRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
-            permanentRect->bitmapID = permanentRect->bitmap->bitmapID;
-            permanentRect->renderLayer = FRONT_STATIC;
-            PushBack(&gameMetadata->rectManager->NonTraversable.rda, permanentRect);
-
-            SetAABB(&gameMetadata->rectManager->NonTraversable);
-        }
-        else if (gameMetadata->mouseInfo.mouseType == LEFT_MOUSE_DRAG)
-        {
-            AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
-        }
-        /* Find new selected rect to modify */
-        else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
-        {
-            Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
-            gameMetadata->editMode.selectedRect = nullptr;
-            for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
-            {
-                Rect *rect = arr[i];
-                if (ContainsPoint(rect, range.center))
+            case LEFT_SINGLE_CLICK:
+            case LEFT_DRAG_CLICK:
                 {
-                    gameMetadata->editMode.selectedRect = rect;
-                    break;
+                    Rect *permanentRect =
+                        CreateMinimalRectInfo(&gameMetadata->reservedMemory, COLOR_BLUE_TRANSPARENT, &range);
+                    permanentRect->type = COLLISION;
+                    permanentRect->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "box");
+                    permanentRect->bitmapID = permanentRect->bitmap->bitmapID;
+                    permanentRect->renderLayer = FRONT_STATIC;
+                    PushBack(&gameMetadata->rectManager->NonTraversable.rda, permanentRect);
+
+                    SetAABB(&gameMetadata->rectManager->NonTraversable);
                 }
-            }
+                break;
+            case LEFT_MOUSE_DRAG:
+                AddDebugRect(gameMetadata, &range, COLOR_RED_TRANSPARENT);
+                break;
+            case RIGHT_SINGLE_CLICK:
+                {
+                    /* Find new selected rect to modify */
+                    Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+                    gameMetadata->editMode.selectedRect = nullptr;
+                    for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
+                    {
+                        Rect *rect = arr[i];
+                        if (ContainsPoint(rect, range.center))
+                        {
+                            gameMetadata->editMode.selectedRect = rect;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case MOUSE_WHEEL_UP:
+            case MOUSE_WHEEL_DOWN:
+                DoCameraUpdate(gameMetadata->mouseInfo.mouseType, gameMetadata->camera);
+                break;
         }
     }
 
-    if (gameMetadata->mouseInfo.mouseType == LEFT_SINGLE_CLICK ||
-            gameMetadata->mouseInfo.mouseType == LEFT_DRAG_CLICK ||
-            gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK ||
-            gameMetadata->mouseInfo.mouseType == RIGHT_DRAG_CLICK)
+    switch(gameMetadata->mouseInfo.mouseType)
     {
-        gameMetadata->mouseInfo.mouseType = DO_NOT_USE_ANYMORE_MOUSE;
+        case LEFT_SINGLE_CLICK:
+        case LEFT_DRAG_CLICK:
+        case RIGHT_SINGLE_CLICK:
+        case RIGHT_DRAG_CLICK:
+        case MOUSE_WHEEL_DOWN:
+        case MOUSE_WHEEL_UP:
+            gameMetadata->mouseInfo.mouseType = DO_NOT_USE_ANYMORE_MOUSE;
+            break;
     }
 }
 
