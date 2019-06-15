@@ -21,20 +21,13 @@ struct EditMode
     char backupCommandPrompt[256];
     memory_index commandPromptCount;
 
-    b32 willSelectObject;
     Rect *selectedRect;
 
     glm::vec3 *objectsToBeAddedTotheWorld;
     glm::vec3 leftMouseDrag[2];
-    v2 screenCoordinates[2];
-    v2 rightMouseButtonScreenCoordiantes;
-    b32 isLeftButtonReleased;
     b32 createNewRect;
 
-    b32 isRequestTriggered;
-    b32 isRightButtonReleased;
-    glm::vec3 rightMouseButton;
-
+    v3 selectUITextureOffset;
 };
 
 struct GameMetadata
@@ -92,8 +85,6 @@ struct GameMetadata
     glm::mat4 *projection;
 
     MouseInfo mouseInfo;
-
-    v3 selectUITextureOffset;
 };
 
 inline void *AllocateMemory(GameMetadata *gm, u32 size)

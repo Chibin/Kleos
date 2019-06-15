@@ -267,8 +267,6 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
 
 b32 IsMouseInSelectedUIRegion(GameMetadata *gm, AABB range)
 {
-    AddDebugRectUI(gm, &range, COLOR_RED_TRANSPARENT);
-
     if (gm->mouseInfo.mouseType == LEFT_SINGLE_CLICK || gm->mouseInfo.mouseType == LEFT_DRAG_CLICK)
     {
         v2 leftMouseButton = V2(ScreenSpaceToNormalizedDeviceSpace(
@@ -391,12 +389,12 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
         {
             if (gameMetadata->mouseInfo.mouseType == MOUSE_WHEEL_UP)
             {
-                gameMetadata->selectUITextureOffset.y -= 0.1f;
+                gameMetadata->editMode.selectUITextureOffset.y -= 0.1f;
 
             }
             else if (gameMetadata->mouseInfo.mouseType == MOUSE_WHEEL_DOWN)
             {
-                gameMetadata->selectUITextureOffset.y += 0.1f;
+                gameMetadata->editMode.selectUITextureOffset.y += 0.1f;
             }
         }
 
@@ -410,7 +408,7 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
         v3 position = V3(uiInfo->range.center, 0);
         /* This will make the first texture at the very top of the screen. */
         position.y = 0.75f;
-        position += gameMetadata->selectUITextureOffset;
+        position += gameMetadata->editMode.selectUITextureOffset;
 
         for(Bitmap *node = sentinelNode->next; node != sentinelNode; node = node->next)
         {

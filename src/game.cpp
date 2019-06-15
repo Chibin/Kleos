@@ -43,9 +43,7 @@ void MainGameLoop(SDL_Window *mainWindow, RenderAPI *renderAPI)
     gameMetadata.frameAnimationSentinelNode.prev = &gameMetadata.frameAnimationSentinelNode;
 
     gameMetadata.editMode = {};
-    gameMetadata.editMode.isLeftButtonReleased = true;
     gameMetadata.editMode.isActive = true;
-    gameMetadata.editMode.isRightButtonReleased = true;
 
     gameMetadata.mouseInfo.mouseType = DO_NOT_USE_ANYMORE_MOUSE;
 
