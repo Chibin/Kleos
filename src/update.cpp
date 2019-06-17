@@ -126,6 +126,28 @@ void UpdateAttack(
          * symetrical when swapping between both directions
          */
         AddDebugRect(gameMetadata, &e->frameState, V3(movement->position), COLOR_RED_TRANSPARENT);
+        AABB range = CreateFrameAABB(&e->frameState, V3(movement->position));
+        FOR_EACH_HASH_KEY_VAL_BEGIN(HashEntityNPC, hashKeyVal, gameMetadata->hashEntityNPC)
+        {
+            NPC *npc = hashKeyVal->val;
+            AABB npcAABB = {};
+            npcAABB.center = V2(npc->movement->position);
+            npcAABB.halfDim = npc->dim * 0.5f;
+            if (TestAABBAABB(&range, &npcAABB))
+            {
+                if (movement->position.x < npc->movement->position.x)
+                {
+                    npc->movement->velocity.x += 2.0f;
+                }
+                else
+                {
+                    npc->movement->velocity.x -= 2.0f;
+                }
+
+                npc->movement->velocity.y += 1.0f;
+            }
+        }
+        FOR_EACH_HASH_KEY_VAL_END();
     }
     else
     {
