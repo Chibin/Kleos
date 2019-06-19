@@ -80,6 +80,7 @@ inline void *RequestToReservedMemory(memory_index size)
 
 b32 IsWithinThreshold(v2 a, v2 b, f32 thresholdValueInScreenCoordinates);
 
+#include "stats.cpp"
 #include "debug_helper.cpp"
 #include "random.cpp"
 #include "scene_node.cpp"

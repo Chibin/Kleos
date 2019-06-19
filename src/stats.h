@@ -3,7 +3,7 @@
 
 struct Stat
 {
-    u32 currentHealth;
+    s32 currentHealth;
     u32 maxHealth;
 };
 

@@ -51,6 +51,7 @@ void SetHash(GameMetadata *gm)
     HASH_CREATE(HashEntityNPC, &gm->reservedMemory, hashEntityNPC, MAX_HASH);
     HASH_CREATE(HashSetEntity, &gm->reservedMemory, hashSetEntity, MAX_HASH);
     HASH_CREATE(HashCharUIInfo, &gm->reservedMemory, hashCharUIInfo, MAX_HASH);
+    HASH_CREATE(HashEntityStat, &gm->reservedMemory, hashEntityStat, MAX_HASH);
 
     gm->hashBitmapVkDescriptorSet = hashBMPDescSet;
     gm->hashBitmap = hashBitmap;
@@ -59,6 +60,7 @@ void SetHash(GameMetadata *gm)
     gm->hashEntityNPC = hashEntityNPC;
     gm->hashSetEntity = hashSetEntity;
     gm->hashCharUIInfo = hashCharUIInfo;
+    gm->hashEntityStat = hashEntityStat;
 }
 
 void SetWhiteBitmap(GameMetadata *gm)
@@ -271,8 +273,11 @@ void SetPlayer(GameMetadata *gm)
     movement->position.y = playerRect->center.y;
     movement->position.z = playerRect->center.z;
 
+    Stat *stat = CreateStat(reservedMemory, /* maxHealth */ 1);
+
     HashAdd(gm->hashEntityRect, playerEntity, playerRect);
     HashAdd(gm->hashEntityMovement, playerEntity, movement);
+    HashAdd(gm->hashEntityStat, playerEntity, stat);
 }
 
 void SetParticle(GameMetadata *gm)
@@ -489,10 +494,12 @@ void LoadStuff(GameMetadata *gameMetadata)
     enemyNPC->movementType = X_MOVEMENT;
     enemyNPC->movementPattern = UNI_DIRECTIONAL;
     enemyNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
+    Stat *enemyStat = CreateStat(reservedMemory, 1);
 
     Entity *enemyEntity = CreateNewEntity(gameMetadata, reservedMemory);
     HashAdd(gameMetadata->hashEntityMovement, enemyEntity, enemyNPC->movement);
     HashAdd(gameMetadata->hashEntityNPC, enemyEntity, enemyNPC);
+    HashAdd(gameMetadata->hashEntityStat, enemyEntity, enemyStat);
 
     /* Spawn another enemty */
     NPC *secondNPC = (NPC *)AllocateMemory(reservedMemory, sizeof(NPC));
@@ -515,9 +522,12 @@ void LoadStuff(GameMetadata *gameMetadata)
     secondNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
     secondNPC->movement->position = glm::vec3(1,2,0);
 
+    Stat *secondStat = CreateStat(reservedMemory, 1);
+
     Entity *secondNPCEntity = CreateNewEntity(gameMetadata, reservedMemory);
     HashAdd(gameMetadata->hashEntityMovement, secondNPCEntity, secondNPC->movement);
     HashAdd(gameMetadata->hashEntityNPC, secondNPCEntity, secondNPC);
+    HashAdd(gameMetadata->hashEntityStat, secondNPCEntity, secondStat);
 }
 
 inline void LoadAssets(GameMetadata *gameMetadata)
