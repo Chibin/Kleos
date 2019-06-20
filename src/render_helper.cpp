@@ -253,7 +253,7 @@ void SetPlayer(GameMetadata *gm)
 {
     GameMemory *reservedMemory = &gm->reservedMemory;
     v3 pos = { 0, 0, 0.01f };
-    Entity *playerEntity = CreateNewEntity(gm, reservedMemory);
+    Entity *playerEntity = CreateAndAddNewEntity(gm, reservedMemory);
     playerEntity->isPlayer = true;
     gm->playerEntity = playerEntity;
 
@@ -496,38 +496,16 @@ void LoadStuff(GameMetadata *gameMetadata)
     enemyNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
     Stat *enemyStat = CreateStat(reservedMemory, 1);
 
-    Entity *enemyEntity = CreateNewEntity(gameMetadata, reservedMemory);
+    Entity *enemyEntity = CreateAndAddNewEntity(gameMetadata, reservedMemory);
     HashAdd(gameMetadata->hashEntityMovement, enemyEntity, enemyNPC->movement);
     HashAdd(gameMetadata->hashEntityNPC, enemyEntity, enemyNPC);
     HashAdd(gameMetadata->hashEntityStat, enemyEntity, enemyStat);
 
-    /* Spawn another enemty */
-    NPC *secondNPC = (NPC *)AllocateMemory(reservedMemory, sizeof(NPC));
-    memset(secondNPC, 0, sizeof(NPC));
-
-    secondNPC->dim.height = 1.0f;
-    secondNPC->dim.width = 1.5f;
-    secondNPC->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
-    secondNPC->spriteAnimation =
-        CreateCopyOfSpriteAnimationInfo(
-                reservedMemory,
-                GetSpriteAnimationInfo(
-                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom"),
-                    "IDLE")
-        );
-    secondNPC->direction = LEFT;
-    secondNPC->renderLayer = BEHIND_PLAYER;
-    secondNPC->movementType = X_MOVEMENT;
-    secondNPC->movementPattern = UNI_DIRECTIONAL;
-    secondNPC->movement = (Movement *)AllocateMemory0(reservedMemory, sizeof(Movement));
-    secondNPC->movement->position = glm::vec3(1,2,0);
-
-    Stat *secondStat = CreateStat(reservedMemory, 1);
-
-    Entity *secondNPCEntity = CreateNewEntity(gameMetadata, reservedMemory);
-    HashAdd(gameMetadata->hashEntityMovement, secondNPCEntity, secondNPC->movement);
-    HashAdd(gameMetadata->hashEntityNPC, secondNPCEntity, secondNPC);
-    HashAdd(gameMetadata->hashEntityStat, secondNPCEntity, secondStat);
+    for (memory_index i = 0; i < 500; i++)
+    {
+        glm::vec3 position = glm::vec3(1 + (f32)i * 1/(f32)100,2,0);
+        CreateEnemy(gameMetadata, reservedMemory, position);
+    }
 }
 
 inline void LoadAssets(GameMetadata *gameMetadata)

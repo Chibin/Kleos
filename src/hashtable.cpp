@@ -52,7 +52,7 @@ CREATE_HASH_GET_VALUE_FUCTION(HashBitmapBitmap, const char *, Bitmap *);
 CREATE_HASH_GET_VALUE_FUCTION(HashBitmapBitmap, u32, Bitmap *);
 
 /* Entity */
-Entity *CreateNewEntity(GameMetadata *gameMetadata, GameMemory *gameMemory)
+Entity *CreateAndAddNewEntity(GameMetadata *gameMetadata, GameMemory *gameMemory)
 {
     Entity *newEntity = (Entity *)AllocateMemory0(gameMemory, sizeof(Entity));
     newEntity->id = gameMetadata->entityID++;
@@ -67,6 +67,16 @@ CREATE_HASH_DELETE_FUCTION(HashSetEntity)
 
 /* NPC */
 CREATE_HASH_DELETE_FUCTION(HashEntityNPC)
+{
+    return;
+}
+
+CREATE_HASH_DELETE_FUCTION(HashEntityMovement)
+{
+    return;
+}
+
+CREATE_HASH_DELETE_FUCTION(HashEntityStat)
 {
     return;
 }

@@ -221,4 +221,41 @@ void UpdateNPCMovement(NPC *npc, GameMetadata *gm, f32 dt)
 {
     NPCMove(npc, gm, dt);
 }
+
+NPC *CreateNPC(GameMetadata *gameMetadata, GameMemory *gameMemory)
+{
+    NPC *result = (NPC *)AllocateMemory0(gameMemory, sizeof(NPC));
+
+    result->dim.height = 1.0f;
+    result->dim.width = 1.5f;
+    result->bitmap = FindBitmap(&gameMetadata->bitmapSentinelNode, "pshroom");
+    result->spriteAnimation =
+        CreateCopyOfSpriteAnimationInfo(
+                gameMemory,
+                GetSpriteAnimationInfo(
+                    GetFrameAnimation(&gameMetadata->frameAnimationSentinelNode, "pshroom"),
+                    "IDLE")
+                );
+    result->direction = LEFT;
+    result->renderLayer = BEHIND_PLAYER;
+    result->movementType = X_MOVEMENT;
+    result->movementPattern = UNI_DIRECTIONAL;
+    result->movement = (Movement *)AllocateMemory0(gameMemory, sizeof(Movement));
+    result->movement->position = glm::vec3(1,2,0);
+
+    return result;
+}
+
+void CreateEnemy(GameMetadata *gameMetadata, GameMemory *gameMemory, glm::vec3 position)
+{
+        Entity *entity = CreateAndAddNewEntity(gameMetadata, gameMemory);
+        NPC *newEnemyNPC = CreateNPC(gameMetadata, gameMemory);
+        newEnemyNPC->movement->position = position;
+        Stat *stat = CreateStat(gameMemory, 1);
+
+        HashAdd(gameMetadata->hashEntityNPC, entity, newEnemyNPC);
+        HashAdd(gameMetadata->hashEntityMovement, entity, newEnemyNPC->movement);
+        HashAdd(gameMetadata->hashEntityStat, entity, stat);
+}
+
 #endif

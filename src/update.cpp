@@ -33,8 +33,10 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
 #endif
 
     AABB uiTest = {};
+#if 0
     glm::vec3 rayWorld =
         UnProject(gameMetadata->camera, gameMetadata->projection, V2(g_mousePoint), gameMetadata->screenResolution);
+#endif
 
     f32 dimRange = 0.1f;
     uiTest.halfDim = v2{dimRange, dimRange * (gameMetadata->screenResolution.x / gameMetadata->screenResolution.y)};
@@ -51,11 +53,14 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
         AddDebugRect(gameMetadata, rect, COLOR_YELLOW_TRANSPARENT);
 #endif
 
+#if 0
         glm::vec3 rayDirection = glm::vec3(1 / rayWorld.x, 1 / rayWorld.y, 0);
         if (IntersectionAABB(rect, V2(gameMetadata->camera->pos), rayDirection))
         {
             AddDebugRect(gameMetadata, rect, COLOR_BLACK_TRANSPARENT);
         }
+#endif
+
 #if 0
         real32 dX = e->velocity.x * dt;
         real32 dY = e->velocity.y + (gravity + e->acceleration.y) * dt;
@@ -134,9 +139,9 @@ void UpdateAttack(
             AABB npcAABB = {};
             npcAABB.center = V2(npc->movement->position);
             npcAABB.halfDim = npc->dim * 0.5f;
+            Stat *stat = HashGetValue(HashEntityStat, gameMetadata->hashEntityStat, npcEntity);
             if (TestAABBAABB(&range, &npcAABB))
             {
-                Stat *stat = HashGetValue(HashEntityStat, gameMetadata->hashEntityStat, npcEntity);
                 stat->currentHealth--;
                 if (movement->position.x < npc->movement->position.x)
                 {
@@ -151,8 +156,9 @@ void UpdateAttack(
 
                 if (stat->currentHealth <= 0)
                 {
-                    npc->bitmap = &gameMetadata->whiteBitmap;
                     HASH_DELETE(HashEntityNPC, gameMetadata->hashEntityNPC, npcEntity);
+                    HASH_DELETE(HashEntityMovement, gameMetadata->hashEntityMovement, npcEntity);
+                    HASH_DELETE(HashEntityStat, gameMetadata->hashEntityStat, npcEntity);
                     HASH_DELETE(HashSetEntity, gameMetadata->hashSetEntity, npcEntity);
                 }
             }
@@ -254,15 +260,13 @@ void UpdateEntities(GameMetadata *gameMetadata, GameTimestep *gt, RectDynamicArr
         Movement *movement = HashGetValue(HashEntityMovement, gameMetadata->hashEntityMovement, e);
         Rect *rectFromEntity = HashGetValue(HashEntityRect, gameMetadata->hashEntityRect, e);
 
+        NPC *npcFromEntity = HashGetValue(HashEntityNPC, gameMetadata->hashEntityNPC, e);
         if (rectFromEntity != NULL)
         {
             UpdateMovement(gameMetadata, movement, rectFromEntity->dim, dt);
         }
-        else
+        else if(npcFromEntity != NULL)
         {
-
-            NPC *npcFromEntity = HashGetValue(HashEntityNPC, gameMetadata->hashEntityNPC, e);
-            ASSERT(npcFromEntity != NULL);
             UpdateMovement(gameMetadata, movement, npcFromEntity->dim, dt);
         }
 
