@@ -59,3 +59,14 @@ Entity *CreateNewEntity(GameMetadata *gameMetadata, GameMemory *gameMemory)
     HashAdd(gameMetadata->hashSetEntity, newEntity, newEntity);
     return newEntity;
 }
+
+CREATE_HASH_DELETE_FUCTION(HashSetEntity)
+{
+    return;
+}
+
+/* NPC */
+CREATE_HASH_DELETE_FUCTION(HashEntityNPC)
+{
+    return;
+}

@@ -28,6 +28,12 @@ CREATE_HASH_GET_VALUE_FUCTION(HashU32U32, u32, u32);
 CREATE_HASH_ADD_FUNCTION(HashCharU32, const char *, u32);
 CREATE_HASH_GET_VALUE_FUCTION(HashCharU32, const char *, u32);
 
+CREATE_HASH_DELETE_FUCTION(HashU32U32)
+{
+    // no malloc happened so nothing to do
+    return;
+}
+
 void testIntHash(GameMemory *gm)
 {
     b32 failed = false;
@@ -110,6 +116,43 @@ void testCharWithaCollission(GameMemory *gm)
     REPORT_TEST(result, __func__);
 }
 
+void testIntHashWithDelete(GameMemory *gm)
+{
+    b32 failed = false;
+    HASH_CREATE(HashU32U32, gm, hash, MAX_HASH_SIZE);
+
+    memory_index count = 200;
+    for(memory_index i = 0; i < count; i++)
+    {
+        u32 key = SafeCastToU32(i);
+        u32 value = SafeCastToU32(i+1);
+        HashAdd(hash, key, value);
+    }
+    b32 result = false;
+    for(memory_index i = 0; i < count; i++)
+    {
+        u32 valueOut = HashGetValue(HashU32U32, hash, i);
+        result = valueOut == SafeCastToU32(i+1);
+        if (result == false)
+        {
+            printf("failed at index '%zu' for expected value '%d' vs '%d'\n", i, SafeCastToU32(i+1), valueOut);
+            break;
+        }
+    }
+
+    u32 i = 1;
+    HASH_DELETE(HashU32U32, hash, i);
+    u32 valueOut = HashGetValue(HashU32U32, hash, i);
+    result = valueOut == 0;
+    if (result == false)
+    {
+        printf("failed at index '%d' for expected value '%d' vs '%d'\n", i, 0, valueOut);
+    }
+
+
+    REPORT_TEST(result, __func__);
+}
+
 int main()
 {
     GameMemory gameMemory;
@@ -120,6 +163,7 @@ int main()
     testIntHash(&gameMemory);
     testCharHash(&gameMemory);
     testCharWithaCollission(&gameMemory);
+    testIntHashWithDelete(&gameMemory);
 
     return 0;
 }

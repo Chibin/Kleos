@@ -151,8 +151,9 @@ void UpdateAttack(
 
                 if (stat->currentHealth <= 0)
                 {
-                    //HASH_DELETE(gameMetadata->hashSetEntity, npcEntity);
                     npc->bitmap = &gameMetadata->whiteBitmap;
+                    HASH_DELETE(HashEntityNPC, gameMetadata->hashEntityNPC, npcEntity);
+                    HASH_DELETE(HashSetEntity, gameMetadata->hashSetEntity, npcEntity);
                 }
             }
         }

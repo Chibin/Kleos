@@ -3,12 +3,12 @@
 
 #define MAX_HASH_SIZE 10
 
-#define CREATE_STRUCT(T, TKey, TVal)                                                               \
-    struct T                                                                                       \
-{                                                                                                  \
-    TKey key;                                                                                      \
-    TVal val;                                                                                      \
-    T *next;                                                                                       \
+#define CREATE_STRUCT(T, TKey, TVal)                                                                \
+    struct T                                                                                        \
+{                                                                                                   \
+    TKey key;                                                                                       \
+    TVal val;                                                                                       \
+    T *next;                                                                                        \
 };
 
 #include "string.h"
@@ -87,126 +87,171 @@ b32 KeyCompare(const char *a, const char *b)
     return strcmp(a, b) == 0;
 }
 
-#define HASH_CREATE(T, gameMemory, hash, bCount)                                                   \
-    Hash *hash = (Hash *)AllocateMemory(gameMemory, sizeof(Hash));                                 \
-    memset(hash, 0, sizeof(Hash));                                                                 \
-    {                                                                                              \
-        memory_index size = sizeof(T) * bCount;                                                    \
-        hash->bucketCount = bCount;                                                                \
-        hash->list = (T *)AllocateMemory(gameMemory, size);                                        \
-        memset(hash->list, 0, size);                                                               \
-        hash->isEmptyList = (b32 *)AllocateMemory(gameMemory, sizeof(b32) * bCount);               \
-        for(memory_index i = 0; i < size; i++)                                                     \
-        {                                                                                          \
-            hash->isEmptyList[i] = true;                                                           \
-        }                                                                                          \
-        hash->gm = gameMemory;                                                                     \
+#define HASH_CREATE(T, gameMemory, hash, bCount)                                                    \
+    Hash *hash = (Hash *)AllocateMemory(gameMemory, sizeof(Hash));                                  \
+    memset(hash, 0, sizeof(Hash));                                                                  \
+    {                                                                                               \
+        memory_index size = sizeof(T) * bCount;                                                     \
+        hash->bucketCount = bCount;                                                                 \
+        hash->list = (T *)AllocateMemory(gameMemory, size);                                         \
+        memset(hash->list, 0, size);                                                                \
+        hash->isEmptyList = (b32 *)AllocateMemory(gameMemory, sizeof(b32) * bCount);                \
+        for(memory_index i = 0; i < size; i++)                                                      \
+        {                                                                                           \
+            hash->isEmptyList[i] = true;                                                            \
+        }                                                                                           \
+        hash->gm = gameMemory;                                                                      \
     }
 
-#define HASH_ADD(T, hash, k, value)                                                                \
-    {                                                                                              \
-        memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                          \
-        T *tmp = &((T *)hash->list)[index];                                                        \
-        if (hash->isEmptyList[index] == true)                                                      \
-        {                                                                                          \
-            SetHash(tmp, k, value, 0);                                                             \
-            hash->isEmptyList[index] = false;                                                      \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            b32 found = false;                                                                     \
-            if (KeyCompare(tmp->key, k))                                                           \
-            {                                                                                      \
-                SetValue(value, &tmp->val);                                                        \
-                found = true;                                                                      \
-            }                                                                                      \
-            while(tmp->next != 0 && found == false)                                                \
-            {                                                                                      \
-                tmp = tmp->next;                                                                   \
-                if (KeyCompare(tmp->key, k))                                                       \
-                {                                                                                  \
-                    SetValue(value, &tmp->val);                                                    \
-                    found = true;                                                                  \
-                    break;                                                                         \
-                }                                                                                  \
-            }                                                                                      \
-            if (found == false)                                                                    \
-            {                                                                                      \
-                T *newKeyVal = (T *)AllocateMemory(hash->gm, sizeof(T));                           \
-                memset(newKeyVal, 0, sizeof(T));                                                   \
-                               SetHash(newKeyVal, k, value, 0);                                    \
-                               tmp->next = newKeyVal;                                              \
-            }                                                                                      \
-        }                                                                                          \
+#define HASH_ADD(T, hash, k, value)                                                                 \
+    {                                                                                               \
+        memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                           \
+        T *tmp = &((T *)hash->list)[index];                                                         \
+        if (hash->isEmptyList[index] == true)                                                       \
+        {                                                                                           \
+            SetHash(tmp, k, value, 0);                                                              \
+            hash->isEmptyList[index] = false;                                                       \
+        }                                                                                           \
+        else                                                                                        \
+        {                                                                                           \
+            b32 found = false;                                                                      \
+            if (KeyCompare(tmp->key, k))                                                            \
+            {                                                                                       \
+                SetValue(value, &tmp->val);                                                         \
+                found = true;                                                                       \
+            }                                                                                       \
+            while(tmp->next != 0 && found == false)                                                 \
+            {                                                                                       \
+                tmp = tmp->next;                                                                    \
+                if (KeyCompare(tmp->key, k))                                                        \
+                {                                                                                   \
+                    SetValue(value, &tmp->val);                                                     \
+                    found = true;                                                                   \
+                    break;                                                                          \
+                }                                                                                   \
+            }                                                                                       \
+            if (found == false)                                                                     \
+            {                                                                                       \
+                T *newKeyVal = (T *)AllocateMemory(hash->gm, sizeof(T));                            \
+                memset(newKeyVal, 0, sizeof(T));                                                    \
+                               SetHash(newKeyVal, k, value, 0);                                     \
+                               tmp->next = newKeyVal;                                               \
+            }                                                                                       \
+        }                                                                                           \
     }
 
-#define HASH_GET_VALUE(T, hash, k, result, found)                                                  \
-    memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                              \
-    T *tmp = &((T *)hash->list)[index];                                                            \
-                                                                                                   \
-    if(hash->isEmptyList[index] == false)                                                          \
-    {                                                                                              \
-        do                                                                                         \
-        {                                                                                          \
-            if (KeyCompare(tmp->key, k))                                                           \
-            {                                                                                      \
-                result = tmp->val;                                                                 \
-                found = true;                                                                      \
-                break;                                                                             \
-            }                                                                                      \
-                                                                                                   \
-        }                                                                                          \
-        while((tmp = tmp->next) != 0);                                                             \
-    }                                                                                              \
+#define HASH_GET_VALUE(T, hash, k, result, found)                                                   \
+    memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                               \
+    T *tmp = &((T *)hash->list)[index];                                                             \
+                                                                                                    \
+    if(hash->isEmptyList[index] == false)                                                           \
+    {                                                                                               \
+        do                                                                                          \
+        {                                                                                           \
+            if (KeyCompare(tmp->key, k))                                                            \
+            {                                                                                       \
+                result = tmp->val;                                                                  \
+                found = true;                                                                       \
+                break;                                                                              \
+            }                                                                                       \
+                                                                                                    \
+        }                                                                                           \
+        while((tmp = tmp->next) != 0);                                                              \
+    }                                                                                               \
 
-#define CREATE_HASH_ADD_FUNCTION(T, keyType, valueType)                                            \
-    void HashAdd(Hash *hash, keyType k, valueType value)                                           \
-    {                                                                                              \
-        HASH_ADD(T, hash, k, value);                                                               \
+#define CREATE_HASH_ADD_FUNCTION(T, keyType, valueType)                                             \
+    void HashAdd(Hash *hash, keyType k, valueType value)                                            \
+    {                                                                                               \
+        HASH_ADD(T, hash, k, value);                                                                \
     }
 
-#define CREATE_HASH_GET_VALUE_FUCTION_PROTOTYPE( T, keyType, valueType)                            \
+#define CREATE_HASH_GET_VALUE_FUCTION_PROTOTYPE( T, keyType, valueType)                             \
     valueType T##GetValue(Hash *hash, keyType k);
 
-#define CREATE_HASH_GET_VALUE_FUCTION(T, keyType, valueType)                                       \
-    valueType T##GetValue(Hash *hash, keyType k)                                                   \
-    {                                                                                              \
-        valueType result = {};                                                                     \
-        b32 found = false;                                                                         \
-        HASH_GET_VALUE(T, hash, k, result, found);                                                 \
-        if(!found)                                                                                 \
-        {                                                                                          \
-            return NULL;                                                                           \
-        }                                                                                          \
-        return result;                                                                             \
-    }                                                                                              \
+#define CREATE_HASH_GET_VALUE_FUCTION(T, keyType, valueType)                                        \
+    valueType T##GetValue(Hash *hash, keyType k)                                                    \
+    {                                                                                               \
+        valueType result = {};                                                                      \
+        b32 found = false;                                                                          \
+        HASH_GET_VALUE(T, hash, k, result, found);                                                  \
+        if(!found)                                                                                  \
+        {                                                                                           \
+            return NULL;                                                                            \
+        }                                                                                           \
+        return result;                                                                              \
+    }                                                                                               \
 
-#define HashGetValue(T, hash, key)                                                                 \
+#define HashGetValue(T, hash, key)                                                                  \
     T##GetValue(hash, key)
 
-#define FOR_EACH_HASH_KEY_VAL_BEGIN(T, varName, hash)                                              \
-{                                                                                                  \
-    memory_index i = 0;                                                                            \
-    memory_index hashBucketCount = hash->bucketCount;                                              \
-    while(i < hashBucketCount)                                                                     \
-    {                                                                                              \
-        if (hash->isEmptyList[i] == true)                                                          \
-        {                                                                                          \
-            i++;                                                                                   \
-            continue;                                                                              \
-        }                                                                                          \
+#define FOR_EACH_HASH_KEY_VAL_BEGIN(T, varName, hash)                                               \
+{                                                                                                   \
+    memory_index i = 0;                                                                             \
+    memory_index hashBucketCount = hash->bucketCount;                                               \
+    while(i < hashBucketCount)                                                                      \
+    {                                                                                               \
+        if (hash->isEmptyList[i] == true)                                                           \
+        {                                                                                           \
+            i++;                                                                                    \
+            continue;                                                                               \
+        }                                                                                           \
         for(T *varName = &((T *)hash->list)[i]; varName; varName = varName->next)
 
-#define FOR_EACH_HASH_KEY_VAL_END()                                                                \
-        i++;                                                                                       \
-    }                                                                                              \
+#define FOR_EACH_HASH_KEY_VAL_END()                                                                 \
+        i++;                                                                                        \
+    }                                                                                               \
 }
 
 /* This is needed as we're doing a for loop within a while loop. If we just do
  * a normal break, then it will just end the for loop but will still go
  * through the other buckets of the hash */
-#define FOR_EACH_HASH_BREAK()                                                                      \
-    i = hashBucketCount + 1;                                                                       \
+#define FOR_EACH_HASH_BREAK()                                                                       \
+    i = hashBucketCount + 1;                                                                        \
     break;
 
 #endif
+
+/* Macro used to create the function to delete the hash key value pair */
+#define CREATE_HASH_DELETE_FUCTION(T)                                                               \
+    void T##DeleteKeyVal(T *keyVal)
+
+#define HASH_DELETE(T, hash, k)                                                                     \
+    {                                                                                               \
+        memory_index index = KeyToHashIndex(hash, k) % hash->bucketCount;                           \
+        b32 found = false;                                                                          \
+        T *prev = nullptr;                                                                          \
+        T *tmp = &((T *)hash->list)[index];                                                         \
+        if (hash->isEmptyList[index] == true)                                                       \
+        {                                                                                           \
+        }                                                                                           \
+        else                                                                                        \
+        {                                                                                           \
+            if (KeyCompare(tmp->key, k))                                                            \
+            {                                                                                       \
+                hash->isEmptyList[index] = true;                                                    \
+                found = true;                                                                       \
+            }                                                                                       \
+            while(tmp->next != 0 && found == false)                                                 \
+            {                                                                                       \
+                prev = tmp;                                                                         \
+                tmp = tmp->next;                                                                    \
+                if (KeyCompare(tmp->key, k))                                                        \
+                {                                                                                   \
+                    found = true;                                                                   \
+                    break;                                                                          \
+                }                                                                                   \
+            }                                                                                       \
+            if (found == true)                                                                      \
+            {                                                                                       \
+                if (prev != nullptr)                                                                \
+                {                                                                                   \
+                    prev->next = nullptr;                                                           \
+                }                                                                                   \
+                else                                                                                \
+                {                                                                                   \
+                    hash->isEmptyList[index] = true;                                                \
+                }                                                                                   \
+                T##DeleteKeyVal(tmp);                                                               \
+            }                                                                                       \
+        }                                                                                           \
+    }
