@@ -209,8 +209,6 @@ b32 KeyCompare(const char *a, const char *b)
     i = hashBucketCount + 1;                                                                             \
     break;
 
-#endif
-
 /* Macro used to create the function to delete the hash key value pair */
 #define CREATE_HASH_DELETE_FUCTION(T)                                                                    \
     void T##DeleteKeyVal(T *keyVal)
@@ -267,3 +265,5 @@ b32 KeyCompare(const char *a, const char *b)
             }                                                                                            \
         }                                                                                                \
     }
+
+#endif
