@@ -1,7 +1,7 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
-#define ARRAY_INIT_SIZE 2
+#define ARRAY_INIT_SIZE 20
 
 #define ARRAY_RAW(arr) ((memory_index *)arr - 2)
 #define ARRAY_LIST_CAPACITY(arr) (*((memory_index *)arr - 2))
