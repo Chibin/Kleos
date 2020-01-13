@@ -95,12 +95,7 @@ b32 TestAABBAABB(MinMax *a, MinMax *b)
 
 b32 TestAABBAABB(Rect *a, Rect *b)
 {
-    MinMax aMinMax = {};
-    MinMax bMinMax = {};
-    GetMinMax(a, &aMinMax);
-    GetMinMax(b, &bMinMax);
-
-    return TestAABBAABB(&aMinMax, &bMinMax);
+    return TestAABBAABB(&MinMax{a->min, a->max}, &MinMax{b->min, b->max});
 }
 
 b32 TestAABBAABB(AABB *a, AABB *b)
