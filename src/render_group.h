@@ -40,16 +40,24 @@ inline void PushRenderGroupRectVertex(RenderGroup *rg, Rect *rect)
     rg->rectCount++;
 }
 
+/*
+ * if the filter is skipped, we no longer need to check the bounds
+ */
 inline void PushRenderGroupRectInfo(RenderGroup *rg, Rect *rect, b32 skipFilter)
 {
-    MinMax rectMinMax = {rect->min, rect->max};
-    if (TestAABBAABB(&rg->minMax, &rectMinMax) == false && skipFilter == false)
+    if (skipFilter)
     {
+        PushRectInfo(&rg->rectMemory, rect);
+        rg->rectEntityCount++;
         return;
     }
 
-    PushRectInfo(&rg->rectMemory, rect);
-    rg->rectEntityCount++;
+    MinMax rectMinMax = {rect->min, rect->max};
+    if (TestAABBAABB(&rg->minMax, &rectMinMax))
+    {
+        PushRectInfo(&rg->rectMemory, rect);
+        rg->rectEntityCount++;
+    }
 }
 
 inline RenderGroup *CreateRenderGroup(

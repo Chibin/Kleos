@@ -456,7 +456,7 @@ void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Cam
     CreateScenePartition(gameMetadata->sm, &gameMetadata->rectManager->NonTraversable);
 }
 
-void LoadStuff(GameMetadata *gameMetadata)
+void LoadSomeEnemies(GameMetadata *gameMetadata)
 {
     GameMemory *reservedMemory = &gameMetadata->reservedMemory;
 
@@ -503,7 +503,7 @@ void LoadStuff(GameMetadata *gameMetadata)
 
     for (memory_index i = 0; i < 500; i++)
     {
-        glm::vec3 position = glm::vec3(1 + (f32)i * 1/(f32)100,2,0);
+        glm::vec3 position = glm::vec3(1 + (f32)i * 1/(f32)10,2,0);
         CreateEnemy(gameMetadata, reservedMemory, position);
     }
 }
@@ -717,7 +717,7 @@ void InitGameUpdateAndRender(VulkanContext *vc, GameMetadata *gameMetadata)
 
     SetUI(gameMetadata);
 
-    LoadStuff(gameMetadata);
+    LoadSomeEnemies(gameMetadata);
 
     gameMetadata->infinitePlaneNormal = glm::vec3(0, 0, 1);
 
