@@ -95,6 +95,7 @@ Rect *CreateMinimalRectInfo(GameMemory *gm, v2 min, v2 max)
 inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
 {
     const u8 numOfPoints = ARRAY_SIZE(g_rectIndices);
+#if 0
     union {
         struct
         {
@@ -105,27 +106,35 @@ inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
         };
         Vertex vertices[4];
     };
+#else
+    Vertex topRight;
+    Vertex bottomRight;
+    Vertex bottomLeft;
+    Vertex topLeft;
+    memory_index sizeofVertices = sizeof(Vertex) * 4;
+    Vertex vertices[4];
+#endif
 
-    topRight.vPosition    = v3{ rect->max.x, rect->max.y, 0 };
-    bottomRight.vPosition = v3{ rect->max.x, rect->min.y, 0 };
-    bottomLeft.vPosition  = v3{ rect->min.x, rect->min.y, 0 };
-    topLeft.vPosition     = v3{ rect->min.x, rect->max.y, 0 };
+    vertices[0].vPosition    = v3{ rect->max.x, rect->max.y, 0 };
+    vertices[1].vPosition = v3{ rect->max.x, rect->min.y, 0 };
+    vertices[2].vPosition  = v3{ rect->min.x, rect->min.y, 0 };
+    vertices[3].vPosition     = v3{ rect->min.x, rect->max.y, 0 };
 
-    topRight.vColor       = rect->color;
-    bottomRight.vColor    = rect->color;
-    bottomLeft.vColor     = rect->color;
-    topLeft.vColor        = rect->color;
+    vertices[0].vColor       = rect->color;
+    vertices[1].vColor    = rect->color;
+    vertices[2].vColor     = rect->color;
+    vertices[3].vColor        = rect->color;
 
     v3 normal             = v3{ 0.0f, 0.0f, 0.0f };
-    topRight.vNormal      = normal;
-    bottomRight.vNormal   = normal;
-    bottomLeft.vNormal    = normal;
-    topLeft.vNormal       = normal;
+    vertices[0].vNormal      = normal;
+    vertices[1].vNormal   = normal;
+    vertices[2].vNormal    = normal;
+    vertices[3].vNormal       = normal;
 
-    topRight.vUv          = rect->UV[0];
-    bottomRight.vUv       = rect->UV[1];
-    bottomLeft.vUv        = rect->UV[2];
-    topLeft.vUv           = rect->UV[3];
+    vertices[0].vUv          = rect->UV[0];
+    vertices[1].vUv       = rect->UV[1];
+    vertices[2].vUv        = rect->UV[2];
+    vertices[3].vUv           = rect->UV[3];
     if(rect->frameDirection == RIGHT)
     {
         v2 first          = rect->UV[0];
@@ -133,13 +142,13 @@ inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
         v2 third          = rect->UV[2];
         v2 fourth         = rect->UV[3];
 
-        topRight.vUv      = v2{ fourth.x, fourth.y };
-        bottomRight.vUv   = v2{ third.x, third.y };
-        bottomLeft.vUv    = v2{ second.x, second.y };
-        topLeft.vUv       = v2{ first.x, first.y };
+        vertices[0].vUv      = v2{ fourth.x, fourth.y };
+        vertices[1].vUv   = v2{ third.x, third.y };
+        vertices[2].vUv    = v2{ second.x, second.y };
+        vertices[3].vUv       = v2{ first.x, first.y };
     }
 
-#if 1
+#if 0
 
     for (memory_index i = 0; i < numOfPoints; i++)
     {
@@ -148,6 +157,13 @@ inline void CreateVertices(Rect *rect, Vertex *vertexPointer)
         ASSERT(index < sizeof(vertices));
         *(vertexPointer + i) = vertices[index]; // NOLINT
     }
+#else
+    *(vertexPointer + 0) = vertices[g_rectIndices[0]]; // NOLINT
+    *(vertexPointer + 1) = vertices[g_rectIndices[1]]; // NOLINT
+    *(vertexPointer + 2) = vertices[g_rectIndices[2]]; // NOLINT
+    *(vertexPointer + 3) = vertices[g_rectIndices[3]]; // NOLINT
+    *(vertexPointer + 4) = vertices[g_rectIndices[4]]; // NOLINT
+    *(vertexPointer + 5) = vertices[g_rectIndices[5]]; // NOLINT
 #endif
 }
 
