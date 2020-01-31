@@ -2,14 +2,6 @@
 #define __FONT__
 #include "font.h"
 
-#ifndef STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#pragma warning(push)
-#pragma warning(disable : 4244)
-#include "stb_image.h"
-#pragma warning(pop)
-#endif
-
 TTF_Font *OpenFont()
 {
     const char *file = "assets/fonts/lato/Lato-Regular.ttf";
