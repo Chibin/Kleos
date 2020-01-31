@@ -4,7 +4,7 @@
  * V2
  */
 
-inline v2 operator-(v2 A) //NOLINT
+v2 operator-(v2 A) //NOLINT
 {
 
     v2 result;
@@ -14,7 +14,7 @@ inline v2 operator-(v2 A) //NOLINT
     return result;
 }
 
-inline v2 operator-(v2 A, v2 B) //NOLINT
+v2 operator-(v2 A, v2 B) //NOLINT
 {
     v2 result;
     result.x = A.x - B.x;
@@ -23,7 +23,7 @@ inline v2 operator-(v2 A, v2 B) //NOLINT
     return result;
 }
 
-inline v2 &operator-=(v2 &A, v2 B)
+v2 &operator-=(v2 &A, v2 B)
 {
 
     A.x -= B.x;
@@ -32,7 +32,7 @@ inline v2 &operator-=(v2 &A, v2 B)
     return A;
 }
 
-inline v2 operator+(v2 A, v2 B) //NOLINT
+v2 operator+(v2 A, v2 B) //NOLINT
 {
 
     v2 result;
@@ -42,7 +42,7 @@ inline v2 operator+(v2 A, v2 B) //NOLINT
     return result;
 }
 
-inline v2 operator+(v2 A, f32 B) //NOLINT
+v2 operator+(v2 A, f32 B) //NOLINT
 {
 
     v2 result;
@@ -52,7 +52,7 @@ inline v2 operator+(v2 A, f32 B) //NOLINT
     return result;
 }
 
-inline v2 &operator+=(v2 &A, v2 B)
+v2 &operator+=(v2 &A, v2 B)
 {
 
     A.x += B.x;
@@ -61,7 +61,7 @@ inline v2 &operator+=(v2 &A, v2 B)
     return A;
 }
 
-inline v2 operator*(v2 A, f32 B) //NOLINT
+v2 operator*(v2 A, f32 B) //NOLINT
 {
 
     A.x *= B;
@@ -70,7 +70,7 @@ inline v2 operator*(v2 A, f32 B) //NOLINT
     return A;
 }
 
-inline v2 operator*(f32 A, v2 B) //NOLINT
+v2 operator*(f32 A, v2 B) //NOLINT
 {
 
     B.x *= A;
@@ -79,7 +79,7 @@ inline v2 operator*(f32 A, v2 B) //NOLINT
     return B;
 }
 
-inline v2 operator+(f32 A, v2 B) //NOLINT
+v2 operator+(f32 A, v2 B) //NOLINT
 {
 
     B.x += A;
@@ -88,7 +88,7 @@ inline v2 operator+(f32 A, v2 B) //NOLINT
     return B;
 }
 
-inline v2 operator-(v2 A, f32 B) //NOLINT
+v2 operator-(v2 A, f32 B) //NOLINT
 {
 
     A.x -= B;
@@ -97,7 +97,7 @@ inline v2 operator-(v2 A, f32 B) //NOLINT
     return A;
 }
 
-inline v2 operator/(v2 A, f32 B) //NOLINT
+v2 operator/(v2 A, f32 B) //NOLINT
 {
 
     A.x /= B;
@@ -106,7 +106,7 @@ inline v2 operator/(v2 A, f32 B) //NOLINT
     return A;
 }
 
-inline v2 operator/(f32 A, v2 B) //NOLINT
+v2 operator/(f32 A, v2 B) //NOLINT
 {
 
     B.x /= A;
@@ -115,7 +115,7 @@ inline v2 operator/(f32 A, v2 B) //NOLINT
     return B;
 }
 
-inline b32 operator<(v2 A, v2 B) //NOLINT
+b32 operator<(v2 A, v2 B) //NOLINT
 {
 
     if ((A.x < B.x) && (A.y < B.y))
@@ -126,12 +126,12 @@ inline b32 operator<(v2 A, v2 B) //NOLINT
     return false;
 }
 
-inline v2 V2(v3 A)
+v2 V2(v3 A)
 {
     return v2{A.x, A.y};
 }
 
-inline v2 abs(v2 a)
+v2 abs(v2 a)
 {
     return v2{fabsf(a.x), fabsf(a.y)};
 }
@@ -140,7 +140,7 @@ inline v2 abs(v2 a)
  * V3
  */
 
-inline v3 operator+(v3 A, v3 B) //NOLINT
+v3 operator+(v3 A, v3 B) //NOLINT
 {
 
     A.x += B.x;
@@ -150,7 +150,7 @@ inline v3 operator+(v3 A, v3 B) //NOLINT
     return A;
 }
 
-inline v3 &operator+=(v3 &A, v3 B)
+v3 &operator+=(v3 &A, v3 B)
 {
 
     A.x += B.x;
@@ -160,7 +160,7 @@ inline v3 &operator+=(v3 &A, v3 B)
     return A;
 }
 
-inline v3 operator-(v3 A, v3 B) //NOLINT
+v3 operator-(v3 A, v3 B) //NOLINT
 {
 
     A.x -= B.x;
@@ -170,7 +170,7 @@ inline v3 operator-(v3 A, v3 B) //NOLINT
     return A;
 }
 
-inline v3 &operator-=(v3 &A, v3 B)
+v3 &operator-=(v3 &A, v3 B)
 {
 
     A.x -= B.x;
@@ -189,7 +189,7 @@ v3 V3(v2 A, f32 B)
  * V4
  */
 
-inline v4 operator+(v4 A, v4 B)
+v4 operator+(v4 A, v4 B)
 {
 
     A.x += B.x;
@@ -200,7 +200,7 @@ inline v4 operator+(v4 A, v4 B)
     return A;
 }
 
-inline v4 operator*(v4 A, v4 B)
+v4 operator*(v4 A, v4 B)
 {
 
     A.x *= B.x;
@@ -211,7 +211,7 @@ inline v4 operator*(v4 A, v4 B)
     return A;
 }
 
-inline v4 &operator/(v4 &A, v4 B) // NOLINT
+v4 &operator/(v4 &A, v4 B) // NOLINT
 {
 
     A.x /= B.x;
@@ -222,7 +222,7 @@ inline v4 &operator/(v4 &A, v4 B) // NOLINT
     return A;
 }
 
-inline v4 operator-(v4 a, v4 b)
+v4 operator-(v4 a, v4 b)
 {
 
     a.x -= b.x;
@@ -233,7 +233,7 @@ inline v4 operator-(v4 a, v4 b)
     return a;
 }
 
-inline v4 &operator/=(v4 &A, v4 B)
+v4 &operator/=(v4 &A, v4 B)
 {
 
     A.x *= B.x;
@@ -244,7 +244,7 @@ inline v4 &operator/=(v4 &A, v4 B)
     return A;
 }
 
-inline v4 &operator*=(v4 &A, v4 B)
+v4 &operator*=(v4 &A, v4 B)
 {
 
     A.x *= B.x;
@@ -255,7 +255,7 @@ inline v4 &operator*=(v4 &A, v4 B)
     return A;
 }
 
-inline v4 &operator-=(v4 &A, v4 B)
+v4 &operator-=(v4 &A, v4 B)
 {
 
     A.x -= B.x;
@@ -266,7 +266,7 @@ inline v4 &operator-=(v4 &A, v4 B)
     return A;
 }
 
-inline v4 &operator+=(v4 &A, v4 B)
+v4 &operator+=(v4 &A, v4 B)
 {
 
     A.x += B.x;

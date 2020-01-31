@@ -140,26 +140,26 @@ void ZeroSize(void *_data, memory_index size);
 u32 SafeCastToU32(memory_index x);
 u8 SafeCastToU8(f32 num);
 s32 *SafeCastU32ToS32(u32 *u32Pointer);
-inline v2 operator-(v2 A, v2 B);
-inline v2 operator-(v2 A, f32 B);
-inline v2 operator+(v2 A, v2 B);
-inline v2 operator+(f32 A, v2 B);
-inline v2 operator+(v2 A, f32 B);
-inline v2 operator*(v2 A, f32 B);
-inline v2 operator*(f32 A, v2 B);
-inline v2 operator/(f32 A, v2 B);
-inline v2 operator/(v2 A, f32 B);
-inline v2 &operator-=(v2 &A, v2 B);
-inline v2 &operator+=(v2 &A, v2 B);
-inline v3 operator+(v3 A, v3 B); //NOLINT
-inline v3 operator+(f32 A, v3 B);
-inline v3 operator+(v3 A, f32 B);
-inline v3 &operator-=(v3 &A, v3 B);
-inline v3 &operator+=(v3 &A, v3 B);
-inline b32 operator<(v2 A, v2 B); //NOLINT
-inline b32 operator>(v2 A, v2 B); //NOLINT
-inline v2 V2(v3 A);
-inline v2 abs(v2);
+v2 operator-(v2 A, v2 B);
+v2 operator-(v2 A, f32 B);
+v2 operator+(v2 A, v2 B);
+v2 operator+(f32 A, v2 B);
+v2 operator+(v2 A, f32 B);
+v2 operator*(v2 A, f32 B);
+v2 operator*(f32 A, v2 B);
+v2 operator/(f32 A, v2 B);
+v2 operator/(v2 A, f32 B);
+v2 &operator-=(v2 &A, v2 B);
+v2 &operator+=(v2 &A, v2 B);
+v3 operator+(v3 A, v3 B); //NOLINT
+v3 operator+(f32 A, v3 B);
+v3 operator+(v3 A, f32 B);
+v3 &operator-=(v3 &A, v3 B);
+v3 &operator+=(v3 &A, v3 B);
+b32 operator<(v2 A, v2 B); //NOLINT
+b32 operator>(v2 A, v2 B); //NOLINT
+v2 V2(v3 A);
+v2 abs(v2);
 v3 V3(v2 A, f32 B);
 
 #endif
