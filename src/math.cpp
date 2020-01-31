@@ -288,7 +288,7 @@ void ZeroSize(void *_data, memory_index size)
 u32 SafeCastToU32(f32 x)
 {
     /* We know that data will be lost if we do this */
-    ASSERT(x > -0);
+    ASSERT(x > -1);
     ASSERT(x <= UINT32_MAX); // NOLINT
     return (u32)x;
 }

@@ -23,6 +23,7 @@ list (APPEND justtobuild
     rect_manager.cpp
     rectangle.cpp
     shaders.cpp
+    spatial_hash.cpp
     )
 if (UNIX)
     list (APPEND justtobuild linux_platform.cpp)

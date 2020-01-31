@@ -46,12 +46,21 @@ void NPCMoveRight(NPC *npc)
 {
     npc->direction = RIGHT;
     npc->movement->velocity.x += 1.0f;
+#if 0
+    /*Debugging purposes*/
+    npc->movement->velocity.y = 0;
+    npc->movement->acceleration.y = 0;
+#endif
 }
 
 void NPCMoveLeft(NPC *npc)
 {
     npc->direction = LEFT;
     npc->movement->velocity.x -= 1.0f;
+#if 0
+    npc->movement->velocity.y = 0;
+    npc->movement->acceleration.y = 0;
+#endif
 }
 
 b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, f32 dt)
@@ -76,9 +85,10 @@ b32 CanMoveTheSameDirection(NPC *npc, GameMetadata *gameMetadata, f32 dt)
      * So, we need to make the query range bigger.
      * The bigger the rect, the harder it is to be found.
      */
-    f32 arbitraryPadding = 5.0f;
+    f32 arbitraryPadding = 0.0f;
     range.halfDim = range.halfDim + arbitraryPadding;
-    Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+    //Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+    Rect **arr = SpatialHashGet(gameMetadata->sh, &range);
 
 #if DEBUG_NPC
     AddDebugRect(gameMetadata, &range, COLOR_GREEN);

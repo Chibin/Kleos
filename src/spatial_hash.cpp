@@ -1,57 +1,42 @@
-#ifndef __SPACIAL_HASH__
-#define __SPACIAL_HASH__
+#ifndef __SPATIAL_HASH__
+#define __SPATIAL_HASH__
 
-#include "../src/game_memory.h"
-#include "../src/array.h"
-#include "../src/hash_set.cpp"
+#include "spatial_hash.h"
 
-struct SpatialStore
-{
-    Rect **rects;
-};
-
-struct SpacialHash
-{
-    SpatialStore *buckets;
-    memory_index bucketCount;
-    memory_index cellGrid;
-    memory_index bucketsPerColumn;
-    struct GameMemory *gm;
-};
-
-SpacialHash *CreateSpacialHash(
+SpatialHash *CreateSpatialHash(
         GameMemory *gm,
         memory_index bucketCount,
         memory_index bucketsPerColumn,
         memory_index cellGrid)
 {
-    SpacialHash *result = (SpacialHash *)AllocateMemory0(gm, sizeof(SpacialHash));
+    SpatialHash *result = (SpatialHash *)AllocateMemory0(gm, sizeof(SpatialHash));
     result->buckets = (SpatialStore *)AllocateMemory0(gm, sizeof(SpatialStore) * bucketCount);
     result->cellGrid = cellGrid;
     result->bucketsPerColumn = bucketsPerColumn;
+    result->bucketCount = bucketCount;
     result->gm = gm;
     return result;
 }
 
 
 /* convert a point to a possible bucket*/
-memory_index SpacialHashPointToBucket(SpacialHash *sh, v2 point)
+memory_index SpatialHashPointToBucket(SpatialHash *sh, v2 point)
 {
     /* turn buckets into a 2D grid and see if the point exist in that grid */
     /* Find an easy way to put a point into a grid */
-    if (point.x < 0)
-        printf("x value is negative using fabsf\n");
-    if (point.y < 0)
-        printf("y value is negative using fabsf\n");
+    //if (point.x < 0)
+    //    printf("x value is negative using fabsf\n");
+    //if (point.y < 0)
+    //    printf("y value is negative using fabsf\n");
 
-    u8 xGrid = SafeCastToU8(fabsf(point.x) / sh->cellGrid);
-    u8 yGrid = SafeCastToU8(fabsf(point.y) / sh->cellGrid);
+    u32 xGrid = SafeCastToU32(fabsf(point.x) / sh->cellGrid);
+    u32 yGrid = SafeCastToU32(fabsf(point.y) / sh->cellGrid);
     memory_index hashId = xGrid + yGrid * sh->bucketsPerColumn;
 
     return hashId;
 }
 
-memory_index *SpacialHashRectToKey(SpacialHash *sh, Rect *rect)
+memory_index *SpatialHashRectToKey(SpatialHash *sh, Rect *rect)
 {
 
     ARRAY_CREATE(memory_index, sh->gm, arr);
@@ -62,10 +47,10 @@ memory_index *SpacialHashRectToKey(SpacialHash *sh, Rect *rect)
     v2 topLeft = v2{rect->min.x, rect->max.y};
     v2 topRight = rect->max;
 
-    ARRAY_PUSH(memory_index, sh->gm, arr, SpacialHashPointToBucket(sh, topRight));
-    ARRAY_PUSH(memory_index, sh->gm, arr, SpacialHashPointToBucket(sh, bottomLeft));
-    ARRAY_PUSH(memory_index, sh->gm, arr, SpacialHashPointToBucket(sh, topLeft));
-    ARRAY_PUSH(memory_index, sh->gm, arr, SpacialHashPointToBucket(sh, bottomRight));
+    ARRAY_PUSH(memory_index, sh->gm, arr, SpatialHashPointToBucket(sh, topRight));
+    ARRAY_PUSH(memory_index, sh->gm, arr, SpatialHashPointToBucket(sh, bottomLeft));
+    ARRAY_PUSH(memory_index, sh->gm, arr, SpatialHashPointToBucket(sh, topLeft));
+    ARRAY_PUSH(memory_index, sh->gm, arr, SpatialHashPointToBucket(sh, bottomRight));
 #endif
 
     for(f32 i = rect->min.x; i < rect->max.x + sh->cellGrid; i += sh->cellGrid)
@@ -81,7 +66,7 @@ memory_index *SpacialHashRectToKey(SpacialHash *sh, Rect *rect)
                 j = rect->max.y;
             }
             //printf("locations %f %f\n", i, j);
-            ARRAY_PUSH(memory_index, sh->gm, arr, SpacialHashPointToBucket(sh, v2{i, j}));
+            ARRAY_PUSH(memory_index, sh->gm, arr, SpatialHashPointToBucket(sh, v2{i, j}));
         }
     }
 
@@ -89,7 +74,7 @@ memory_index *SpacialHashRectToKey(SpacialHash *sh, Rect *rect)
 }
 
 /* Determine which bucket to put the rect*/
-SpatialStore **GetListOfPossibleBuckets(SpacialHash *sh, Rect *rect)
+SpatialStore **GetListOfPossibleBuckets(SpatialHash *sh, Rect *rect)
 {
     ARRAY_CREATE(SpatialStore *, sh->gm, arr);
 
@@ -102,7 +87,7 @@ SpatialStore **GetListOfPossibleBuckets(SpacialHash *sh, Rect *rect)
 }
 
 /*It's possible that you may need to insert the rect to multiple buckets*/
-void SpacialHashInsert(SpacialHash *sh, Rect *rect)
+void SpatialHashInsert(SpatialHash *sh, Rect *rect)
 {
     ASSERT(sh->cellGrid > 0);
     for(f32 i = rect->min.x; i < rect->max.x + sh->cellGrid; i += sh->cellGrid)
@@ -117,8 +102,9 @@ void SpacialHashInsert(SpacialHash *sh, Rect *rect)
             {
                 j = rect->max.y;
             }
-            printf("locations %f %f\n", i, j);
-            Rect **rects = sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects;
+            //printf("locations %f %f\n", i, j);
+            memory_index bucketId = SpatialHashPointToBucket(sh, v2{i, j});
+            Rect **rects = sh->buckets[bucketId].rects;
             if(rects == nullptr)
             {
                 ARRAY_CREATE(Rect *, sh->gm, arr);
@@ -126,20 +112,20 @@ void SpacialHashInsert(SpacialHash *sh, Rect *rect)
             }
 
             ARRAY_PUSH(Rect *, sh->gm, rects, rect);
-            //if(sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects != 0)
+            //if(sh->buckets[SpatialHashPointToBucket(sh, v2{i, j})].rects != 0)
             //{
             //    printf("collision detected\n");
             //}
-            //sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects = rect;
-            printf("buckets->rect size: %zu\n", ARRAY_LIST_SIZE(rects));
-            sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects = rects;
+            //sh->buckets[SpatialHashPointToBucket(sh, v2{i, j})].rects = rect;
+            //printf("buckets->rect size: %zu\n", ARRAY_LIST_SIZE(rects));
+            sh->buckets[bucketId].rects = rects;
 
         }
     }
 }
 
 /*Get the bucket/list of rects that correspond to the rect bounding box */
-Rect **SpacialHashGet(SpacialHash *sh, Rect *rect)
+Rect **SpatialHashGet(SpatialHash *sh, Rect *rect)
 {
     ASSERT(sh->cellGrid > 0);
     /* This should be a hash set */
@@ -158,12 +144,14 @@ Rect **SpacialHashGet(SpacialHash *sh, Rect *rect)
             {
                 j = rect->max.y;
             }
-            if(sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects != 0)
+            memory_index bucketId = SpatialHashPointToBucket(sh, v2{i, j});
+            ASSERT(bucketId < sh->bucketCount);
+            if(sh->buckets[bucketId].rects != 0)
             {
-                /* This should be a spacial hash set */
-                //ARRAY_PUSH(Rect *, sh->gm, arr, sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects);
-                printf("%p\n",sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects);
-                Rect **rects = sh->buckets[SpacialHashPointToBucket(sh, v2{i, j})].rects;
+                /* This should be a Spatial hash set */
+                //ARRAY_PUSH(Rect *, sh->gm, arr, sh->buckets[SpatialHashPointToBucket(sh, v2{i, j})].rects);
+                //printf("%p\n",sh->buckets[SpatialHashPointToBucket(sh, v2{i, j})].rects);
+                Rect **rects = sh->buckets[bucketId].rects;
                 for(memory_index i = 0; i < ARRAY_LIST_SIZE(rects); i++)
                 {
                     HashSetInsert(sh->gm, hs, rects[i]);
@@ -177,6 +165,26 @@ Rect **SpacialHashGet(SpacialHash *sh, Rect *rect)
     Rect **rectList = HashSetOrderedToList(sh->gm, hs);
     return rectList;
     //return arr;
+}
+
+Rect **SpatialHashGet(SpatialHash *sh, AABB *range)
+{
+    v2 dim = 2 * range->halfDim;
+    v3 center = V3(range->center, 0);
+
+    Rect tempRect = {};
+    tempRect.center = center;
+
+    v2 centerXY = {0.5f * dim.x, 0.5f * dim.y};
+    v2 basePositionXY = { center.x, center.y };
+    v2 min = basePositionXY - centerXY;
+    v2 max = basePositionXY + centerXY;
+    tempRect.min = min;
+    tempRect.max = max;
+    tempRect.dim = dim;
+
+    return SpatialHashGet(sh, &tempRect);
+
 }
 
 #endif

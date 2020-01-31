@@ -63,6 +63,9 @@ inline void *RequestToReservedMemory(memory_index size)
 
 #include "rectangle.cpp"
 
+#include "hash_set.cpp"
+#include "spatial_hash.cpp"
+
 #include "particle.cpp"
 #include "render_group.h"
 #include "asset.cpp"

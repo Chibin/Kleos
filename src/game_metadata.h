@@ -11,6 +11,7 @@
 #include "rect_manager.h"
 #include "hash.h"
 #include "mouse.h"
+#include "spatial_hash.h"
 
 struct EditMode
 {
@@ -75,6 +76,8 @@ struct GameMetadata
     RenderGroup *perFrameRenderGroupUI;
 
     struct SceneManager *sm;
+
+    struct SpatialHash *sh;
 
     EditMode editMode;
 

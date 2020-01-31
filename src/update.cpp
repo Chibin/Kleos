@@ -21,14 +21,15 @@ void UpdateMovement(GameMetadata *gameMetadata, Movement *movement, v2 dim, f32 
     MinMax temp = GetMinMax(&nextUpdate);
     AABB range = MinMaxToSquareAABB(&temp);
 #if 1
-    f32 arbitraryPadding = 5.0f;
+    f32 arbitraryPadding = 0.0f;
 #else
-    f32 arbitraryPadding = 50.0f;
+    f32 arbitraryPadding = 5.0f;
 #endif
     range.halfDim = range.halfDim + arbitraryPadding;
-    Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+    //Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+    Rect **arr = SpatialHashGet(gameMetadata->sh, &range);
 
-#if 0
+#if 1
     AddDebugRect(gameMetadata, &range, COLOR_GREEN_TRANSPARENT);
 #endif
 
@@ -501,7 +502,8 @@ void UpdateBasedOnEditModeChanges(GameMetadata *gameMetadata)
             case RIGHT_SINGLE_CLICK:
                 {
                     /* Find new selected rect to modify */
-                    Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+                    //Rect **arr = GetRectsWithInRange(gameMetadata->sm, &range);
+                    Rect **arr = SpatialHashGet(gameMetadata->sh, &range);
                     gameMetadata->editMode.selectedRect = nullptr;
                     for(memory_index i = 0; i < ARRAY_LIST_SIZE(arr); i++)
                     {

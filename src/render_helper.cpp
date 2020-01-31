@@ -432,6 +432,23 @@ void HandleInput(GameMetadata *gameMetadata, b32 *continueRunning)
     }
 }
 
+SpatialHash *CreateSceneSpatialHash(GameMemory *gm, RectStorage *rs)
+{
+    memory_index bucketCount = 1000;
+    memory_index bucketsPerColumn = 100;
+    memory_index cellGrid = 5;
+
+    SpatialHash *sh =
+        CreateSpatialHash(gm, bucketCount, bucketsPerColumn, cellGrid);
+
+    for(memory_index i = 0; i < rs->rda.size; i++)
+    {
+        SpatialHashInsert(sh, rs->rda.rects[i]);
+    }
+
+    return sh;
+}
+
 void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Camera *camera, glm::mat4 *projection)
 {
 
@@ -454,6 +471,7 @@ void SetPerFrameData(GameMetadata *gameMetadata, GameMemory *perFrameMemory, Cam
     gameMetadata->sm = CreateSceneManager(gameMetadata, perFrameMemory);
     SetAABB(&gameMetadata->rectManager->NonTraversable);
     CreateScenePartition(gameMetadata->sm, &gameMetadata->rectManager->NonTraversable);
+    gameMetadata->sh = CreateSceneSpatialHash(perFrameMemory, &gameMetadata->rectManager->NonTraversable);
 }
 
 void LoadSomeEnemies(GameMetadata *gameMetadata)
@@ -501,9 +519,9 @@ void LoadSomeEnemies(GameMetadata *gameMetadata)
     HashAdd(gameMetadata->hashEntityNPC, enemyEntity, enemyNPC);
     HashAdd(gameMetadata->hashEntityStat, enemyEntity, enemyStat);
 
-    for (memory_index i = 0; i < 500; i++)
+    for (memory_index i = 0; i < 1000; i++)
     {
-        glm::vec3 position = glm::vec3(1 + (f32)i * 1/(f32)10,2,0);
+        glm::vec3 position = glm::vec3(1 + (f32)i * 1/(f32)100, 2, 0);
         CreateEnemy(gameMetadata, reservedMemory, position);
     }
 }

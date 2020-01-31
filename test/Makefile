@@ -13,8 +13,12 @@ array: math.o
 hash: math.o
 	gcc test_hash.cpp math.o -l SDL2 -o hash
 
-spacial_hash: math.o rectangle.o
-	clang -std=c++14 math.o rectangle.o test_spacial_hash.cpp -I../include -l SDL2 -lm -o spacial_hash_test
+hash_set:
+	clang -std=c++14 hash_set.cpp -I../include -l SDL2 -lm
+
+spatial_hash: math.o rectangle.o hash_set.o
+	clang -std=c++14 math.o rectangle.o hash_set.o test_spatial_hash.cpp \
+		-I../include -l SDL2 -lm -o spatial_hash_test
 
 hash_set: math.o rectangle.o
 	clang -std=c++14 math.o rectangle.o test_hash_set.cpp -I../include -l SDL2 -lm -o hash_set_test
