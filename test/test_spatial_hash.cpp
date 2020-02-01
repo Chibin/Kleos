@@ -15,7 +15,7 @@
 
 void testHashKey(GameMemory *gm)
 {
-    SpatialHash *sh = CreateSpatialHash(gm, 100, 10, 10 /*cell grid*/);
+    SpatialHash *sh = CreateSpatialHash(gm, 1000, 10, 10 /*cell grid*/);
     memory_index bucketIndex = SpatialHashPointToBucket(sh, v2{0, 0});
     assert(bucketIndex == 0);
 
@@ -66,11 +66,15 @@ void testHashKey(GameMemory *gm)
 
     bucketIndex = SpatialHashPointToBucket(sh, v2{20, 10});
     assert(bucketIndex == 12);
+
+    bucketIndex = SpatialHashPointToBucket(sh, v2{-50.9438515, 51.7043304});
+    assert(bucketIndex == 55);
+
 }
 
 void testHashRect(GameMemory *gm)
 {
-    SpatialHash *sh = CreateSpatialHash(gm, 100, 10, 10 /*cell grid*/);
+    SpatialHash *sh = CreateSpatialHash(gm, 105, 10, 10 /*cell grid*/);
     v2 dim = {20, 20};
     v3 center = {55, 55, 0};
     Rect *r =  CreateRectangle(gm, center, COLOR_WHITE, dim);

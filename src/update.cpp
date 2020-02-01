@@ -373,7 +373,7 @@ AABB DetermineAABBRangeBasedOnMouse(GameMetadata *gameMetadata)
     }
     else if (gameMetadata->mouseInfo.mouseType == RIGHT_SINGLE_CLICK)
     {
-        f32 arbitraryPadding = 50.0f;
+        f32 arbitraryPadding = 5.0f;
         result.halfDim = v2{arbitraryPadding, arbitraryPadding};
         result.center = V2(mouse0);
     }

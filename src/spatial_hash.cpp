@@ -33,6 +33,14 @@ memory_index SpatialHashPointToBucket(SpatialHash *sh, v2 point)
     u32 yGrid = SafeCastToU32(fabsf(point.y) / sh->cellGrid);
     memory_index hashId = xGrid + yGrid * sh->bucketsPerColumn;
 
+#if 0
+    printf("float x %f\n", point.x);
+    printf("float y %f\n", point.y);
+    printf("x %d\n", xGrid);
+    printf("y %d\n", yGrid);
+    printf("hashId %zu\n", hashId);
+#endif
+
     return hashId;
 }
 
