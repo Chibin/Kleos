@@ -81,17 +81,58 @@ memory_index *SpatialHashRectToKey(SpatialHash *sh, Rect *rect)
     return arr;
 }
 
-/* Determine which bucket to put the rect*/
-SpatialStore **GetListOfPossibleBuckets(SpatialHash *sh, Rect *rect)
+/* If the bucketid entry has not been found, then create a new spatial store for the rects,
+ * otherwise return the corresponding spatial store */
+SpatialStore *SpatialHashFindOrCreateBuckettIdToSpatialStore(SpatialHash *sh, memory_index bucketId)
 {
-    ARRAY_CREATE(SpatialStore *, sh->gm, arr);
+    memory_index boundedBucketId = bucketId % sh->bucketCount;
+    SpatialStore *ss = &sh->buckets[boundedBucketId];
+    /* There hasn't been any entry yet, so just return immediately */
+    if(ss->hashId == 0 && ss->rects == nullptr)
+    {
+        return ss;
+    }
 
-    //for(memory_index i = 0; i < sh->bucketCount; i++)
-    //{
-    //    ARRAY_PUSH(SpatialStore *, sh->gm, arr, &sh->buckets[i]);
-    //}
+    if(ss->hashId == boundedBucketId)
+    {
+        return ss;
+    }
 
-    return arr;
+    while(ss->next != nullptr)
+    {
+        ss = ss->next;
+        if(ss->hashId == boundedBucketId)
+        {
+            return ss;
+        }
+    }
+
+    ss->next = (SpatialStore *)AllocateMemory0(sh->gm, sizeof(SpatialStore));
+    ss->next->hashId = bucketId;
+    ss->next->rects = nullptr;
+
+    return ss->next;
+}
+
+Rect **SpatialHashFindBuckettIdToRects(SpatialHash *sh, memory_index bucketId)
+{
+    memory_index boundedBucketId = bucketId % sh->bucketCount;
+    const SpatialStore *ss = &sh->buckets[boundedBucketId];
+    if(ss->hashId == boundedBucketId)
+    {
+        return ss->rects;
+    }
+
+    while(ss->next != nullptr)
+    {
+        ss = ss->next;
+        if(ss->hashId == boundedBucketId)
+        {
+            return ss->rects;
+        }
+    }
+
+    return nullptr;
 }
 
 /*It's possible that you may need to insert the rect to multiple buckets*/
@@ -112,12 +153,26 @@ void SpatialHashInsert(SpatialHash *sh, Rect *rect)
             }
             //printf("locations %f %f\n", i, j);
             memory_index bucketId = SpatialHashPointToBucket(sh, v2{i, j});
+#if 0
             Rect **rects = sh->buckets[bucketId].rects;
             if(rects == nullptr)
             {
                 ARRAY_CREATE(Rect *, sh->gm, arr);
                 rects = arr;
+                sh->buckets[bucketId].hashId = bucketId;
             }
+#else
+            //Rect **rects = SpatialHashFindBuckettIdToRects(sh, bucketId);
+            SpatialStore *ss = SpatialHashFindOrCreateBuckettIdToSpatialStore(sh, bucketId);
+            Rect **rects = ss->rects;
+
+            if(rects == nullptr)
+            {
+                ARRAY_CREATE(Rect *, sh->gm, arr);
+                rects = arr;
+                ss->hashId = bucketId;
+            }
+#endif
 
             ARRAY_PUSH(Rect *, sh->gm, rects, rect);
             //if(sh->buckets[SpatialHashPointToBucket(sh, v2{i, j})].rects != 0)
@@ -126,8 +181,7 @@ void SpatialHashInsert(SpatialHash *sh, Rect *rect)
             //}
             //sh->buckets[SpatialHashPointToBucket(sh, v2{i, j})].rects = rect;
             //printf("buckets->rect size: %zu\n", ARRAY_LIST_SIZE(rects));
-            sh->buckets[bucketId].rects = rects;
-
+            ss->rects = rects;
         }
     }
 }
@@ -153,6 +207,18 @@ Rect **SpatialHashGet(SpatialHash *sh, Rect *rect)
                 j = rect->max.y;
             }
             memory_index bucketId = SpatialHashPointToBucket(sh, v2{i, j});
+
+#if 1
+            Rect **rects = SpatialHashFindBuckettIdToRects(sh, bucketId);
+            if(rects != nullptr)
+            {
+                for(memory_index i = 0; i < ARRAY_LIST_SIZE(rects); i++)
+                {
+                    HashSetInsert(sh->gm, hs, rects[i]);
+                }
+
+            }
+#else
             ASSERT(bucketId < sh->bucketCount);
             if(sh->buckets[bucketId].rects != 0)
             {
@@ -167,6 +233,7 @@ Rect **SpatialHashGet(SpatialHash *sh, Rect *rect)
 
                 //ARRAY_FREE(rects); /* to be implemented */
             }
+#endif
         }
     }
 

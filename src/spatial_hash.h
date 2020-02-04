@@ -7,6 +7,8 @@
 
 struct SpatialStore
 {
+    SpatialStore *next;
+    memory_index hashId;
     Rect **rects;
 };
 
